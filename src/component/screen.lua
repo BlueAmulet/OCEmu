@@ -273,10 +273,12 @@ function cec.copy(x1, y1, w, h, tx, ty) -- Copies a portion of the screen from t
 			screen.bgp[y][x] = copy.bgp[y-y1-ty][x-x1-tx]
 			local fr,fg,fb = breakColor(copy.fg[y-y1-ty][x-x1-tx])
 			local br,bg,bb = breakColor(copy.bg[y-y1-ty][x-x1-tx])
-			-- TODO: Replace with pixel copy, this is slow.
 			renderChar(lua_utf8.codepoint(copy.txt[y-y1-ty][x-x1-tx]),(x-1)*8,(y-1)*16,fr,fg,fb,br,bg,bb)
 		end
 	end
+	--local copy = love.image.newImageData(width*8, height*16)
+	--copy:paste(idata, 0, 0, 0, 0, width*8, height*8)
+	--idata:paste(copy, (x1+tx-1)*8, (y1+ty-1)*16, (x1-1)*8, (y1-1)*16, w*8, h*16)
 	image:refresh()
 end
 

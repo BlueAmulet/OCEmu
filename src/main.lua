@@ -1,3 +1,4 @@
+require("imagedata-ffi")
 require("compat52.strict")
 
 conf = {
@@ -203,6 +204,8 @@ setmetatable(env,{
 		cprint("Missing environment access", "env." .. k)
 	end,
 })
+
+love.keyboard.setKeyRepeat(true)
 
 -- load unifont
 unifont = {}
