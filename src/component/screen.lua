@@ -237,9 +237,47 @@ function cec.set(x, y, value, vertical) -- Plots a string value to the screen at
 	end
 	return true
 end
-function cec.copy(x, y, width, height, tx, ty) -- Copies a portion of the screen from the specified location with the specified size by the specified translation.
-	--STUB
-	cprint("(cec) screen.copy", x, y, width, height, tx, ty)
+function cec.copy(x, y, w, h, tx, ty) -- Copies a portion of the screen from the specified location with the specified size by the specified translation.
+	--TODO
+	cprint("(cec) screen.copy", x, y, w, h, tx, ty)
+	if w <= 0 or h <= 0 then
+		return true
+	end
+	local x2 = x1+w-1
+	local y2 = y1+h-1
+	-- Not dealing with offscreen stuff yet
+	if x1 < 1 or y1 < 1 or x2 > width or y2 > height then
+		return true
+	end
+	local copy = {txt={},fg={},bg={},fgp={},bgp={}}
+	for y = y1,y2 do
+		copy.txt[y-y1] = {}
+		copy.fg[y-y1] = {}
+		copy.bg[y-y1] = {}
+		copy.fgp[y-y1] = {}
+		copy.bgp[y-y1] = {}
+		for x = x1,x2 do
+			copy.txt[y-y1][x-x1] = screen.txt[y][x]
+			copy.fg[y-y1][x-x1] = screen.fg[y][x]
+			copy.bg[y-y1][x-x1] = screen.bg[y][x]
+			copy.fgp[y-y1][x-x1] = screen.fgp[y][x]
+			copy.bgp[y-y1][x-x1] = screen.bgp[y][x]
+		end
+	end
+	for y = math.max(math.min(y1+ty, height), 1), math.max(math.min(y2+ty, height), 1) do
+		copy.txt[y-y1] = {}
+		copy.fg[y-y1] = {}
+		copy.bg[y-y1] = {}
+		copy.fgp[y-y1] = {}
+		copy.bgp[y-y1] = {}
+		for x = math.max(math.min(x1+tx, width), 1), math.max(math.min(x2+ty, widht), 1) do
+			copy.txt[y-y1][x-x1] = screen.txt[y][x]
+			copy.fg[y-y1][x-x1] = screen.fg[y][x]
+			copy.bg[y-y1][x-x1] = screen.bg[y][x]
+			copy.fgp[y-y1][x-x1] = screen.fgp[y][x]
+			copy.bgp[y-y1][x-x1] = screen.bgp[y][x]
+		end
+	end
 end
 
 return obj,cec
