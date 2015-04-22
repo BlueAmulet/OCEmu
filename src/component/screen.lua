@@ -237,16 +237,16 @@ function cec.set(x, y, value, vertical) -- Plots a string value to the screen at
 	end
 	return true
 end
-function cec.copy(x, y, w, h, tx, ty) -- Copies a portion of the screen from the specified location with the specified size by the specified translation.
+function cec.copy(x1, y1, w, h, tx, ty) -- Copies a portion of the screen from the specified location with the specified size by the specified translation.
 	--TODO
-	cprint("(cec) screen.copy", x, y, w, h, tx, ty)
+	cprint("(cec) screen.copy", x1, y1, w, h, tx, ty)
 	if w <= 0 or h <= 0 then
 		return true
 	end
 	local x2 = x1+w-1
 	local y2 = y1+h-1
 	-- Not dealing with offscreen stuff yet
-	if x1 < 1 or y1 < 1 or x2 > width or y2 > height then
+	if x1 < 1 or y1 < 1 or x2 > width or y2 > height or (tx == 0 and ty == 0) then
 		return true
 	end
 	local copy = {txt={},fg={},bg={},fgp={},bgp={}}
@@ -265,19 +265,19 @@ function cec.copy(x, y, w, h, tx, ty) -- Copies a portion of the screen from the
 		end
 	end
 	for y = math.max(math.min(y1+ty, height), 1), math.max(math.min(y2+ty, height), 1) do
-		copy.txt[y-y1] = {}
-		copy.fg[y-y1] = {}
-		copy.bg[y-y1] = {}
-		copy.fgp[y-y1] = {}
-		copy.bgp[y-y1] = {}
-		for x = math.max(math.min(x1+tx, width), 1), math.max(math.min(x2+ty, widht), 1) do
-			copy.txt[y-y1][x-x1] = screen.txt[y][x]
-			copy.fg[y-y1][x-x1] = screen.fg[y][x]
-			copy.bg[y-y1][x-x1] = screen.bg[y][x]
-			copy.fgp[y-y1][x-x1] = screen.fgp[y][x]
-			copy.bgp[y-y1][x-x1] = screen.bgp[y][x]
+		for x = math.max(math.min(x1+tx, width), 1), math.max(math.min(x2+tx, width), 1) do
+			screen.txt[y][x] = copy.txt[y-y1-ty][x-x1-tx]
+			screen.fg[y][x] = copy.fg[y-y1-ty][x-x1-tx]
+			screen.bg[y][x] = copy.bg[y-y1-ty][x-x1-tx]
+			screen.fgp[y][x] = copy.fgp[y-y1-ty][x-x1-tx]
+			screen.bgp[y][x] = copy.bgp[y-y1-ty][x-x1-tx]
+			local fr,fg,fb = breakColor(copy.fg[y-y1-ty][x-x1-tx])
+			local br,bg,bb = breakColor(copy.bg[y-y1-ty][x-x1-tx])
+			-- TODO: Replace with pixel copy, this is slow.
+			renderChar(lua_utf8.codepoint(copy.txt[y-y1-ty][x-x1-tx]),(x-1)*8,(y-1)*16,fr,fg,fb,br,bg,bb)
 		end
 	end
+	image:refresh()
 end
 
 return obj,cec
