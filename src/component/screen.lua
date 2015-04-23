@@ -57,6 +57,7 @@ function elsa.draw()
 	render:present()
 end
 
+local points = {}
 local function renderChar(char,x,y,fg,bg)
 	if unifont[char] ~= nil then
 		char = unifont[char]
@@ -66,13 +67,12 @@ local function renderChar(char,x,y,fg,bg)
 			local cx = x
 			for j = size*4-1,0,-1 do
 				local bit = math.floor(line/2^j)%2
-				if bit == 0 then
-					setDrawColor(bg)
-				else
-					setDrawColor(fg)
-				end
+				local color = bit == 0 and bg or fg
 				if x >= 0 and y >= 0 and x < width * 8 and y < height * 16 then
-					render:drawPoint({x=cx, y=y})
+					if points[color] == nil then
+						points[color] = {}
+					end
+					points[color][#points[color]+1] = {x=cx, y=y}
 				end
 				cx = cx + 1
 			end
@@ -81,13 +81,24 @@ local function renderChar(char,x,y,fg,bg)
 	end
 end
 
+local function drawPoints()
+	for color,list in pairs(points) do
+		setDrawColor(color)
+		render:drawPoints(list)
+	end
+	points = {}
+end
+
 local function setPos(x,y,c,fg,bg)
-	screen.txt[y][x] = utf8.char(c)
-	screen.fg[y][x] = scrfgc
-	screen.bg[y][x] = scrbgc
-	screen.fgp[y][x] = scrfgp
-	screen.bgp[y][x] = scrbgp
-	renderChar(c,(x-1)*8,(y-1)*16,fg,bg)
+	local change = screen.txt[y][x] ~= utf8.char(c) or screen.fg[y][x] ~= scrfgc or screen.bg[y][x] ~= scrbgc or screen.fgp[y][x] ~= scrfgp or screen.bgp[y][x] ~= scrbgp
+	if change then
+		screen.txt[y][x] = utf8.char(c)
+		screen.fg[y][x] = scrfgc
+		screen.bg[y][x] = scrbgc
+		screen.fgp[y][x] = scrfgp
+		screen.bgp[y][x] = scrbgp
+		renderChar(c,(x-1)*8,(y-1)*16,fg,bg)
+	end
 end
 
 local touchinvert = false
@@ -197,6 +208,7 @@ function cec.fill(x1, y1, w, h, char) -- Fills a portion of the screen at the sp
 			setPos(x,y,code,scrfgc,scrbgc)
 		end
 	end
+	drawPoints()
 end
 function cec.getResolution() -- Get the current screen resolution.
 	cprint("(cec) screen.getResolution")
@@ -242,6 +254,7 @@ function cec.set(x, y, value, vertical) -- Plots a string value to the screen at
 			if x > width then break end
 		end
 	end
+	drawPoints()
 	return true
 end
 function cec.copy(x1, y1, w, h, tx, ty) -- Copies a portion of the screen from the specified location with the specified size by the specified translation.
@@ -273,15 +286,19 @@ function cec.copy(x1, y1, w, h, tx, ty) -- Copies a portion of the screen from t
 	end
 	for y = math.max(math.min(y1+ty, height), 1), math.max(math.min(y2+ty, height), 1) do
 		for x = math.max(math.min(x1+tx, width), 1), math.max(math.min(x2+tx, width), 1) do
-			screen.txt[y][x] = copy.txt[y-y1-ty][x-x1-tx]
-			screen.fg[y][x] = copy.fg[y-y1-ty][x-x1-tx]
-			screen.bg[y][x] = copy.bg[y-y1-ty][x-x1-tx]
-			screen.fgp[y][x] = copy.fgp[y-y1-ty][x-x1-tx]
-			screen.bgp[y][x] = copy.bgp[y-y1-ty][x-x1-tx]
-			-- Speedup somehow D:
-			renderChar(utf8.byte(copy.txt[y-y1-ty][x-x1-tx]),(x-1)*8,(y-1)*16,copy.fg[y-y1-ty][x-x1-tx],copy.bg[y-y1-ty][x-x1-tx])
+			local change = screen.txt[y][x] ~= copy.txt[y-y1-ty][x-x1-tx] or screen.fg[y][x] ~= copy.fg[y-y1-ty][x-x1-tx] or screen.bg[y][x] ~= copy.bg[y-y1-ty][x-x1-tx] or screen.fgp[y][x] ~= copy.fgp[y-y1-ty][x-x1-tx] or screen.bgp[y][x] ~= copy.bgp[y-y1-ty][x-x1-tx]
+			if change then
+				screen.txt[y][x] = copy.txt[y-y1-ty][x-x1-tx]
+				screen.fg[y][x] = copy.fg[y-y1-ty][x-x1-tx]
+				screen.bg[y][x] = copy.bg[y-y1-ty][x-x1-tx]
+				screen.fgp[y][x] = copy.fgp[y-y1-ty][x-x1-tx]
+				screen.bgp[y][x] = copy.bgp[y-y1-ty][x-x1-tx]
+				-- Speedup somehow D:
+				renderChar(utf8.byte(copy.txt[y-y1-ty][x-x1-tx]),(x-1)*8,(y-1)*16,copy.fg[y-y1-ty][x-x1-tx],copy.bg[y-y1-ty][x-x1-tx])
+			end
 		end
 	end
+	drawPoints()
 end
 
 return obj,cec

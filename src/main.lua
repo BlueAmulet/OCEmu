@@ -219,38 +219,48 @@ elsa.filesystem.load("apis/unicode.lua")(env)
 elsa.filesystem.load("apis/userdata.lua")(env)
 elsa.filesystem.load("apis/component.lua")(env)
 
--- load machine.lua
-local machine_data, err = elsa.filesystem.read("lua/machine.lua")
-if machine_data == nil then
-	error("Failed to load machine.lua:\n\t" .. tostring(err))
-end
-local machine_fn, err = load(machine_data,"=kernel","t",env)
-if machine_fn == nil then
-	error("Failed to parse machine.lua\n\t" .. tostring(err))
-end
-local machine_thread = coroutine.create(machine_fn)
-local results = { coroutine.resume(machine_thread) }
-if results[1] then
-	if #results ~= 1 then
-		error("Unexpected result during initialization:\n\t",table.concat(results,", ",2))
+function boot_machine()
+	-- load machine.lua
+	local machine_data, err = elsa.filesystem.read("lua/machine.lua")
+	if machine_data == nil then
+		error("Failed to load machine.lua:\n\t" .. tostring(err))
 	end
-else
-	error("Failed to initialize machine.lua\n\t" .. tostring(results[2]))
+	local machine_fn, err = load(machine_data,"=kernel","t",env)
+	if machine_fn == nil then
+		error("Failed to parse machine.lua\n\t" .. tostring(err))
+	end
+	machine.thread = coroutine.create(machine_fn)
+	local results = { coroutine.resume(machine.thread) }
+	if results[1] then
+		if #results ~= 1 then
+			error("Unexpected result during initialization:\n\t",table.concat(results,", ",2))
+		end
+	else
+		error("Failed to initialize machine.lua\n\t" .. tostring(results[2]))
+	end
+	cprint("Machine.lua booted ...")
 end
-cprint("Machine.lua booted ...")
+
+boot_machine()
 
 local resume_thread
 function resume_thread(...)
-	if coroutine.status(machine_thread) ~= "dead" then
+	if coroutine.status(machine.thread) ~= "dead" then
 		cprint("resume",...)
-		local results = { coroutine.resume(machine_thread, ...) }
+		local results = { coroutine.resume(machine.thread, ...) }
 		cprint("yield",table.unpack(results))
 		if type(results[2]) == "function" then
 			resume_thread(results[2]())
 		elseif type(results[2]) == "number" then
 			machine.deadline = elsa.timer.getTime() + results[2]
+		elseif type(results[2]) == "boolean" then
+			if results[2] then
+				boot_machine()
+			else
+				error("Machine power off",0)
+			end
 		end
-		if coroutine.status(machine_thread) == "dead" and type(results[2]) ~= "function" then
+		if coroutine.status(machine.thread) == "dead" and type(results[2]) ~= "function" then
 			cprint("machine.lua has died")
 		end
 	end

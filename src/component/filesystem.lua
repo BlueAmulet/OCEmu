@@ -53,6 +53,10 @@ end
 function obj.lastModified(path) -- Returns the (real world) timestamp of when the object at the specified absolute path in the file system was modified.
 	cprint("filesystem.lastModified", path)
 	compCheckArg(1,path,"string")
+	path = cleanPath(path)
+	if path == ".." or path:sub(1,3) == "../" then
+		return nil,"file not found"
+	end
 	return elsa.filesystem.getLastModified(directory .. "/" .. path) or 0
 end
 function obj.spaceUsed() -- The currently used capacity of the file system, in bytes.
@@ -64,7 +68,15 @@ function obj.rename(from, to) -- Renames/moves an object from the first specifie
 	--STUB
 	cprint("filesystem.rename", from, to)
 	compCheckArg(1,from,"string")
+	from = cleanPath(from)
+	if from == ".." or from:sub(1,3) == "../" then
+		return nil,"file not found"
+	end
 	compCheckArg(2,to,"string")
+	to = cleanPath(to)
+	if to == ".." or to:sub(1,3) == "../" then
+		return nil,"file not found"
+	end
 	return false
 end
 function obj.close(handle) -- Closes an open file descriptor with the specified handle.
@@ -87,14 +99,21 @@ function obj.write(handle, value) -- Writes the specified data to an open file d
 	return true
 end
 function obj.remove(path) -- Removes the object at the specified absolute path in the file system.
-	--STUB
 	cprint("filesystem.remove", path)
 	compCheckArg(1,path,"string")
-	return false
+	path = cleanPath(path)
+	if path == ".." or path:sub(1,3) == "../" then
+		return nil,"file not found"
+	end
+	return elsa.filesystem.remove(directory .. "/" .. path)
 end
 function obj.size(path) -- Returns the size of the object at the specified absolute path in the file system.
 	cprint("filesystem.size", path)
 	compCheckArg(1,path,"string")
+	path = cleanPath(path)
+	if path == ".." or path:sub(1,3) == "../" then
+		return nil,"file not found"
+	end
 	return elsa.filesystem.getSize(directory .. "/" .. path) or 0
 end
 function obj.seek(handle, whence, offset) -- Seeks in an open file descriptor with the specified handle. Returns the new pointer position.
@@ -129,6 +148,13 @@ function obj.open(path, mode) -- Opens a new file descriptor and returns its han
 	if mode == nil then mode = "r" end
 	compCheckArg(1,path,"string")
 	compCheckArg(2,mode,"string")
+	path = cleanPath(path)
+	if path == ".." or path:sub(1,3) == "../" then
+		return nil,"file not found"
+	end
+	if mode ~= "r" and mode ~= "rb" and mode ~= "w" and mode ~= "wb" and mode ~= "a" and mode ~= "ab" then
+		error("unsupported mode",3)
+	end
 	local file, err = elsa.filesystem.newFile(directory .. "/" .. path, mode:sub(1,1))
 	if not file then return nil, err end
 	while true do
@@ -142,12 +168,20 @@ end
 function obj.exists(path) -- Returns whether an object exists at the specified absolute path in the file system.
 	cprint("filesystem.exists", path)
 	compCheckArg(1,path,"string")
+	path = cleanPath(path)
+	if path == ".." or path:sub(1,3) == "../" then
+		return nil,"file not found"
+	end
 	return elsa.filesystem.exists(directory .. "/" .. path)
 end
 function obj.list(path) -- Returns a list of names of objects in the directory at the specified absolute path in the file system.
 	--TODO
 	cprint("filesystem.list", path)
 	compCheckArg(1,path,"string")
+	path = cleanPath(path)
+	if path == ".." or path:sub(1,3) == "../" then
+		return nil,"file not found"
+	end
 	if not elsa.filesystem.exists(directory .. "/" .. path) then
 		return nil, "no such file or directory"
 	elseif not elsa.filesystem.isDirectory(directory .. "/" .. path) then
@@ -170,11 +204,19 @@ function obj.makeDirectory(path) -- Creates a directory at the specified absolut
 	--TODO
 	cprint("filesystem.makeDirectory", path)
 	compCheckArg(1,path,"string")
+	path = cleanPath(path)
+	if path == ".." or path:sub(1,3) == "../" then
+		return nil,"file not found"
+	end
 	return elsa.filesystem.createDirectory(directory .. "/" .. path)
 end
 function obj.isDirectory(path) -- Returns whether the object at the specified absolute path in the file system is a directory.
 	cprint("filesystem.isDirectory", path)
 	compCheckArg(1,path,"string")
+	path = cleanPath(path)
+	if path == ".." or path:sub(1,3) == "../" then
+		return nil,"file not found"
+	end
 	return elsa.filesystem.isDirectory(directory .. "/" .. path)
 end
 

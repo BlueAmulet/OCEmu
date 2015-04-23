@@ -27,6 +27,26 @@ local function boot()
 		wen[v] = k:lower()
 	end
 
+	local recursiveDelete
+	function recursiveDelete(path)
+		local mode = lfs.attributes(path,"mode")
+		if mode == nil then
+			return false
+		elseif mode == "directory" then
+			local stat = true
+			for entry in lfs.dir(path) do
+				if entry ~= "." and entry ~= ".." then
+					local mode = lfs.attributes(path .. "/" .. entry,"mode")
+					if mode == "directory" then
+						recursiveDelete(path .. "/" .. entry)
+					end
+					os.remove(path .. "/" .. entry)
+				end
+			end
+		end
+		return os.remove(path)
+	end
+
 	elsa = {
 		getError = SDL.getError,
 		filesystem = {
@@ -74,7 +94,10 @@ local function boot()
 			end,
 			getSaveDirectory = function()
 				return (os.getenv("HOME") or os.getenv("APPDATA")) .. "/.ocemu"
-			end
+			end,
+			remove = function(path)
+				return recursiveDelete(path)
+			end,
 		},
 		timer = {
 			getTime = function()
