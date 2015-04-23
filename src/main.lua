@@ -7,6 +7,7 @@ conf = {
 		{"eeprom",nil,9,"lua/bios.lua"},
 		{"filesystem",nil,5,"loot/OpenOS",true},
 		{"filesystem",nil,nil,"tmpfs",false},
+		{"filesystem",nil,nil,nil,false},
 		{"computer"},
 		{"keyboard"},
 	}

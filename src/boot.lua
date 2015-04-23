@@ -32,29 +32,48 @@ local function boot()
 		filesystem = {
 			lines = io.lines,
 			load = loadfile,
-			read = function(filename)
-				local file, err = io.open(filename,"rb")
+			read = function(path)
+				local file, err = io.open(path,"rb")
 				if not file then return nil, err end
 				local data = file:read("*a")
 				file:close()
 				return data, #data
 			end,
-			exists = function(filename)
-				return lfs.attributes(filename,"mode") ~= nil
+			exists = function(path)
+				return lfs.attributes(path,"mode") ~= nil
 			end,
-			isDirectory = function(filename)
-				return lfs.attributes(filename,"mode") == "directory"
+			isDirectory = function(path)
+				return lfs.attributes(path,"mode") == "directory"
 			end,
-			createDirectory = lfs.mkdir,
-			newFile = function(filename, mode)
-				return io.open(filename, mode .. "b")
+			createDirectory = function(path)
+				local pstr = ""
+				for part in (path .. "/"):gmatch("(.-)[\\/]") do
+					pstr = pstr .. part
+					lfs.mkdir(pstr)
+					pstr = pstr .. "/"
+				end
+				return lfs.attributes(path,"mode") ~= nil
+			end,
+			newFile = function(path, mode)
+				return io.open(path, mode .. "b")
 			end,
 			getDirectoryItems = function(path)
 				local list = {}
 				for entry in lfs.dir(path) do
-					list[#list+1] = entry
+					if entry ~= "." and entry ~= ".." then
+						list[#list+1] = entry
+					end
 				end
 				return list
+			end,
+			getLastModified = function(path)
+				return lfs.attributes(path,"modification")
+			end,
+			getSize = function(path)
+				return lfs.attributes(path,"size")
+			end,
+			getSaveDirectory = function()
+				return (os.getenv("HOME") or os.getenv("APPDATA")) .. "/.ocemu"
 			end
 		},
 		timer = {

@@ -1,14 +1,20 @@
 local address, slot, directory, readonly = ...
 
+if directory == nil then
+	directory = elsa.filesystem.getSaveDirectory() .. "/" .. address
+elseif directory == "tmpfs" then
+	directory = elsa.filesystem.getSaveDirectory() .. "/tmpfs"
+	computer.setTempAddress(address)
+end
+
 if not elsa.filesystem.exists(directory) then
 	elsa.filesystem.createDirectory(directory)
 end
 
-if directory == "tmpfs" then
-	computer.setTempAddress(address)
-end
-
 local label = ("/" .. directory):match(".*/(.+)")
+if label == address then
+	label = nil
+end
 local handles = {}
 
 local function cleanPath(path)
@@ -33,58 +39,89 @@ local obj = {}
 function obj.read(handle, count) -- Reads up to the specified amount of data from an open file descriptor with the specified handle. Returns nil when EOF is reached.
 	--TODO
 	cprint("filesystem.read", handle, count)
+	compCheckArg(1,handle,"number")
+	compCheckArg(2,count,"number")
+	if handles[handle] == nil or handles[handle][2] ~= "r" then
+		return nil, "bad file descriptor"
+	end
+	count = math.max(count,0)
 	if count == math.huge then count = "*a" end
-	local ret = { handles[handle]:read(count) }
+	local ret = { handles[handle][1]:read(count) }
 	if ret[1] == "" and count ~= 0 then ret[1] = nil end
 	return table.unpack(ret)
 end
 function obj.lastModified(path) -- Returns the (real world) timestamp of when the object at the specified absolute path in the file system was modified.
-	--STUB
 	cprint("filesystem.lastModified", path)
+	compCheckArg(1,path,"string")
+	return elsa.filesystem.getLastModified(directory .. "/" .. path) or 0
 end
 function obj.spaceUsed() -- The currently used capacity of the file system, in bytes.
 	--STUB
 	cprint("filesystem.spaceUsed")
+	return 0
 end
 function obj.rename(from, to) -- Renames/moves an object from the first specified absolute path in the file system to the second.
 	--STUB
 	cprint("filesystem.rename", from, to)
+	compCheckArg(1,from,"string")
+	compCheckArg(2,to,"string")
+	return false
 end
 function obj.close(handle) -- Closes an open file descriptor with the specified handle.
-	--TODO
 	cprint("filesystem.close", handle)
-	handles[handle]:close()
+	compCheckArg(1,handle,"number")
+	if handles[handle] == nil then
+		return nil, "bad file descriptor"
+	end
+	handles[handle][1]:close()
 	handles[handle] = nil
 end
 function obj.write(handle, value) -- Writes the specified data to an open file descriptor with the specified handle.
-	--STUB
 	cprint("filesystem.write", handle, value)
+	compCheckArg(1,handle,"number")
+	compCheckArg(2,value,"string")
+	if handles[handle] == nil or (handles[handle][2] ~= "w" and handles[handle][2] ~= "a") then
+		return nil, "bad file descriptor"
+	end
+	handles[handle][1]:write(value)
+	return true
 end
 function obj.remove(path) -- Removes the object at the specified absolute path in the file system.
 	--STUB
 	cprint("filesystem.remove", path)
+	compCheckArg(1,path,"string")
+	return false
 end
 function obj.size(path) -- Returns the size of the object at the specified absolute path in the file system.
-	--STUB
 	cprint("filesystem.size", path)
+	compCheckArg(1,path,"string")
+	return elsa.filesystem.getSize(directory .. "/" .. path) or 0
 end
 function obj.seek(handle, whence, offset) -- Seeks in an open file descriptor with the specified handle. Returns the new pointer position.
-	--STUB
+	--TODO
 	cprint("filesystem.seek", handle, whence, offset)
+	compCheckArg(1,handle,"number")
+	compCheckArg(2,whence,"string")
+	compCheckArg(3,offset,"number")
+	if handles[handle] == nil then
+		return nil, "bad file descriptor"
+	end
+	return handles[handle][1]:seek(whence, offset)
 end
 function obj.spaceTotal() -- The overall capacity of the file system, in bytes.
 	--STUB
 	cprint("filesystem.spaceTotal")
+	return math.huge
 end
 function obj.getLabel() -- Get the current label of the file system.
-	--TODO
 	cprint("filesystem.getLabel")
 	return label
 end
 function obj.setLabel(value) -- Sets the label of the file system. Returns the new value, which may be truncated.
 	--TODO
 	cprint("filesystem.setLabel", value)
-	label = value
+	compCheckArg(1,value,"string")
+	label = value:sub(1,16)
 end
 function obj.open(path, mode) -- Opens a new file descriptor and returns its handle.
 	--TODO
@@ -92,24 +129,31 @@ function obj.open(path, mode) -- Opens a new file descriptor and returns its han
 	if mode == nil then mode = "r" end
 	compCheckArg(1,path,"string")
 	compCheckArg(2,mode,"string")
-	local file = elsa.filesystem.newFile(directory .. "/" .. path, mode:sub(1,1))
-	if not file then return nil end
+	local file, err = elsa.filesystem.newFile(directory .. "/" .. path, mode:sub(1,1))
+	if not file then return nil, err end
 	while true do
 		local rnddescrpt = math.random(1000000000,9999999999)
 		if handles[rnddescrpt] == nil then
-			handles[rnddescrpt] = file
+			handles[rnddescrpt] = {file,mode:sub(1,1)}
 			return rnddescrpt
 		end
 	end
 end
 function obj.exists(path) -- Returns whether an object exists at the specified absolute path in the file system.
-	--TODO
 	cprint("filesystem.exists", path)
+	compCheckArg(1,path,"string")
 	return elsa.filesystem.exists(directory .. "/" .. path)
 end
 function obj.list(path) -- Returns a list of names of objects in the directory at the specified absolute path in the file system.
 	--TODO
 	cprint("filesystem.list", path)
+	compCheckArg(1,path,"string")
+	if not elsa.filesystem.exists(directory .. "/" .. path) then
+		return nil, "no such file or directory"
+	elseif not elsa.filesystem.isDirectory(directory .. "/" .. path) then
+		local entry = (directory .. "/" .. path):match(".*/(.+)")
+		return {entry}
+	end
 	local list = elsa.filesystem.getDirectoryItems(directory .. "/" .. path)
 	for i = 1,#list do
 		if elsa.filesystem.isDirectory(directory .. "/" .. path .. "/" .. list[i]) then
@@ -119,17 +163,18 @@ function obj.list(path) -- Returns a list of names of objects in the directory a
 	return list
 end
 function obj.isReadOnly() -- Returns whether the file system is read-only.
-	--STUB
 	cprint("filesystem.isReadOnly")
 	return readonly
 end
 function obj.makeDirectory(path) -- Creates a directory at the specified absolute path in the file system. Creates parent directories, if necessary.
-	--STUB
+	--TODO
 	cprint("filesystem.makeDirectory", path)
+	compCheckArg(1,path,"string")
+	return elsa.filesystem.createDirectory(directory .. "/" .. path)
 end
 function obj.isDirectory(path) -- Returns whether the object at the specified absolute path in the file system is a directory.
-	--STUB
 	cprint("filesystem.isDirectory", path)
+	compCheckArg(1,path,"string")
 	return elsa.filesystem.isDirectory(directory .. "/" .. path)
 end
 

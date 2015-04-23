@@ -4,10 +4,18 @@ local obj = {}
 function obj.isRunning() -- Returns whether the computer is running.
 	--STUB
 	cprint("computer.isRunning")
+	return true
 end
 function obj.beep(frequency, duration) -- Plays a tone, useful to alert users via audible feedback.
 	--STUB
 	cprint("computer.beep", frequency, duration)
+	compCheckArg(1,frequency,"number","nil")
+	compCheckArg(2,duration,"number","nil")
+	frequency = frequency or 440
+	duration = duration or 0.1
+	if frequency < 20 or frequency > 2000 then
+		error("invalid frequency, must be in [20, 2000]",3)
+	end
 end
 function obj.stop() -- Stops the computer. Returns true if the state changed.
 	--STUB

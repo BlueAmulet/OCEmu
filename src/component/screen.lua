@@ -41,7 +41,15 @@ if not render then
 	error(err)
 end
 
-render:setDrawColor(0)
+local lastcolor
+local function setDrawColor(color)
+	if color ~= lastcolor then
+		render:setDrawColor(color)
+		lastcolor = color
+	end
+end
+
+setDrawColor(0)
 render:clear()
 
 function elsa.draw()
@@ -59,9 +67,9 @@ local function renderChar(char,x,y,fg,bg)
 			for j = size*4-1,0,-1 do
 				local bit = math.floor(line/2^j)%2
 				if bit == 0 then
-					render:setDrawColor(bg)
+					setDrawColor(bg)
 				else
-					render:setDrawColor(fg)
+					setDrawColor(fg)
 				end
 				if x >= 0 and y >= 0 and x < width * 8 and y < height * 16 then
 					render:drawPoint({x=cx, y=y})
@@ -82,26 +90,30 @@ local function setPos(x,y,c,fg,bg)
 	renderChar(c,(x-1)*8,(y-1)*16,fg,bg)
 end
 
+local touchinvert = false
+local precise = false
+
 -- screen component
 local obj = {}
 
 function obj.isTouchModeInverted() -- Whether touch mode is inverted (sneak-activate opens GUI, instead of normal activate).
-	--STUB
 	cprint("screen.isTouchModeInverted")
-	return false
+	return touchinvert
 end
 function obj.setTouchModeInverted(value) -- Sets whether to invert touch mode (sneak-activate opens GUI, instead of normal activate).
 	--STUB
 	cprint("screen.setTouchModeInverted", value)
+	compCheckArg(1,value,"boolean")
+	touchinvert = value
 end
 function obj.isPrecise() -- Returns whether the screen is in high precision mode (sub-pixel mouse event positions).
-	--STUB
 	cprint("screen.isPrecise")
-	return false
+	return precise
 end
 function obj.setPrecise(enabled) -- Set whether to use high precision mode (sub-pixel mouse event positions).
-	--STUB
 	cprint("screen.setPrecise", enabled)
+	compCheckArg(1,enabled,"boolean")
+	precise = enabled
 end
 function obj.turnOff() -- Turns off the screen. Returns true if it was on.
 	--STUB
@@ -124,9 +136,12 @@ function obj.getAspectRatio() -- The aspect ratio of the screen. For multi-block
 	return 1, 1
 end
 function obj.getKeyboards() -- The list of keyboards attached to the screen.
-	--STUB
 	cprint("screen.getKeyboards")
-	return {}
+	local klist = {}
+	for addr in component.list("keyboard",true) do
+		klist[#klist+1] = addr
+	end
+	return klist
 end
 
 local cec = {}
@@ -263,13 +278,10 @@ function cec.copy(x1, y1, w, h, tx, ty) -- Copies a portion of the screen from t
 			screen.bg[y][x] = copy.bg[y-y1-ty][x-x1-tx]
 			screen.fgp[y][x] = copy.fgp[y-y1-ty][x-x1-tx]
 			screen.bgp[y][x] = copy.bgp[y-y1-ty][x-x1-tx]
+			-- Speedup somehow D:
 			renderChar(utf8.byte(copy.txt[y-y1-ty][x-x1-tx]),(x-1)*8,(y-1)*16,copy.fg[y-y1-ty][x-x1-tx],copy.bg[y-y1-ty][x-x1-tx])
 		end
 	end
-	--local copy = love.image.newImageData(width*8, height*16)
-	--copy:paste(idata, 0, 0, 0, 0, width*8, height*8)
-	--idata:paste(copy, (x1+tx-1)*8, (y1+ty-1)*16, (x1-1)*8, (y1-1)*16, w*8, h*16)
-	--image:refresh()
 end
 
 return obj,cec
