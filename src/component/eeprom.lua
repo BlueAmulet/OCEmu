@@ -1,6 +1,6 @@
 local address, slot, filename = ...
 
-local code = love.filesystem.read(filename)
+local code = elsa.filesystem.read(filename)
 local data = ""
 local label = "EEPROM"
 

@@ -1,6 +1,3 @@
-require("imagedata-ffi")
-require("compat52.strict")
-
 conf = {
 	-- Format: string:type, (string or number or nil):address, (number or nil):slot, component parameters
 	-- Read component files for parameter documentation
@@ -16,7 +13,8 @@ conf = {
 }
 
 machine = {
-	starttime = love.timer.getTime(),
+	starttime = elsa.timer.getTime(),
+	deadline = elsa.timer.getTime(),
 	signals = {},
 }
 
@@ -205,25 +203,23 @@ setmetatable(env,{
 	end,
 })
 
-love.keyboard.setKeyRepeat(true)
-
 -- load unifont
 unifont = {}
-for line in love.filesystem.lines("unifont.hex") do
+for line in elsa.filesystem.lines("unifont.hex") do
 	local a,b = line:match("(.+):(.*)")
 	unifont[tonumber(a,16)] = b
 end
 
 -- load api's into environment
-love.filesystem.load("apis/computer.lua")(env)
-love.filesystem.load("apis/os.lua")(env)
-love.filesystem.load("apis/system.lua")(env)
-love.filesystem.load("apis/unicode.lua")(env)
-love.filesystem.load("apis/userdata.lua")(env)
-love.filesystem.load("apis/component.lua")(env)
+elsa.filesystem.load("apis/computer.lua")(env)
+elsa.filesystem.load("apis/os.lua")(env)
+elsa.filesystem.load("apis/system.lua")(env)
+elsa.filesystem.load("apis/unicode.lua")(env)
+elsa.filesystem.load("apis/userdata.lua")(env)
+elsa.filesystem.load("apis/component.lua")(env)
 
 -- load machine.lua
-local machine_data, err = love.filesystem.read("lua/machine.lua")
+local machine_data, err = elsa.filesystem.read("lua/machine.lua")
 if machine_data == nil then
 	error("Failed to load machine.lua:\n\t" .. tostring(err))
 end
@@ -250,6 +246,8 @@ function resume_thread(...)
 		cprint("yield",table.unpack(results))
 		if type(results[2]) == "function" then
 			resume_thread(results[2]())
+		elseif type(results[2]) == "number" then
+			machine.deadline = elsa.timer.getTime() + results[2]
 		end
 		if coroutine.status(machine_thread) == "dead" and type(results[2]) ~= "function" then
 			cprint("machine.lua has died")
@@ -259,7 +257,7 @@ end
 
 kbdcodes = {}
 
-function love.update(dt)
+function elsa.update(dt)
 	if #kbdcodes > 0 then
 		local kbdcode = kbdcodes[1]
 		table.remove(kbdcodes,1)
@@ -269,7 +267,7 @@ function love.update(dt)
 		signal = machine.signals[1]
 		table.remove(machine.signals, 1)
 		resume_thread(table.unpack(signal))
-	else
+	elseif elsa.timer.getTime() >= machine.deadline then
 		resume_thread()
 	end
 end

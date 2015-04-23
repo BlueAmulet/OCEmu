@@ -18,7 +18,7 @@ end
 function env.computer.uptime()
 	--STUB
 	cprint("computer.uptime")
-	return love.timer.getTime() - machine.starttime
+	return elsa.timer.getTime() - machine.starttime
 end
 function env.computer.address()
 	cprint("computer.address")

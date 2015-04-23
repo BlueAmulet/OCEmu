@@ -1,6 +1,6 @@
 local address, slot, maxwidth, maxheight, maxtier = ...
 
-local lua_utf8 = require("utf8")
+local utf8 = require("utf8")
 
 local width, height, tier = maxwidth, maxheight, maxtier
 local scrfgc, scrfgp = 0xFFFFFF
@@ -30,31 +30,26 @@ for y = 1,height do
 	end
 end
 
-function z(val)
-	local size = val < 0x10000 and (val < 0x800 and (val < 0x80 and 1 or 2) or 3) or 4
-	if size == 1 then return string.char(val) end
-	local b = {string.char((240*2^(4-size)%256)+(val/2^(size*6-6))%(2^(7-size)))}
-	for i = size*6-12,0,-6 do
-		b[#b+1] = string.char(128+(val/2^i)%64)
-	end
-	return table.concat(b)
+local window, err = elsa.window.createWindow({title="OCEmu - screen@" .. address, width=width*8, height=height*16})
+if not window then
+	error(err)
 end
 
-love.window.setMode(width*8, height*16,{})
 
-local idata = love.image.newImageData(width*8, height*16)
-idata:mapPixel(function() return 0,0,0,255 end)
-local image = love.graphics.newImage(idata)
-
-function love.draw()
-	love.graphics.draw(image)
+local render, err = elsa.graphics.createRenderer(window, 0, 0)
+if not render then
+	error(err)
 end
 
-local function breakColor(color)
-	return math.floor(color/65536%256), math.floor(color/256%256), math.floor(color%256)
+render:setDrawColor(0)
+render:clear()
+
+function elsa.draw()
+	window:show()
+	render:present()
 end
 
-local function renderChar(char,x,y,fr,fg,fb,br,bg,bb)
+local function renderChar(char,x,y,fg,bg)
 	if unifont[char] ~= nil then
 		char = unifont[char]
 		local size = #char/16
@@ -64,9 +59,12 @@ local function renderChar(char,x,y,fr,fg,fb,br,bg,bb)
 			for j = size*4-1,0,-1 do
 				local bit = math.floor(line/2^j)%2
 				if bit == 0 then
-					idata:setPixel(cx,y,br,bg,bb,255)
+					render:setDrawColor(bg)
 				else
-					idata:setPixel(cx,y,fr,fg,fb,255)
+					render:setDrawColor(fg)
+				end
+				if x >= 0 and y >= 0 and x < width * 8 and y < height * 16 then
+					render:drawPoint({x=cx, y=y})
 				end
 				cx = cx + 1
 			end
@@ -75,13 +73,13 @@ local function renderChar(char,x,y,fr,fg,fb,br,bg,bb)
 	end
 end
 
-local function setPos(x,y,c,fr,fg,fb,br,bg,bb)
-	screen.txt[y][x] = z(c)
+local function setPos(x,y,c,fg,bg)
+	screen.txt[y][x] = utf8.char(c)
 	screen.fg[y][x] = scrfgc
 	screen.bg[y][x] = scrbgc
 	screen.fgp[y][x] = scrfgp
 	screen.bgp[y][x] = scrbgp
-	renderChar(c,(x-1)*8,(y-1)*16,fr,fg,fb,br,bg,bb)
+	renderChar(c,(x-1)*8,(y-1)*16,fg,bg)
 end
 
 -- screen component
@@ -178,12 +176,10 @@ function cec.fill(x1, y1, w, h, char) -- Fills a portion of the screen at the sp
 	if x2 < 1 or y2 < 1 or x1 > width or y1 > height then
 		return true
 	end
-	local fr,fg,fb = breakColor(scrfgc)
-	local br,bg,bb = breakColor(scrbgc)
-	local code = lua_utf8.codepoint(char)
+	local code = utf8.byte(char)
 	for y = y1,y2 do
 		for x = x1,x2 do
-			setPos(x,y,code,fr,fg,fb,br,bg,bb)
+			setPos(x,y,code,scrfgc,scrbgc)
 		end
 	end
 end
@@ -214,26 +210,22 @@ function cec.get(x, y) -- Get the value displayed on the screen at the specified
 end
 function cec.set(x, y, value, vertical) -- Plots a string value to the screen at the specified position. Optionally writes the string vertically.
 	cprint("(cec) screen.set", x, y, value, vertical)
-	local fr,fg,fb = breakColor(scrfgc)
-	local br,bg,bb = breakColor(scrbgc)
 	if vertical and x >= 1 and x <= width and y <= height then
-		for _,c in lua_utf8.codes(value) do
+		for _,c in utf8.next, value do
 			if y >= 1 then
-				setPos(x,y,c,fr,fg,fb,br,bg,bb)
+				setPos(x,y,c,scrfgc,scrbgc)
 			end
 			y = y + 1
 			if y > height then break end
 		end
-		image:refresh()
 	elseif not vertical and y >= 1 and y <= height and x <= width then
-		for _,c in lua_utf8.codes(value) do
+		for _,c in utf8.next, value do
 			if x >= 1 then
-				setPos(x,y,c,fr,fg,fb,br,bg,bb)
+				setPos(x,y,c,scrfgc,scrbgc)
 			end
 			x = x + #unifont[c]/32
 			if x > width then break end
 		end
-		image:refresh()
 	end
 	return true
 end
@@ -271,15 +263,13 @@ function cec.copy(x1, y1, w, h, tx, ty) -- Copies a portion of the screen from t
 			screen.bg[y][x] = copy.bg[y-y1-ty][x-x1-tx]
 			screen.fgp[y][x] = copy.fgp[y-y1-ty][x-x1-tx]
 			screen.bgp[y][x] = copy.bgp[y-y1-ty][x-x1-tx]
-			local fr,fg,fb = breakColor(copy.fg[y-y1-ty][x-x1-tx])
-			local br,bg,bb = breakColor(copy.bg[y-y1-ty][x-x1-tx])
-			renderChar(lua_utf8.codepoint(copy.txt[y-y1-ty][x-x1-tx]),(x-1)*8,(y-1)*16,fr,fg,fb,br,bg,bb)
+			renderChar(utf8.byte(copy.txt[y-y1-ty][x-x1-tx]),(x-1)*8,(y-1)*16,copy.fg[y-y1-ty][x-x1-tx],copy.bg[y-y1-ty][x-x1-tx])
 		end
 	end
 	--local copy = love.image.newImageData(width*8, height*16)
 	--copy:paste(idata, 0, 0, 0, 0, width*8, height*8)
 	--idata:paste(copy, (x1+tx-1)*8, (y1+ty-1)*16, (x1-1)*8, (y1-1)*16, w*8, h*16)
-	image:refresh()
+	--image:refresh()
 end
 
 return obj,cec

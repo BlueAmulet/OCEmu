@@ -1,7 +1,7 @@
 local address, slot, directory, readonly = ...
 
-if not love.filesystem.exists(directory) then
-	love.filesystem.createDirectory(directory)
+if not elsa.filesystem.exists(directory) then
+	elsa.filesystem.createDirectory(directory)
 end
 
 if directory == "tmpfs" then
@@ -33,9 +33,8 @@ local obj = {}
 function obj.read(handle, count) -- Reads up to the specified amount of data from an open file descriptor with the specified handle. Returns nil when EOF is reached.
 	--TODO
 	cprint("filesystem.read", handle, count)
-	if count == math.huge then count = nil end
+	if count == math.huge then count = "*a" end
 	local ret = { handles[handle]:read(count) }
-	if ret[1] ~= nil then ret[2] = nil end
 	if ret[1] == "" and count ~= 0 then ret[1] = nil end
 	return table.unpack(ret)
 end
@@ -93,7 +92,7 @@ function obj.open(path, mode) -- Opens a new file descriptor and returns its han
 	if mode == nil then mode = "r" end
 	compCheckArg(1,path,"string")
 	compCheckArg(2,mode,"string")
-	local file = love.filesystem.newFile(directory .. "/" .. path, mode:sub(1,1))
+	local file = elsa.filesystem.newFile(directory .. "/" .. path, mode:sub(1,1))
 	if not file then return nil end
 	while true do
 		local rnddescrpt = math.random(1000000000,9999999999)
@@ -106,14 +105,14 @@ end
 function obj.exists(path) -- Returns whether an object exists at the specified absolute path in the file system.
 	--TODO
 	cprint("filesystem.exists", path)
-	return love.filesystem.exists(directory .. "/" .. path)
+	return elsa.filesystem.exists(directory .. "/" .. path)
 end
 function obj.list(path) -- Returns a list of names of objects in the directory at the specified absolute path in the file system.
 	--TODO
 	cprint("filesystem.list", path)
-	local list = love.filesystem.getDirectoryItems(directory .. "/" .. path)
+	local list = elsa.filesystem.getDirectoryItems(directory .. "/" .. path)
 	for i = 1,#list do
-		if love.filesystem.isDirectory(directory .. "/" .. path .. "/" .. list[i]) then
+		if elsa.filesystem.isDirectory(directory .. "/" .. path .. "/" .. list[i]) then
 			list[i] = list[i] .. "/"
 		end
 	end
@@ -131,7 +130,7 @@ end
 function obj.isDirectory(path) -- Returns whether the object at the specified absolute path in the file system is a directory.
 	--STUB
 	cprint("filesystem.isDirectory", path)
-	return love.filesystem.isDirectory(directory .. "/" .. path)
+	return elsa.filesystem.isDirectory(directory .. "/" .. path)
 end
 
 local cec = {}
