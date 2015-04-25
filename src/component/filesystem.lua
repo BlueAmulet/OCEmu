@@ -30,6 +30,9 @@ local function cleanPath(path)
    			end
    		end
 	end
+	if #tPath == 0 then
+		return "."
+	end
 	return table.concat(tPath, "/")
 end
 

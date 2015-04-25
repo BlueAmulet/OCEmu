@@ -1,3 +1,8 @@
+if elsa == nil then
+	print("Launch boot.lua and not main.lua")
+	return
+end
+
 conf = {
 	-- Format: string:type, (string or number or nil):address, (number or nil):slot, component parameters
 	-- Read component files for parameter documentation
