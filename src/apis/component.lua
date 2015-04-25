@@ -26,7 +26,11 @@ for k,v in pairs(components) do
 		address = gen_uuid()
 	end
 	v[2] = address
-	local proxy, cec, doc = elsa.filesystem.load("component/" .. v[1] .. ".lua")(table.unpack(v,2))
+	local fn, err = elsa.filesystem.load("component/" .. v[1] .. ".lua")
+	if not fn then
+		error(err,0)
+	end
+	local proxy, cec, doc = fn(table.unpack(v,2))
 	proxy.address = address
 	proxy.type = v[1]
 	proxylist[address] = proxy

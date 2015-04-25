@@ -1,30 +1,45 @@
 #!/usr/bin/lua5.2
-local SDL = require("SDL")
+local function b(a) return a ~= 0 end
+local ffi = require("ffi")
+local SDL = require("sdl2.init")
 local lfs = require("lfs")
 
 local sdlinit = false
 
 local function boot()
-	local ret, err = SDL.init {
-		SDL.flags.Audio,
-		SDL.flags.Events,
-    	SDL.flags.Video,
-		SDL.flags.NoParachute,
-	}
+	local ret, err = not b(SDL.init(SDL.INIT_AUDIO + SDL.INIT_EVENTS + SDL.INIT_VIDEO))
 
 	if not ret then
-		error(err)
+		error(ffi.string(SDL.getError))
 	end
 	sdlinit = true
 
-	local eventNames = {}
-	for k,v in pairs(SDL.event) do
-		eventNames[v] = k:lower()
-	end
+	local eventNames = {
+		[SDL.FIRSTEVENT] = "firstevent",
+		[SDL.QUIT] = "quit",
+		[SDL.APP_TERMINATING] = "app_terminating",
+		[SDL.APP_LOWMEMORY] = "app_lowmemory",
+		[SDL.APP_WILLENTERBACKGROUND] = "app_willenterbackground",
+		[SDL.APP_DIDENTERBACKGROUND] = "app_didenterbackground",
+		[SDL.APP_WILLENTERFOREGROUND] = "app_willenterforeground",
+		[SDL.APP_DIDENTERFOREGROUND] = "app_didenterforeground",
+		[SDL.WINDOWEVENT] = "windowevent",
+		[SDL.SYSWMEVENT] = "syswmevent",
+		[SDL.KEYDOWN] = "keydown",
+		[SDL.KEYUP] = "keyup",
+		[SDL.TEXTEDITING] = "textediting",
+		[SDL.TEXTINPUT] = "textinput",
+		[SDL.MOUSEMOTION] = "mousemotion",
+		[SDL.MOUSEBUTTONDOWN] = "mousebuttondown",
+		[SDL.MOUSEBUTTONUP] = "mousebuttonup",
+		[SDL.MOUSEWHEEL] = "mousewheel",
+	}
 
 	local wen = {}
-	for k,v in pairs(SDL.eventWindow) do
-		wen[v] = k:lower()
+	for k,v in pairs(SDL) do
+		if k:sub(1,12) == "WINDOWEVENT_" then
+			wen[v] = k:sub(13):lower()
+		end
 	end
 
 	local recursiveDelete
@@ -48,7 +63,7 @@ local function boot()
 	end
 
 	elsa = {
-		getError = SDL.getError,
+		getError = function() return ffi.string(SDL.getError()) end,
 		filesystem = {
 			lines = io.lines,
 			load = loadfile,
@@ -103,32 +118,28 @@ local function boot()
 			getTime = function()
 				return SDL.getTicks()/1000
 			end,
-			sleep = function(s)
-				SDL.delay(s*1000)
-			end,
 		},
-		window = {
-			createWindow = SDL.createWindow,
-		},
-		graphics = {	
-			createRenderer = SDL.createRenderer,
-		}
+		SDL = SDL,
+		windowEventID = wen,
 	}
 	
 	require("main")
-	
+
+	local e = ffi.new('SDL_Event')
 	while true do
-		for e in SDL.pollEvent() do
-			e.type = eventNames[e.type]
-			if e.type == "windowevent" then
-				e.event = wen[e.event]
+		while b(SDL.pollEvent(e)) do
+			local etype = eventNames[e.type]
+			if etype == nil then
+				print("Ignoring event of ID: " .. e.type)
+				goto econtinue
 			end
-			if e.type == "quit" then
+			if elsa[etype] ~= nil then
+				elsa[etype](e)
+			end
+			if etype == "quit" then
 				return
 			end
-			if elsa[e.type] ~= nil then
-				elsa[e.type](e)
-			end
+			::econtinue::
 		end
 		elsa.update()
 		if elsa.draw then
@@ -139,6 +150,6 @@ local function boot()
 	end
 end
 print(xpcall(boot,debug.traceback))
-if sdlinit then 
+if sdlinit then
 	SDL.quit()
 end

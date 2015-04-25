@@ -1,6 +1,8 @@
 local address, slot, maxwidth, maxheight, maxtier = ...
 
+local ffi = require("ffi")
 local utf8 = require("utf8")
+local SDL = elsa.SDL
 
 local width, height, tier = maxwidth, maxheight, maxtier
 local scrfgc, scrfgp = 0xFFFFFF
@@ -30,31 +32,36 @@ for y = 1,height do
 	end
 end
 
-local window, err = elsa.window.createWindow({title="OCEmu - screen@" .. address, width=width*8, height=height*16})
-if not window then
-	error(err)
+local window = SDL.createWindow("OCEmu - screen@" .. address, SDL.WINDOWPOS_CENTERED, SDL.WINDOWPOS_CENTERED, width*8, height*16, SDL.WINDOW_SHOWN)
+if window == ffi.C.NULL then
+	error(SDL.getError())
 end
 
 
-local render, err = elsa.graphics.createRenderer(window, 0, 0)
-if not render then
-	error(err)
+local render = SDL.createRenderer(window, -1, 0)
+if render == ffi.C.NULL then
+	error(SDL.getError())
+end
+
+local function breakColor(color)
+	return math.floor(color/65536%256), math.floor(color/256%256), math.floor(color%256)
 end
 
 local lastcolor
 local function setDrawColor(color)
 	if color ~= lastcolor then
-		render:setDrawColor(color)
+		local r,g,b = breakColor(color)
+		SDL.setRenderDrawColor(render, r, g, b, 255)
 		lastcolor = color
 	end
 end
 
 setDrawColor(0)
-render:clear()
+SDL.renderClear(render)
 
 function elsa.draw()
-	window:show()
-	render:present()
+	SDL.showWindow(window)
+	SDL.renderPresent(render)
 end
 
 local points = {}
@@ -72,7 +79,7 @@ local function renderChar(char,x,y,fg,bg)
 					if points[color] == nil then
 						points[color] = {}
 					end
-					points[color][#points[color]+1] = {x=cx, y=y}
+					points[color][#points[color]+1] = ffi.new("SDL_Point", {x=cx, y=y})
 				end
 				cx = cx + 1
 			end
@@ -84,7 +91,7 @@ end
 local function drawPoints()
 	for color,list in pairs(points) do
 		setDrawColor(color)
-		render:drawPoints(list)
+		SDL.renderDrawPoints(render, ffi.new("SDL_Point[?]",#list,list), #list)
 	end
 	points = {}
 end
