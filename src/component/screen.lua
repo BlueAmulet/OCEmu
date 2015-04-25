@@ -36,74 +36,70 @@ local window = SDL.createWindow("OCEmu - screen@" .. address, SDL.WINDOWPOS_CENT
 if window == ffi.C.NULL then
 	error(SDL.getError())
 end
-
-
-local render = SDL.createRenderer(window, -1, 0)
-if render == ffi.C.NULL then
+local renderer = SDL.createRenderer(window, -1, SDL.RENDERER_TARGETTEXTURE)
+if renderer == ffi.C.NULL then
+	error(SDL.getError())
+end
+local texture = SDL.createTexture(renderer, SDL.PIXELFORMAT_ARGB8888, SDL.TEXTUREACCESS_TARGET, width*8, height*16);
+if texture == ffi.C.NULL then
+	error(SDL.getError())
+end
+local copytexture = SDL.createTexture(renderer, SDL.PIXELFORMAT_ARGB8888, SDL.TEXTUREACCESS_TARGET, width*8, height*16);
+if copytexture == ffi.C.NULL then
 	error(SDL.getError())
 end
 
-local function breakColor(color)
-	return math.floor(color/65536%256), math.floor(color/256%256), math.floor(color%256)
-end
-
-local lastcolor
-local function setDrawColor(color)
-	if color ~= lastcolor then
-		local r,g,b = breakColor(color)
-		SDL.setRenderDrawColor(render, r, g, b, 255)
-		lastcolor = color
-	end
-end
-
-setDrawColor(0)
-SDL.renderClear(render)
+-- Initialize all the textures to black
+SDL.setRenderDrawColor(renderer, 0, 0, 0, 255)
+SDL.renderFillRect(renderer, ffi.C.NULL)
+SDL.setRenderTarget(renderer, texture);
+SDL.renderFillRect(renderer, ffi.C.NULL)
+SDL.setRenderTarget(renderer, copytexture);
+SDL.renderFillRect(renderer, ffi.C.NULL)
+SDL.setRenderTarget(renderer, ffi.C.NULL);
 
 function elsa.draw()
 	SDL.showWindow(window)
-	SDL.renderPresent(render)
+	SDL.renderCopy(renderer, texture, ffi.C.NULL, ffi.C.NULL)
+	SDL.renderPresent(renderer)
 end
 
-local points = {}
+local char8 = ffi.new("uint32_t[?]", 8*16);
+local char16 = ffi.new("uint32_t[?]", 16*16);
 local function renderChar(char,x,y,fg,bg)
-	if unifont[char] ~= nil then
-		char = unifont[char]
-		local size = #char/16
-		for i = 1,#char,size do
-			local line = tonumber(char:sub(i,i+size-1),16)
-			local cx = x
-			for j = size*4-1,0,-1 do
-				local bit = math.floor(line/2^j)%2
-				local color = bit == 0 and bg or fg
-				if x >= 0 and y >= 0 and x < width * 8 and y < height * 16 then
-					if points[color] == nil then
-						points[color] = {}
-					end
-					points[color][#points[color]+1] = ffi.new("SDL_Point", {x=cx, y=y})
-				end
-				cx = cx + 1
-			end
-			y = y + 1
+	if unifont[char] == nil then
+		char = 63
+	end
+	char = unifont[char]
+	local size,pchar = #char/16
+	if size == 2 then
+		pchar = char8
+	else
+		pchar = char16
+	end
+	local cy = 0
+	for i = 1,#char,size do
+		local line = tonumber(char:sub(i,i+size-1),16)
+		local cx = 0
+		for j = size*4-1,0,-1 do
+			local bit = math.floor(line/2^j)%2
+			local color = bit == 0 and bg or fg
+			pchar[cy*size*4+cx] = color + 0xFF000000
+			cx = cx + 1
 		end
+		cy = cy + 1
 	end
-end
-
-local function drawPoints()
-	for color,list in pairs(points) do
-		setDrawColor(color)
-		SDL.renderDrawPoints(render, ffi.new("SDL_Point[?]",#list,list), #list)
-	end
-	points = {}
+	SDL.updateTexture(texture, ffi.new("SDL_Rect",{x=x,y=y,w=size*4,h=16}), pchar, (size*4) * ffi.sizeof("uint32_t"))
 end
 
 local function setPos(x,y,c,fg,bg)
-	local change = screen.txt[y][x] ~= utf8.char(c) or screen.fg[y][x] ~= scrfgc or screen.bg[y][x] ~= scrbgc or screen.fgp[y][x] ~= scrfgp or screen.bgp[y][x] ~= scrbgp
-	if change then
-		screen.txt[y][x] = utf8.char(c)
-		screen.fg[y][x] = scrfgc
-		screen.bg[y][x] = scrbgc
-		screen.fgp[y][x] = scrfgp
-		screen.bgp[y][x] = scrbgp
+	local renderchange = screen.txt[y][x] ~= utf8.char(c) or screen.bg[y][x] ~= scrbgc or (screen.txt[y][x] ~= " " and screen.fg[y][x] ~= scrfgc)
+	screen.txt[y][x] = utf8.char(c)
+	screen.fg[y][x] = scrfgc
+	screen.bg[y][x] = scrbgc
+	screen.fgp[y][x] = scrfgp
+	screen.bgp[y][x] = scrbgp
+	if renderchange then
 		renderChar(c,(x-1)*8,(y-1)*16,fg,bg)
 	end
 end
@@ -199,7 +195,7 @@ function cec.maxDepth() -- Get the maximum supported color depth.
 	return maxtier
 end
 function cec.fill(x1, y1, w, h, char) -- Fills a portion of the screen at the specified position with the specified size with the specified character.
-	--STUB
+	--TODO
 	cprint("(cec) screen.fill", x1, y1, w, h, char)
 	if w <= 0 or h <= 0 then
 		return true
@@ -215,7 +211,6 @@ function cec.fill(x1, y1, w, h, char) -- Fills a portion of the screen at the sp
 			setPos(x,y,code,scrfgc,scrbgc)
 		end
 	end
-	drawPoints()
 end
 function cec.getResolution() -- Get the current screen resolution.
 	cprint("(cec) screen.getResolution")
@@ -261,7 +256,6 @@ function cec.set(x, y, value, vertical) -- Plots a string value to the screen at
 			if x > width then break end
 		end
 	end
-	drawPoints()
 	return true
 end
 function cec.copy(x1, y1, w, h, tx, ty) -- Copies a portion of the screen from the specified location with the specified size by the specified translation.
@@ -293,19 +287,20 @@ function cec.copy(x1, y1, w, h, tx, ty) -- Copies a portion of the screen from t
 	end
 	for y = math.max(math.min(y1+ty, height), 1), math.max(math.min(y2+ty, height), 1) do
 		for x = math.max(math.min(x1+tx, width), 1), math.max(math.min(x2+tx, width), 1) do
-			local change = screen.txt[y][x] ~= copy.txt[y-y1-ty][x-x1-tx] or screen.fg[y][x] ~= copy.fg[y-y1-ty][x-x1-tx] or screen.bg[y][x] ~= copy.bg[y-y1-ty][x-x1-tx] or screen.fgp[y][x] ~= copy.fgp[y-y1-ty][x-x1-tx] or screen.bgp[y][x] ~= copy.bgp[y-y1-ty][x-x1-tx]
-			if change then
-				screen.txt[y][x] = copy.txt[y-y1-ty][x-x1-tx]
-				screen.fg[y][x] = copy.fg[y-y1-ty][x-x1-tx]
-				screen.bg[y][x] = copy.bg[y-y1-ty][x-x1-tx]
-				screen.fgp[y][x] = copy.fgp[y-y1-ty][x-x1-tx]
-				screen.bgp[y][x] = copy.bgp[y-y1-ty][x-x1-tx]
-				-- Speedup somehow D:
-				renderChar(utf8.byte(copy.txt[y-y1-ty][x-x1-tx]),(x-1)*8,(y-1)*16,copy.fg[y-y1-ty][x-x1-tx],copy.bg[y-y1-ty][x-x1-tx])
-			end
+			local renderchange = screen.txt[y][x] ~= copy.txt[y-y1-ty][x-x1-tx] or screen.bg[y][x] ~= copy.bg[y-y1-ty][x-x1-tx] or (screen.txt[y][x] ~= " " and screen.fg[y][x] ~= copy.fg[y-y1-ty][x-x1-tx])
+			screen.txt[y][x] = copy.txt[y-y1-ty][x-x1-tx]
+			screen.fg[y][x] = copy.fg[y-y1-ty][x-x1-tx]
+			screen.bg[y][x] = copy.bg[y-y1-ty][x-x1-tx]
+			screen.fgp[y][x] = copy.fgp[y-y1-ty][x-x1-tx]
+			screen.bgp[y][x] = copy.bgp[y-y1-ty][x-x1-tx]
 		end
 	end
-	drawPoints()
+	SDL.updateTexture(texture, ffi.C.NULL, pixels, (width*8) * ffi.sizeof("uint32_t"))
+	SDL.setRenderTarget(renderer, copytexture);
+	SDL.renderCopy(renderer, texture, ffi.C.NULL, ffi.C.NULL)
+	SDL.renderCopy(renderer, texture, ffi.new("SDL_Rect",{x=(x1-1)*8,y=(y1-1)*16,w=w*8,h=h*16}), ffi.new("SDL_Rect",{x=(x1+tx-1)*8,y=(y1+ty-1)*16,w=w*8,h=h*16}))
+	SDL.setRenderTarget(renderer, ffi.C.NULL);
+	texture,copytexture=copytexture,texture
 end
 
 return obj,cec
