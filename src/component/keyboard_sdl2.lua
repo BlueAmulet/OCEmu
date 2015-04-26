@@ -4,7 +4,7 @@ local ffi = require("ffi")
 local lua_utf8 = require("utf8")
 
 -- Conversion table for SDL2 keys to LWJGL key codes
-local keys = elsa.filesystem.load("sdl_to_lwjgl.lua")()
+local keys = require("support.sdl_to_lwjgl")
 
 local code2char = {}
 
@@ -33,7 +33,7 @@ end
 -- keyboard component
 
 -- Much complex
-local obj = {}
+local obj = {type="keyboard"}
 
 -- Such methods
 local cec = {}

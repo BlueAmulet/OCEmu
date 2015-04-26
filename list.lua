@@ -5,6 +5,7 @@ end
 local component = require("component")
 local address = component.get(args[1])
 local proxy = component.proxy(address)
+print(proxy.type)
 local keys = {}
 for k,v in pairs(proxy) do
 	if type(v) == "table" then
@@ -25,5 +26,13 @@ for i = 1,#keys do
 	end
 	file:write("function obj." .. k .. "(" .. doc .. ") " .. comment .."\n\t--STUB\n\tcprint(\"" .. proxy.type .. "." .. k .. "\"" .. (doc ~= "" and "," or "") .. doc .. ")\nend\n")
 end
-file:write("\nlocal cec = {}\n\nreturn obj,cec")
+file:write("\nlocal cec = {}\n\nlocal doc = {\n")
+for i = 1,#keys do
+	local k = keys[i]
+	if component.doc(address,k) ~= nil then
+		local doc = component.doc(address,k)
+		file:write(string.format("\t[%q]=%q,\n",k,doc))
+	end
+end
+file:write("}\n\nreturn obj,cec,doc")
 file:close()

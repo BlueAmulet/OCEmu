@@ -1,5 +1,13 @@
 local env = ...
 
+local sok,socket = pcall(require,"socket")
+local gettime
+if sok then
+	gettime = socket.gettime
+else
+	gettime = os.time
+end
+
 local tmpaddr = "tmp-address"
 
 computer = {}
@@ -11,12 +19,12 @@ end
 env.computer = {}
 
 function env.computer.realTime()
-	--STUB
+	--TODO
 	--cprint("computer.realTime") -- Spammy
-	return 0
+	return gettime()
 end
 function env.computer.uptime()
-	--STUB
+	--TODO
 	cprint("computer.uptime")
 	return elsa.timer.getTime() - machine.starttime
 end
@@ -35,8 +43,8 @@ function env.computer.totalMemory()
 	return 10000
 end
 function env.computer.pushSignal(name, ...)
-	--TODO
 	cprint("computer.pushSignal", name, ...)
+	compCheckArg(1,name,"string")
 	table.insert(machine.signals, {name, ... })
 end
 function env.computer.tmpAddress()
@@ -51,11 +59,13 @@ end
 function env.computer.addUser(username)
 	--STUB
 	cprint("computer.addUser", username)
+	compCheckArg(1,username,"string")
 	return nil, "player must be online"
 end
 function env.computer.removeUser(username)
 	--STUB
 	cprint("computer.removeUser", username)
+	compCheckArg(1,username,"string")
 	return false
 end
 function env.computer.energy()
@@ -64,7 +74,7 @@ function env.computer.energy()
 	return math.huge
 end
 function env.computer.maxEnergy()
-	--STUB
+	--STUB, move to a config
 	cprint("computer.maxEnergy")
-	return math.huge
+	return 500
 end

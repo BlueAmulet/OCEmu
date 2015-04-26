@@ -28,4 +28,11 @@ end
 
 local cec = {}
 
-return obj,cec
+local doc = {
+	["isRunning"]="function():boolean -- Returns whether the computer is running.",
+	["beep"]="function([frequency:number[, duration:number]]) -- Plays a tone, useful to alert users via audible feedback.",
+	["stop"]="function():boolean -- Stops the computer. Returns true if the state changed.",
+	["start"]="function():boolean -- Starts the computer. Returns true if the state changed.",
+}
+
+return obj,cec,doc

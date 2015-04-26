@@ -2,59 +2,51 @@ local env = ...
 
 local utf8 = require("utf8")
 
-env.unicode = {}
+env.unicode = {
+	lower = utf8.lower,
+	upper = utf8.upper,
+	char = utf8.char,
+	len = utf8.len,
+	reverse = utf8.reverse,
+	sub = utf8.sub,
+}
 
-function env.unicode.lower(str)
-	-- STUB
-	cprint("unicode.lower", str)
-	checkArg(1,str,"string")
-	return utf8.lower(str)
-end
-function env.unicode.upper(str)
-	-- STUB
-	cprint("unicode.upper", str)
-	checkArg(1,str,"string")
-	return utf8.upper(str)
-end
-function env.unicode.char(...)
-	-- TODO
-	cprint("unicode.char", ...)
-	return utf8.char(...)
-end
-function env.unicode.len(str)
-	-- TODO
-	cprint("unicode.len", str)
-	checkArg(1,str,"string")
-	return utf8.len(str)
-end
-function env.unicode.reverse(str)
-	-- TODO
-	cprint("unicode.reverse", str)
-	checkArg(1,str,"string")
-	return utf8.reverse(str)
-end
-function env.unicode.sub(str, i, j)
-	-- TODO
-	cprint("unicode.sub", str, i, j)
-	return utf8.sub(str, i, j)
-end
 function env.unicode.isWide(str)
-	-- STUB
 	cprint("unicode.isWide", str)
 	checkArg(1,str,"string")
+	if #str == 0 then
+		error("String index out of range: 0",3)
+	end
+	local char = utf8.byte(str)
+	if unifont[char] ~= nil then
+		return #unifont[char] > 32
+	end
 	return false
 end
 function env.unicode.charWidth(str)
-	-- STUB
 	cprint("unicode.charWidth", str)
 	checkArg(1,str,"string")
+	if #str == 0 then
+		error("String index out of range: 0",3)
+	end
+	local char = utf8.byte(str)
+	if unifont[char] ~= nil then
+		return #unifont[char] / 32
+	end
 	return 1
 end
 function env.unicode.wlen(str)
-	-- STUB
 	cprint("unicode.wlen", str)
 	checkArg(1,str,"string")
-	return utf8.len(str)
+	local length = 0
+	for _,c in utf8.next, str do
+		if unifont[c] ~= nil then
+			length = length + #unifont[c] / 32
+		else
+			length = length + 1
+		end
+	end
+	return length
 end
 function env.unicode.wtrunc(str, count)
 	-- STUB

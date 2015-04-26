@@ -8,15 +8,19 @@ conf = {
 	-- Read component files for parameter documentation
 	components = {
 		{"gpu",nil,0,160,50,3},
-		{"screen",nil,nil,80,25,3},
 		{"eeprom",nil,9,"lua/bios.lua"},
 		{"filesystem",nil,5,"loot/OpenOS",true},
 		{"filesystem",nil,nil,"tmpfs",false},
 		{"filesystem",nil,nil,nil,false},
 		{"computer"},
-		{"keyboard"},
 	}
 }
+if elsa.SDL then
+	table.insert(conf.components, {"screen_sdl2",nil,nil,80,25,3})
+	table.insert(conf.components, {"keyboard_sdl2"})
+else
+	-- TODO: Alternatives
+end
 
 machine = {
 	starttime = elsa.timer.getTime(),

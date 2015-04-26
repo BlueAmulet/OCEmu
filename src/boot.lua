@@ -122,7 +122,7 @@ local function boot()
 		SDL = SDL,
 		windowEventID = wen,
 	}
-	
+
 	require("main")
 
 	local e = ffi.new('SDL_Event')
@@ -145,7 +145,7 @@ local function boot()
 		if elsa.draw then
 			elsa.draw()
 		end
-		
+
 		SDL.delay(1)
 	end
 end

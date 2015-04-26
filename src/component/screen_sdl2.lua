@@ -108,7 +108,7 @@ local touchinvert = false
 local precise = false
 
 -- screen component
-local obj = {}
+local obj = {type="screen"}
 
 function obj.isTouchModeInverted() -- Whether touch mode is inverted (sneak-activate opens GUI, instead of normal activate).
 	cprint("screen.isTouchModeInverted")
@@ -303,4 +303,16 @@ function cec.copy(x1, y1, w, h, tx, ty) -- Copies a portion of the screen from t
 	texture,copytexture=copytexture,texture
 end
 
-return obj,cec
+local doc = {
+	["isTouchModeInverted"]="function():boolean -- Whether touch mode is inverted (sneak-activate opens GUI, instead of normal activate).",
+	["setTouchModeInverted"]="function(value:boolean):boolean -- Sets whether to invert touch mode (sneak-activate opens GUI, instead of normal activate).",
+	["isPrecise"]="function():boolean -- Returns whether the screen is in high precision mode (sub-pixel mouse event positions).",
+	["setPrecise"]="function(enabled:boolean):boolean -- Set whether to use high precision mode (sub-pixel mouse event positions).",
+	["turnOff"]="function():boolean -- Turns off the screen. Returns true if it was on.",
+	["turnOn"]="function():boolean -- Turns the screen on. Returns true if it was off.",
+	["isOn"]="function():boolean -- Returns whether the screen is currently on.",
+	["getAspectRatio"]="function():number, number -- The aspect ratio of the screen. For multi-block screens this is the number of blocks, horizontal and vertical.",
+	["getKeyboards"]="function():table -- The list of keyboards attached to the screen.",
+}
+
+return obj,cec,doc

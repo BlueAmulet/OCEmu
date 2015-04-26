@@ -32,7 +32,7 @@ for k,v in pairs(components) do
 	end
 	local proxy, cec, doc = fn(table.unpack(v,2))
 	proxy.address = address
-	proxy.type = v[1]
+	proxy.type = proxy.type or v[1]
 	proxylist[address] = proxy
 	emuicc[address] = cec
 	doclist[address] = doc
@@ -115,6 +115,7 @@ function env.component.methods(address)
 		end
 		return methods
 	end
+	return nil, "no such component"
 end
 
 function env.component.invoke(address, method, ...)
@@ -126,6 +127,7 @@ function env.component.invoke(address, method, ...)
 		end
 		return true, proxylist[address][method](...)
 	end
+	return nil, "no such component"
 end
 
 function env.component.doc(address, method)
@@ -133,11 +135,12 @@ function env.component.doc(address, method)
 	checkArg(2,method,"string")
 	if proxylist[address] ~= nil then
 		if proxylist[address][method] == nil then
-			error("no such method",2)
+			return nil
 		end
 		if doclist[address] ~= nil then
 			return doclist[address][method]
 		end
 		return nil
 	end
+	return nil, "no such component"
 end

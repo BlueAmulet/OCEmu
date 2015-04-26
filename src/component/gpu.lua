@@ -199,4 +199,25 @@ end
 
 local cec = {}
 
-return obj,cec
+local doc = {
+	["bind"]="function(address:string):boolean -- Binds the GPU to the screen with the specified address.",
+	["getForeground"]="function():number, boolean -- Get the current foreground color and whether it's from the palette or not.",
+	["setForeground"]="function(value:number[, palette:boolean]):number, number or nil -- Sets the foreground color to the specified value. Optionally takes an explicit palette index. Returns the old value and if it was from the palette its palette index.",
+	["getBackground"]="function():number, boolean -- Get the current background color and whether it's from the palette or not.",
+	["setBackground"]="function(value:number[, palette:boolean]):number, number or nil -- Sets the background color to the specified value. Optionally takes an explicit palette index. Returns the old value and if it was from the palette its palette index.",
+	["getDepth"]="function():number -- Returns the currently set color depth.",
+	["setDepth"]="function(depth:number):number -- Set the color depth. Returns the previous value.",
+	["maxDepth"]="function():number -- Get the maximum supported color depth.",
+	["fill"]="function(x:number, y:number, width:number, height:number, char:string):boolean -- Fills a portion of the screen at the specified position with the specified size with the specified character.",
+	["getScreen"]="function():string -- Get the address of the screen the GPU is currently bound to.",
+	["getResolution"]="function():number, number -- Get the current screen resolution.",
+	["setResolution"]="function(width:number, height:number):boolean -- Set the screen resolution. Returns true if the resolution changed.",
+	["maxResolution"]="function():number, number -- Get the maximum screen resolution.",
+	["getPaletteColor"]="function(index:number):number -- Get the palette color at the specified palette index.",
+	["setPaletteColor"]="function(index:number, color:number):number -- Set the palette color at the specified palette index. Returns the previous value.",
+	["get"]="function(x:number, y:number):string, number, number, number or nil, number or nil -- Get the value displayed on the screen at the specified index, as well as the foreground and background color. If the foreground or background is from the palette, returns the palette indices as fourth and fifth results, else nil, respectively.",
+	["set"]="function(x:number, y:number, value:string[, vertical:boolean]):boolean -- Plots a string value to the screen at the specified position. Optionally writes the string vertically.",
+	["copy"]="function(x:number, y:number, width:number, height:number, tx:number, ty:number):boolean -- Copies a portion of the screen from the specified location with the specified size by the specified translation.",
+}
+
+return obj,cec,doc
