@@ -77,19 +77,23 @@ end
 
 local window = SDL.createWindow("OCEmu - screen@" .. address, SDL.WINDOWPOS_CENTERED, SDL.WINDOWPOS_CENTERED, width*8, height*16, SDL.WINDOW_SHOWN)
 if window == ffi.C.NULL then
-	error(SDL.getError())
+	error(ffi.string(SDL.getError()))
 end
-local renderer = SDL.createRenderer(window, -1, SDL.RENDERER_TARGETTEXTURE)
+local flags = SDL.RENDERER_TARGETTEXTURE
+if ffi.os == "Windows" then -- TODO: Investigate why
+	flags = flags + SDL.RENDERER_SOFTWARE
+end
+local renderer = SDL.createRenderer(window, -1, flags)
 if renderer == ffi.C.NULL then
-	error(SDL.getError())
+	error(ffi.string(SDL.getError()))
 end
 local texture = SDL.createTexture(renderer, SDL.PIXELFORMAT_ARGB8888, SDL.TEXTUREACCESS_TARGET, width*8, height*16);
 if texture == ffi.C.NULL then
-	error(SDL.getError())
+	error(ffi.string(SDL.getError()))
 end
 local copytexture = SDL.createTexture(renderer, SDL.PIXELFORMAT_ARGB8888, SDL.TEXTUREACCESS_TARGET, width*8, height*16);
 if copytexture == ffi.C.NULL then
-	error(SDL.getError())
+	error(ffi.string(SDL.getError()))
 end
 
 -- Initialize all the textures to black
