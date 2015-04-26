@@ -48,7 +48,6 @@ function env.computer.pushSignal(name, ...)
 	table.insert(machine.signals, {name, ... })
 end
 function env.computer.tmpAddress()
-	--STUB
 	cprint("computer.tmpAddress")
 	return tmpaddr
 end
@@ -74,7 +73,6 @@ function env.computer.energy()
 	return math.huge
 end
 function env.computer.maxEnergy()
-	--STUB, move to a config
 	cprint("computer.maxEnergy")
-	return 500
+	return config.get("power.buffer.computer",500)
 end

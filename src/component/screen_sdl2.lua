@@ -32,6 +32,49 @@ for y = 1,height do
 	end
 end
 
+local buttons = {[SDL.BUTTON_LEFT] = 0, [SDL.BUTTON_RIGHT] = 1}
+local moved, bttndown, lx, ly = false
+function elsa.mousebuttondown(event)
+	local mbevent = ffi.cast("SDL_MouseButtonEvent", event)
+	if buttons[mbevent.button] then
+		if not bttndown then
+			lx, ly = math.floor(mbevent.x/8)+1,math.floor(mbevent.y/16)+1
+			table.insert(machine.signals,{"touch",address,lx,ly,buttons[mbevent.button]})
+		end
+		bttndown = buttons[mbevent.button]
+	end
+end
+
+function elsa.mousebuttonup(event)
+	local mbevent = ffi.cast("SDL_MouseButtonEvent", event)
+	if bttndown and buttons[mbevent.button] then
+		if moved then
+			moved = false
+			table.insert(machine.signals,{"drop",address,lx,ly,buttons[mbevent.button]})
+		end
+		bttndown = nil
+	end
+end
+
+function elsa.mousemotion(event)
+	local mmevent = ffi.cast("SDL_MouseMotionEvent", event)
+	if bttndown then
+		local nx, ny = math.floor(mmevent.x/8)+1,math.floor(mmevent.y/16)+1
+		if nx ~= lx or ny ~= ly then
+			moved = true
+			table.insert(machine.signals,{"drag",address,nx,ny,bttndown})
+			lx, ly = nx, ny
+		end
+	end
+end
+
+function elsa.mousewheel(event)
+	local mwevent = ffi.cast("SDL_MouseWheelEvent", event)
+	local x,y = ffi.new("int[1]"),ffi.new("int[1]")
+	SDL.getMouseState(ffi.cast("int*",x), ffi.cast("int*",y))
+	table.insert(machine.signals,{"scroll",address,math.floor(x[0]/8)+1,math.floor(y[0]/16)+1,mwevent.y})
+end
+
 local window = SDL.createWindow("OCEmu - screen@" .. address, SDL.WINDOWPOS_CENTERED, SDL.WINDOWPOS_CENTERED, width*8, height*16, SDL.WINDOW_SHOWN)
 if window == ffi.C.NULL then
 	error(SDL.getError())

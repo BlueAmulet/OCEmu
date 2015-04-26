@@ -3,6 +3,18 @@ if elsa == nil then
 	return
 end
 
+-- load configuration
+elsa.filesystem.load("config.lua")()
+config.load()
+
+elsa.cleanup = {}
+function elsa.quit()
+	config.save()
+	for k,v in pairs(elsa.cleanup) do
+		v()
+	end
+end
+
 conf = {
 	-- Format: string:type, (string or number or nil):address, (number or nil):slot, component parameters
 	-- Read component files for parameter documentation
