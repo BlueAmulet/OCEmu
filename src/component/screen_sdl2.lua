@@ -265,7 +265,9 @@ function cec.getResolution() -- Get the current screen resolution.
 end
 function cec.setResolution(newwidth, newheight) -- Set the screen resolution. Returns true if the resolution changed.
 	cprint("(cec) screen.setResolution", newwidth, newheight)
+	local oldwidth, oldheight = width, height
 	width, height = math.min(newwidth, maxwidth), math.min(newheight, maxheight)
+	return oldwidth ~= width or oldheight ~= height
 end
 function cec.maxResolution() -- Get the maximum screen resolution.
 	cprint("(cec) screen.maxResolution")
@@ -342,7 +344,6 @@ function cec.copy(x1, y1, w, h, tx, ty) -- Copies a portion of the screen from t
 			screen.bgp[y][x] = copy.bgp[y-y1-ty][x-x1-tx]
 		end
 	end
-	SDL.updateTexture(texture, ffi.C.NULL, pixels, (width*8) * ffi.sizeof("uint32_t"))
 	SDL.setRenderTarget(renderer, copytexture);
 	SDL.renderCopy(renderer, texture, ffi.C.NULL, ffi.C.NULL)
 	SDL.renderCopy(renderer, texture, ffi.new("SDL_Rect",{x=(x1-1)*8,y=(y1-1)*16,w=w*8,h=h*16}), ffi.new("SDL_Rect",{x=(x1+tx-1)*8,y=(y1+ty-1)*16,w=w*8,h=h*16}))
