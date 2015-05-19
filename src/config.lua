@@ -6,6 +6,8 @@ local comments = {
 ["computer.lua"]="Settings specific to the Lua architecture.",
 ["computer.lua.allowBytecode"]="Whether to allow loading precompiled bytecode via Lua's `load` function, or related functions (`loadfile`, `dofile`). Enable this only if you absolutely trust all users on your server and all Lua code you run. This can be a MASSIVE SECURITY RISK, since precompiled code can easily be used for exploits, running arbitrary code on the real server! I cannot stress this enough: only enable this is you know what you're doing.",
 ["computer.timeout"]="The time in seconds a program may run without yielding before it is forcibly aborted. This is used to avoid stupidly written or malicious programs blocking other computers by locking down the executor threads. Note that changing this won't have any effect on computers that are already running - they'll have to be rebooted for this to take effect.",
+["internet.enableHttp"]="Whether to allow HTTP requests via internet cards. When enabled, the `request` method on internet card components becomes available.",
+["internet.enableTcp"]="Whether to allow TCP connections via internet cards. When enabled, the `connect` method on internet card components becomes available.",
 }
 
 local function writeComment(text,file,size)
