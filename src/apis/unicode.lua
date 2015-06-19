@@ -11,6 +11,13 @@ env.unicode = {
 	sub = utf8.sub,
 }
 
+local function getCharWidth(char)
+	if unifont[char] ~= nil then
+		return #unifont[char] / 32
+	end
+	return 1
+end
+
 function env.unicode.isWide(str)
 	cprint("unicode.isWide", str)
 	checkArg(1,str,"string")
@@ -18,10 +25,7 @@ function env.unicode.isWide(str)
 		error("String index out of range: 0",3)
 	end
 	local char = utf8.byte(str)
-	if unifont[char] ~= nil then
-		return #unifont[char] > 32
-	end
-	return false
+	return getCharWidth(char) > 1
 end
 function env.unicode.charWidth(str)
 	cprint("unicode.charWidth", str)
@@ -30,32 +34,30 @@ function env.unicode.charWidth(str)
 		error("String index out of range: 0",3)
 	end
 	local char = utf8.byte(str)
-	if unifont[char] ~= nil then
-		return #unifont[char] / 32
-	end
-	return 1
+	return getCharWidth(char)
 end
 function env.unicode.wlen(str)
 	cprint("unicode.wlen", str)
 	checkArg(1,str,"string")
 	local length = 0
 	for _,c in utf8.next, str do
-		if unifont[c] ~= nil then
-			length = length + #unifont[c] / 32
-		else
-			length = length + 1
-		end
+		length = length + getCharWidth(c)
 	end
 	return length
 end
 function env.unicode.wtrunc(str, count)
-	-- STUB
 	cprint("unicode.wtrunc", str, count)
 	checkArg(1,str,"string")
 	checkArg(2,count,"number")
+	local width = 0
+	local pos = 0
 	local len = utf8.len(str)
-	if count >= len then
-		error("String index out of range: " .. len,2)
+	while (width < count) do
+		pos = pos + 1
+		if pos > len then
+			error("String index out of range: " .. pos-1,3)
+		end
+		width = width + getCharWidth(utf8.byte(str,pos,pos))
 	end
-	return utf8.sub(str, 1, count-1)
+	return utf8.sub(str, 1, pos-1)
 end

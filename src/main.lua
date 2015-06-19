@@ -246,7 +246,7 @@ function boot_machine()
 	if machine_data == nil then
 		error("Failed to load machine.lua:\n\t" .. tostring(err))
 	end
-	local machine_fn, err = load(machine_data,"=kernel","t",env)
+	local machine_fn, err = load(machine_data,"=machine","t",env)
 	if machine_fn == nil then
 		error("Failed to parse machine.lua\n\t" .. tostring(err))
 	end

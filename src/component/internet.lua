@@ -1,6 +1,21 @@
 -- internet component
 local obj = {}
 
+local socket = require("socket")
+local url = require("socket.url")
+
+local function checkUri(address, port)
+	local parsed = url.parse(address)
+	if parsed ~= nil and parsed.host ~= nil and (parsed.port ~= nil or port > -1) then
+		return parsed.host, parsed.port or port
+	end
+	local simple = url.parse("oc://" .. address)
+	if simple ~= nil and simple.host ~= nil and (simple.port ~= nil or port > -1) then
+		return simple.host, simple.port or port
+	end
+	error("address could not be parsed or no valid port given",4)
+end
+
 function obj.isTcpEnabled() -- Returns whether TCP connections can be made (config setting).
 	cprint("internet.isTcpEnabled")
 	return config.get("internet.enableTcp",true)
@@ -10,7 +25,6 @@ function obj.isHttpEnabled() -- Returns whether HTTP requests can be made (confi
 	return config.get("internet.enableHttp",true)
 end
 function obj.connect(address, port) -- Opens a new TCP connection. Returns the handle of the connection.
-	--STUB
 	cprint("internet.connect",address, port)
 	if port == nil then port = -1 end
 	compCheckArg(1,address,"string")
@@ -18,7 +32,53 @@ function obj.connect(address, port) -- Opens a new TCP connection. Returns the h
 	if not config.get("internet.enableTcp",true) then
 		return nil, "tcp connections are unavailable"
 	end
-	return nil
+	-- TODO Check for too many connections
+	local host, port = checkUri(address, port)
+	if host == nil then
+		return host, port
+	end
+	local client = socket.tcp()
+	-- TODO: not OC behaviour, but needed to prevent hanging
+	client:settimeout(10)
+	local connected = false
+	local function connect()
+		local did, err = client:connect(address,port)
+		if did then
+			connected = true
+			client:settimeout(0)
+		end
+	end
+	local fakesocket = {
+		read = function(n)
+			-- TODO: Error handling
+			if not connected then connect() return "" end
+			if type(n) ~= "number" then n = math.huge end
+			local data, err, part = client:receive(n)
+			if err == nil or err == "timeout" or part ~= "" then
+				return data or part
+			else
+				return nil, err
+			end
+		end,
+		write = function(data)
+			if not connected then connect() return 0 end
+			checkArg(1,data,"string")
+			local data, err, part = client:send(data)
+			if err == nil or err == "timeout" or part ~= 0 then
+				return data or part
+			else
+				return nil, err
+			end
+		end,
+		close = function()
+			pcall(client.close,client)
+		end,
+		finishConnect = function()
+			-- TODO: Does this actually error?
+			return connected
+		end
+	}
+	return fakesocket
 end
 function obj.request(url, postData) -- Starts an HTTP request. If this returns true, further results will be pushed using `http_response` signals.
 	--STUB

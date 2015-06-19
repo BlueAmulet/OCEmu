@@ -26,4 +26,4 @@ Running
 -------
 Launch boot.lua with lua5.2, and provided everything is installed, you'll have a working Emulator
 
-OCEmu stores its files in $HOME/.ocemu or %APPDATA%\.ocemu, whichever happens to exist first
+OCEmu stores its files in $HOME/.ocemu or %APPDATA%\\.ocemu, whichever happens to exist first
