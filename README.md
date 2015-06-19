@@ -4,12 +4,16 @@ OCEmu - OpenComputers Emulator
 Installation
 ------------
 
-Needs luafilesystem, utf8, and luaffi
+Needs luafilesystem, utf8, and luaffi.
+
+luasocket is required for the Internet Component.
+
+luasec is optional but is required for HTTPS.
 
 ```
 luarocks-5.2 install luafilesystem
 luarocks-5.2 install utf8
-git clone https://github.com/colesbury/luaffi.git
+git clone https://github.com/gamax92/luaffi.git
 cd luaffi
 make
 sudo cp ffi.so /appropriate/path/for/lua/libraries/

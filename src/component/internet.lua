@@ -6,6 +6,11 @@ if not okay then
 	return
 end
 local url = require("socket.url")
+local okay, http = pcall(require, "ssl.https")
+if not okay then
+	cprint("Cannot use HTTPS: " .. http)
+	http = require("socket.http")
+end
 
 component.connect("filesystem",gen_uuid(),nil,"lua/component/internet",true)
 
@@ -94,17 +99,48 @@ function obj.connect(address, port) -- Opens a new TCP connection. Returns the h
 	return fakesocket
 end
 function obj.request(url, postData) -- Starts an HTTP request. If this returns true, further results will be pushed using `http_response` signals.
-	--STUB
 	cprint("internet.request",url, postData)
 	compCheckArg(1,url,"string")
 	if not config.get("internet.enableHttp",true) then
 		return nil, "http requests are unavailable"
 	end
-	local post
-	if type(postData) == "string" then
-		post = postData
+	-- TODO: Check for too many connections
+	if type(postData) ~= "string" then
+		postData = nil
 	end
-	return nil
+	-- TODO: This works ... but is slow.
+	local page, _, headers, status = http.request(url, postData)
+	local protocol, code, message = status:match("(.-) (.-) (.*)")
+	code = tonumber(code)
+	local fakesocket = {
+		read = function(n)
+			cprint("(socket) read",n)
+			-- OC doesn't actually return n bytes when requested.
+			if page == nil then
+				return nil, "connection lost"
+			elseif page == "" then
+				return nil
+			else
+				-- Return up to 8192 bytes
+				local data = page:sub(1,8192)
+				page = page:sub(8193)
+				return data
+			end
+		end,
+		response = function()
+			cprint("(socket) response")
+			return code, message, headers
+		end,
+		close = function()
+			cprint("(request) close")
+			page = nil
+		end,
+		finishConnect = function()
+			cprint("(socket) finishConnect")
+			return true
+		end
+	}
+	return fakesocket
 end
 
 local cec = {}

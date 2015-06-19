@@ -2,6 +2,7 @@ local address = ...
 
 local ffi = require("ffi")
 local lua_utf8 = require("utf8")
+local SDL = elsa.SDL
 
 -- Conversion table for SDL2 keys to LWJGL key codes
 local keys = require("support.sdl_to_lwjgl")
@@ -21,6 +22,11 @@ function elsa.keydown(event)
 	local key = keyevent.keysym.scancode
 	cprint("keydown",keys[key])
 	table.insert(kbdcodes,{type="key_down",addr=address,code=keys[key]})
+	if keys[key] == 210 then
+		if SDL.hasClipboardText() > 0 then
+			table.insert(machine.signals,{"clipboard",address,ffi.string(SDL.getClipboardText())})
+		end
+	end
 end
 
 function elsa.keyup(event)

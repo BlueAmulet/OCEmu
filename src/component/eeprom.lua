@@ -2,10 +2,43 @@ local address, slot, filename = ...
 
 local crc32 = require("support.crc32")
 
+local directory = elsa.filesystem.getSaveDirectory() .. "/" .. address
+if not elsa.filesystem.exists(directory) then
+	elsa.filesystem.createDirectory(directory)
+end
+
 local code = elsa.filesystem.read(filename)
 local data = ""
 local label = "EEPROM"
 local readonly = false
+if elsa.filesystem.exists(directory .. "/data.lua") then
+	local fn, err = elsa.filesystem.load(directory .. "/data.lua","t",{})
+	if not fn then
+		cprint("Failed to unpersist eeprom @" .. address .. ": " .. err)
+	else
+		local ncode,ndata,nlabel,nread = fn()
+		if type(ncode) ~= "string" or type(ndata) ~= "string" or type(nlabel) ~= "string" or type(nread) ~= "boolean" then
+			cprint("Failed to unpersist eeprom @" .. address .. ": Invalid persist data")
+			cprint("code) " .. type(ncode))
+			cprint("data) " .. type(ndata))
+			cprint("labl) " .. type(nlabel))
+			cprint("read) " .. type(nread))
+		else
+			code,data,label,readonly = ncode,ndata,nlabel,nread
+		end
+	end
+end
+
+local function persist()
+	local file, err = io.open(directory .. "/data.lua", "wb")
+	if not file then
+		cprint("Failed to persist eeprom @" .. address .. ": " .. err)
+		return false
+	end
+	file:write(string.format("return %q,%q,%q,%s",code,data,label,tostring(readonly)):gsub("\\\n","\\n") .. "")
+	file:close()
+	return true
+end
 
 -- eeprom component
 local obj = {}
@@ -22,6 +55,7 @@ function obj.setData(newdata) -- Overwrite the currently stored byte array.
 		error("not enough space",3)
 	end
 	data = newdata
+	persist()
 end
 function obj.getDataSize() -- Get the storage capacity of this EEPROM.
 	cprint("eeprom.getDataSize")
@@ -43,6 +77,7 @@ function obj.setLabel(newlabel) -- Set the label of the EEPROM.
 	compCheckArg(1,newlabel,"string","nil")
 	if newlabel == nil then newlabel = "EEPROM" end
 	label = newlabel:sub(1,16)
+	persist()
 	return label
 end
 function obj.getChecksum() -- Get the checksum of the data on this EEPROM.
@@ -64,14 +99,16 @@ function obj.set(newcode) -- Overwrite the currently stored byte array.
 		error("not enough space",3)
 	end
 	code = newcode
+	persist()
 end
 function obj.makeReadonly(checksum) -- Make this EEPROM readonly if it isn't already. This process cannot be reversed!
-	print("eeprom.makeReadonly", checksum)
+	cprint("eeprom.makeReadonly", checksum)
 	compCheckArg(1,checksum,"string")
 	if checksum ~= obj.getChecksum() then
 		return nil, "incorrect checksum"
 	end
 	readonly = true
+	persist()
 	return true
 end
 
