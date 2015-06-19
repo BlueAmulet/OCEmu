@@ -271,6 +271,7 @@ boot_machine()
 
 local resume_thread
 function resume_thread(...)
+	timeoffset = 0
 	if coroutine.status(machine.thread) ~= "dead" then
 		cprint("resume",...)
 		local results = { coroutine.resume(machine.thread, ...) }

@@ -1,12 +1,12 @@
 local env = ...
 
 local sok,socket = pcall(require,"socket")
-local gettime
 if sok then
 	gettime = socket.gettime
 else
 	gettime = os.time
 end
+timeoffset = 0
 
 local tmpaddr = "tmp-address"
 
@@ -21,7 +21,7 @@ env.computer = {}
 function env.computer.realTime()
 	--TODO
 	--cprint("computer.realTime") -- Spammy
-	return gettime()
+	return gettime()-timeoffset
 end
 function env.computer.uptime()
 	--TODO

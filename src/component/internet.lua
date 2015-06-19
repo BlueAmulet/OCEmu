@@ -122,11 +122,11 @@ function obj.request(url, postData) -- Starts an HTTP request. If this returns t
 	end
 	-- TODO: This works ... but is slow.
 	-- TODO: Infact so slow, it can trigger the machine's sethook, so we have to work around that.
-	local hookf,hookm,hookc = debug.gethook()
-	local co = coroutine.running()
-	debug.sethook(co)
+	local starttime = gettime()
 	local page, err, headers, status = http.request(url, postData)
-	debug.sethook(co,hookf,hookm,hookc)
+	local offset = gettime() - starttime
+	timeoffset = timeoffset + offset
+	cprint("(request.hack) Going back in time: " .. offset .. "s")
 	if not page then
 		cprint("(request) request failed",err)
 	end
