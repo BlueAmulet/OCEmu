@@ -244,6 +244,7 @@ end
 function cec.fill(x1, y1, w, h, char) -- Fills a portion of the screen at the specified position with the specified size with the specified character.
 	--TODO
 	cprint("(cec) screen.fill", x1, y1, w, h, char)
+	x1,y1,w,h=math.trunc(x1),math.trunc(y1),math.trunc(w),math.trunc(h)
 	if w <= 0 or h <= 0 then
 		return true
 	end
@@ -284,10 +285,13 @@ function cec.setPaletteColor(index, color) -- Set the palette color at the speci
 end
 function cec.get(x, y) -- Get the value displayed on the screen at the specified index, as well as the foreground and background color. If the foreground or background is from the palette, returns the palette indices as fourth and fifth results, else nil, respectively.
 	cprint("(cec) screen.get", x, y)
+	x,y=math.trunc(x),math.trunc(y)
 	return screen.txt[y][x], screen.fg[y][x], screen.bg[y][x], screen.fgp[y][x], screen.bgp[y][x]
 end
 function cec.set(x, y, value, vertical) -- Plots a string value to the screen at the specified position. Optionally writes the string vertically.
+	-- TODO: Offscreen Y set is weird in OC.
 	cprint("(cec) screen.set", x, y, value, vertical)
+	x,y=math.trunc(x),math.trunc(y)
 	if vertical and x >= 1 and x <= width and y <= height then
 		for _,c in utf8.next, value do
 			if y >= 1 then
@@ -310,6 +314,7 @@ end
 function cec.copy(x1, y1, w, h, tx, ty) -- Copies a portion of the screen from the specified location with the specified size by the specified translation.
 	--TODO
 	cprint("(cec) screen.copy", x1, y1, w, h, tx, ty)
+	x1,y1,w,h,tx,ty=math.trunc(x1),math.trunc(y1),math.trunc(w),math.trunc(h),math.trunc(tx),math.trunc(ty)
 	if w <= 0 or h <= 0 then
 		return true
 	end

@@ -3,6 +3,10 @@ if elsa == nil then
 	return
 end
 
+function math.trunc(n)
+	return n < 0 and math.ceil(n) or math.floor(n)
+end
+
 -- load configuration
 elsa.filesystem.load("config.lua")()
 config.load()
@@ -24,6 +28,7 @@ conf = {
 		{"filesystem",nil,5,"loot/OpenOS",true},
 		{"filesystem",nil,nil,"tmpfs",false},
 		{"filesystem",nil,nil,nil,false},
+		{"internet"},
 		{"computer"},
 	}
 }

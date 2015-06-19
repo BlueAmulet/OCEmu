@@ -1,8 +1,13 @@
 -- internet component
-local obj = {}
 
-local socket = require("socket")
+local okay, socket = pcall(require, "socket")
+if not okay then
+	cprint("Cannot use internet component: " .. socket)
+	return
+end
 local url = require("socket.url")
+
+local obj = {}
 
 local function checkUri(address, port)
 	local parsed = url.parse(address)
@@ -42,7 +47,9 @@ function obj.connect(address, port) -- Opens a new TCP connection. Returns the h
 	client:settimeout(10)
 	local connected = false
 	local function connect()
-		local did, err = client:connect(address,port)
+		cprint("(socket) connect",host,port)
+		local did, err = client:connect(host,port)
+		cprint("(socket) connect results",did,err)
 		if did then
 			connected = true
 			client:settimeout(0)
@@ -50,6 +57,7 @@ function obj.connect(address, port) -- Opens a new TCP connection. Returns the h
 	end
 	local fakesocket = {
 		read = function(n)
+			cprint("(socket) read",n)
 			-- TODO: Error handling
 			if not connected then connect() return "" end
 			if type(n) ~= "number" then n = math.huge end
@@ -61,6 +69,7 @@ function obj.connect(address, port) -- Opens a new TCP connection. Returns the h
 			end
 		end,
 		write = function(data)
+			cprint("(socket) write",data)
 			if not connected then connect() return 0 end
 			checkArg(1,data,"string")
 			local data, err, part = client:send(data)
@@ -71,9 +80,11 @@ function obj.connect(address, port) -- Opens a new TCP connection. Returns the h
 			end
 		end,
 		close = function()
+			cprint("(socket) close")
 			pcall(client.close,client)
 		end,
 		finishConnect = function()
+			cprint("(socket) finishConnect")
 			-- TODO: Does this actually error?
 			return connected
 		end
