@@ -25,9 +25,9 @@ conf = {
 	components = {
 		{"gpu",nil,0,160,50,3},
 		{"eeprom",nil,9,"lua/bios.lua"},
-		{"filesystem",nil,5,"loot/OpenOS",true},
+		{"filesystem",nil,7,"loot/OpenOS",true},
 		{"filesystem",nil,nil,"tmpfs",false},
-		{"filesystem",nil,nil,nil,false},
+		{"filesystem",nil,5,nil,false},
 		{"internet"},
 		{"computer"},
 	}

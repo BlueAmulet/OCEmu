@@ -7,6 +7,8 @@ if not okay then
 end
 local url = require("socket.url")
 
+component.connect("filesystem",gen_uuid(),nil,"lua/component/internet",true)
+
 local obj = {}
 
 local function checkUri(address, port)

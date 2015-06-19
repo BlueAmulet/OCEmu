@@ -15,32 +15,31 @@ local slotlist = {}
 local emuicc = {}
 local doclist = {}
 
--- Load components
-local components = conf.components
-for k,v in pairs(components) do
+component = {}
+
+function component.connect(...)
 	local address
-	if type(v[2]) == "string" then
-		address = v[2]
+	local info = table.pack(...)
+	checkArg(2,info[2],"string","number")
+	if type(info[2]) == "string" then
+		address = info[2]
 	else
-		math.randomseed(type(v[2]) == "number" and v[2] or k)
+		math.randomseed(info[2])
 		address = gen_uuid()
 	end
-	v[2] = address
-	local fn, err = elsa.filesystem.load("component/" .. v[1] .. ".lua")
+	info[2] = address
+	local fn, err = elsa.filesystem.load("component/" .. info[1] .. ".lua")
 	if not fn then
 		error(err,0)
 	end
-	local proxy, cec, doc = fn(table.unpack(v,2))
+	local proxy, cec, doc = fn(table.unpack(info,2))
 	proxy.address = address
-	proxy.type = proxy.type or v[1]
+	proxy.type = proxy.type or info[1]
 	proxylist[address] = proxy
 	emuicc[address] = cec
 	doclist[address] = doc
-	slotlist[address] = v[3]
+	slotlist[address] = info[3]
 end
-
-component = {}
-
 function component.exists(address)
 	checkArg(1,address,"string")
 	if proxylist[address] ~= nil then
@@ -84,6 +83,13 @@ function component.cecinvoke(address, method, ...)
 		end
 		return emuicc[address][method](...)
 	end
+end
+
+-- Load components
+local components = conf.components
+for k,v in pairs(components) do
+	v[2] = v[2] or k
+	component.connect(table.unpack(v))
 end
 
 env.component = {list = component.list}
