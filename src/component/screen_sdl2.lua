@@ -106,6 +106,7 @@ SDL.renderFillRect(renderer, ffi.C.NULL)
 SDL.setRenderTarget(renderer, ffi.C.NULL);
 
 function elsa.draw()
+	-- TODO: This causes issues in linux, test if it's necessary in windows or not
 	SDL.showWindow(window)
 	SDL.renderCopy(renderer, texture, ffi.C.NULL, ffi.C.NULL)
 	SDL.renderPresent(renderer)
@@ -330,14 +331,15 @@ end
 function cec.copy(x1, y1, w, h, tx, ty) -- Copies a portion of the screen from the specified location with the specified size by the specified translation.
 	--TODO
 	cprint("(cec) screen.copy", x1, y1, w, h, tx, ty)
+	-- TODO: copy has issues with wide characters
 	x1,y1,w,h,tx,ty=math.trunc(x1),math.trunc(y1),math.trunc(w),math.trunc(h),math.trunc(tx),math.trunc(ty)
-	if w <= 0 or h <= 0 then
+	if w <= 0 or h <= 0 or (tx == 0 and ty == 0) then
 		return true
 	end
 	local x2 = x1+w-1
 	local y2 = y1+h-1
-	-- Not dealing with offscreen stuff yet
-	if x1 < 1 or y1 < 1 or x2 > width or y2 > height or (tx == 0 and ty == 0) then
+	-- TODO: Not dealing with offscreen stuff yet
+	if x1 < 1 or y1 < 1 or x2 > width or y2 > height then
 		return true
 	end
 	local copy = {txt={},fg={},bg={},fgp={},bgp={}}
