@@ -3,21 +3,24 @@ local env = ...
 local utf8 = require("utf8")
 
 env.unicode = {
-	lower = utf8.lower,
-	upper = utf8.upper,
 	char = utf8.char,
 	len = utf8.len,
 	reverse = utf8.reverse,
 	sub = utf8.sub,
 }
 
-local function getCharWidth(char)
-	if unifont[char] ~= nil then
-		return #unifont[char] / 32
-	end
-	return 1
+function env.unicode.lower(str)
+	cprint("unicode.lower", str)
+	if type(str) == "number" then str = tostring(str) end
+	checkArg(1,str,"string")
+	return utf8.lower(str)
 end
-
+function env.unicode.upper(str)
+	cprint("unicode.upper", str)
+	if type(str) == "number" then str = tostring(str) end
+	checkArg(1,str,"string")
+	return utf8.upper(str)
+end
 function env.unicode.isWide(str)
 	cprint("unicode.isWide", str)
 	checkArg(1,str,"string")

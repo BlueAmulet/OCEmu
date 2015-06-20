@@ -45,27 +45,28 @@ machine = {
 	signals = {},
 }
 
-local function _checkArg(pos, n, have, ...)
+local function check(have, want, ...)
+	if not want then
+		return false
+	else
+		return have == want or check(have, ...)
+	end
+end
+
+function checkArg(n, have, ...)
 	have = type(have)
-	local function check(want, ...)
-		if not want then
-			return false
-		else
-			return have == want or check(...)
-		end
-	end
-	if not check(...) then
+	if not check(have, ...) then
 	    local msg = string.format("bad argument #%d (%s expected, got %s)", n, table.concat({...}, " or "), have)
-		error(msg, pos)
+		error(msg, 3)
 	end
 end
 
-function checkArg(...)
-	_checkArg(4, ...)
-end
-
-function compCheckArg(...)
-	_checkArg(5, ...)
+function compCheckArg(n, have, ...)
+	have = type(have)
+	if not check(have, ...) then
+	    local msg = string.format("bad arguments #%d (%s expected, got %s)", n, table.concat({...}, " or "), have)
+		error(msg, 4)
+	end
 end
 
 if true then
@@ -235,6 +236,12 @@ unifont = {}
 for line in elsa.filesystem.lines("unifont.hex") do
 	local a,b = line:match("(.+):(.*)")
 	unifont[tonumber(a,16)] = b
+end
+function getCharWidth(char)
+	if unifont[char] ~= nil then
+		return #unifont[char] / 32
+	end
+	return 1
 end
 
 -- load api's into environment

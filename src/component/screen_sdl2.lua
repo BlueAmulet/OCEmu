@@ -111,8 +111,8 @@ function elsa.draw()
 	SDL.renderPresent(renderer)
 end
 
-local char8 = ffi.new("uint32_t[?]", 8*16);
-local char16 = ffi.new("uint32_t[?]", 16*16);
+local char8 = ffi.new("uint32_t[?]", 8*16)
+local char16 = ffi.new("uint32_t[?]", 16*16)
 local function renderChar(char,x,y,fg,bg)
 	if unifont[char] == nil then
 		char = 63
@@ -139,15 +139,31 @@ local function renderChar(char,x,y,fg,bg)
 	SDL.updateTexture(texture, ffi.new("SDL_Rect",{x=x,y=y,w=size*4,h=16}), pchar, (size*4) * ffi.sizeof("uint32_t"))
 end
 
-local function setPos(x,y,c,fg,bg)
-	local renderchange = screen.txt[y][x] ~= utf8.char(c) or screen.bg[y][x] ~= scrbgc or (screen.txt[y][x] ~= " " and screen.fg[y][x] ~= scrfgc)
+local function screenSet(x,y,c)
 	screen.txt[y][x] = utf8.char(c)
 	screen.fg[y][x] = scrfgc
 	screen.bg[y][x] = scrbgc
 	screen.fgp[y][x] = scrfgp
 	screen.bgp[y][x] = scrbgp
+end
+
+local function setPos(x,y,c,fg,bg)
+	local renderchange = screen.txt[y][x] ~= utf8.char(c) or screen.bg[y][x] ~= scrbgc or (screen.txt[y][x] ~= " " and screen.fg[y][x] ~= scrfgc)
+	local charWidth = getCharWidth(c)
+	local renderafter = getCharWidth(utf8.byte(screen.txt[y][x])) > 1 and charWidth == 1 and x < width
+	if x > 1 and getCharWidth(utf8.byte(screen.txt[y][x-1])) > 1 then
+		renderchange = false
+	else
+		screenSet(x,y,c)
+	end
 	if renderchange then
 		renderChar(c,(x-1)*8,(y-1)*16,fg,bg)
+		if charWidth > 1 and x < width then
+			screenSet(x+1,y,32)
+		end
+	end
+	if renderafter then
+		renderChar(32,x*8,(y-1)*16,screen.fg[y][x+1],screen.bg[y][x+1])
 	end
 end
 
@@ -248,14 +264,14 @@ function cec.fill(x1, y1, w, h, char) -- Fills a portion of the screen at the sp
 	if w <= 0 or h <= 0 then
 		return true
 	end
-	local x2 = x1+w-1
+	local code = utf8.byte(char)
+	local x2 = x1+(w*getCharWidth(code))-1
 	local y2 = y1+h-1
 	if x2 < 1 or y2 < 1 or x1 > width or y1 > height then
 		return true
 	end
-	local code = utf8.byte(char)
 	for y = y1,y2 do
-		for x = x1,x2 do
+		for x = x1,x2,getCharWidth(code) do
 			setPos(x,y,code,scrfgc,scrbgc)
 		end
 	end
@@ -305,7 +321,7 @@ function cec.set(x, y, value, vertical) -- Plots a string value to the screen at
 			if x >= 1 then
 				setPos(x,y,c,scrfgc,scrbgc)
 			end
-			x = x + #unifont[c]/32
+			x = x + getCharWidth(c)
 			if x > width then break end
 		end
 	end
