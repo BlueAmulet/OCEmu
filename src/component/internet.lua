@@ -3,7 +3,7 @@
 local okay, socket = pcall(require, "socket")
 if not okay then
 	cprint("Cannot use internet component: " .. socket)
-	return
+	return nil, "missing socket library"
 end
 require("support.http_patch")
 local url = require("socket.url")
@@ -145,9 +145,18 @@ function obj.request(url, postData) -- Starts an HTTP request. If this returns t
 		end
 	end
 	local procotol, code, message
+	local bad = false
 	if status then
 		protocol, code, message = status:match("(.-) (.-) (.*)")
 		code = tonumber(code)
+		if code >= 400 then
+			bad = true
+			if code == 404 or code == 410 then
+				page = url
+			else
+				page = "Server returned HTTP response code: " .. code .. " for URL: " .. url
+			end
+		end
 	end
 	local closed = false
 	local fakesocket = {
@@ -160,6 +169,8 @@ function obj.request(url, postData) -- Starts an HTTP request. If this returns t
 				return nil, "Connection refused"
 			elseif page == "" then
 				return nil
+			elseif bad then
+				return nil, page
 			else
 				-- Return up to 8192 bytes
 				local data = page:sub(1,8192)
@@ -169,7 +180,7 @@ function obj.request(url, postData) -- Starts an HTTP request. If this returns t
 		end,
 		response = function()
 			cprint("(socket) response")
-			if headers == nil then
+			if headers == nil or bad then
 				return nil
 			end
 			return code, message, headers
@@ -185,6 +196,8 @@ function obj.request(url, postData) -- Starts an HTTP request. If this returns t
 				return nil, "connection lost"
 			elseif headers == nil then
 				return nil, "Connection refused"
+			elseif bad then
+				return nil, page
 			end
 			return true
 		end

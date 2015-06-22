@@ -1,4 +1,7 @@
-local address, slot, maxwidth, maxheight, maxtier = ...
+local address, _, maxwidth, maxheight, maxtier = ...
+compCheckArg(1,maxwidth,"number")
+compCheckArg(2,maxheight,"number")
+compCheckArg(3,maxtier,"number")
 
 local ffi = require("ffi")
 local utf8 = require("utf8")
@@ -106,8 +109,6 @@ SDL.renderFillRect(renderer, ffi.C.NULL)
 SDL.setRenderTarget(renderer, ffi.C.NULL);
 
 function elsa.draw()
-	-- TODO: This causes issues in linux, test if it's necessary in windows or not
-	SDL.showWindow(window)
 	SDL.renderCopy(renderer, texture, ffi.C.NULL, ffi.C.NULL)
 	SDL.renderPresent(renderer)
 end
@@ -359,7 +360,6 @@ function cec.copy(x1, y1, w, h, tx, ty) -- Copies a portion of the screen from t
 	end
 	for y = math.max(math.min(y1+ty, height), 1), math.max(math.min(y2+ty, height), 1) do
 		for x = math.max(math.min(x1+tx, width), 1), math.max(math.min(x2+tx, width), 1) do
-			local renderchange = screen.txt[y][x] ~= copy.txt[y-y1-ty][x-x1-tx] or screen.bg[y][x] ~= copy.bg[y-y1-ty][x-x1-tx] or (screen.txt[y][x] ~= " " and screen.fg[y][x] ~= copy.fg[y-y1-ty][x-x1-tx])
 			screen.txt[y][x] = copy.txt[y-y1-ty][x-x1-tx]
 			screen.fg[y][x] = copy.fg[y-y1-ty][x-x1-tx]
 			screen.bg[y][x] = copy.bg[y-y1-ty][x-x1-tx]

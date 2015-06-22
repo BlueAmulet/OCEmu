@@ -30,6 +30,7 @@ conf = {
 		{"filesystem",nil,5,nil,false},
 		{"internet"},
 		{"computer"},
+		{"ocemu"},
 	}
 }
 if elsa.SDL then

@@ -1,4 +1,8 @@
-local address, slot, filename = ...
+local address, _, filename = ...
+compCheckArg(1,filename,"string")
+if not elsa.filesystem.exists(filename) then	
+	error("no such file",3)
+end
 
 local crc32 = require("support.crc32")
 

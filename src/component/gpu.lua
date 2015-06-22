@@ -1,4 +1,7 @@
-local address, slot, maxwidth, maxheight, maxtier = ...
+local address, _, maxwidth, maxheight, maxtier = ...
+compCheckArg(1,maxwidth,"number")
+compCheckArg(2,maxheight,"number")
+compCheckArg(3,maxtier,"number")
 
 local lua_utf8 = require("utf8")
 

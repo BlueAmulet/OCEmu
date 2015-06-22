@@ -27,18 +27,41 @@ function component.connect(...)
 		math.randomseed(info[2])
 		address = gen_uuid()
 	end
+	if proxylist[address] ~= nil then
+		return nil, "component already at address"
+	end
 	info[2] = address
 	local fn, err = elsa.filesystem.load("component/" .. info[1] .. ".lua")
 	if not fn then
-		error(err,0)
+		return nil, err
 	end
 	local proxy, cec, doc = fn(table.unpack(info,2))
+	if not proxy then
+		return nil, cec or "no component added"
+	end
 	proxy.address = address
 	proxy.type = proxy.type or info[1]
 	proxylist[address] = proxy
 	emuicc[address] = cec
 	doclist[address] = doc
 	slotlist[address] = info[3]
+	if boot_machine then
+		table.insert(machine.signals,{"component_added",address,proxy.type})
+	end
+	return true
+end
+function component.disconnect(address)
+	checkArg(1,address,"string")
+	if proxylist[address] == nil then
+		return nil, "no component at address"
+	end
+	local thetype = proxylist[address].type
+	proxylist[address] = nil
+	emuicc[address] = nil
+	doclist[address] = nil
+	slotlist[address] = nil
+	table.insert(machine.signals,{"component_removed",address,thetype})
+	return true
 end
 function component.exists(address)
 	checkArg(1,address,"string")

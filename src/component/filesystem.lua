@@ -1,4 +1,6 @@
-local address, slot, directory, readonly = ...
+local address, _, directory, readonly = ...
+compCheckArg(1,directory,"string","nil")
+compCheckArg(2,readonly,"boolean")
 
 if directory == nil then
 	directory = elsa.filesystem.getSaveDirectory() .. "/" .. address
