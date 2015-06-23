@@ -7,6 +7,7 @@ cprint("http_patch start")
 -- Patch data
 local patches = {
 	{[[if headers[name] then headers[name] = headers[name] .. ", " .. value]],[[if headers[name] then if type(headers[name]) == "string" then headers[name] = {headers[name]} end headers[name][#headers[name]+1] = value]]},
+	{[[local nreqt = adjustrequest(reqt)]],[[local nreqt = adjustrequest(reqt) if nreqt.scheme == "http" then nreqt.create = nil if nreqt.port == "443" then nreqt.port = "80" end end]]},
 }
 package.loaded["socket.http"] = nil
 local path = package.searchpath("socket.http",package.path)

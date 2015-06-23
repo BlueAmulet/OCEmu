@@ -5,7 +5,7 @@ local lua_utf8 = require("utf8")
 local SDL = elsa.SDL
 
 -- Conversion table for SDL2 keys to LWJGL key codes
-local keys = require("support.sdl_to_lwjgl")
+local keys,codes = elsa.filesystem.load("support/sdl_to_lwjgl.lua")()
 
 local code2char = {}
 
@@ -24,15 +24,16 @@ end
 function elsa.keydown(event)
 	local keyevent = ffi.cast("SDL_KeyboardEvent", event)
 	local key = keyevent.keysym.scancode
-	cprint("keydown",keys[key])
-	table.insert(kbdcodes,{type="key_down",addr=address,code=keys[key] or 0})
+	local lwjgl = keys[key]
+	cprint("keydown",keyevent.keysym.scancode,lwjgl)
 	-- TODO: Lovely SDL Hacks
-	if keys[key] == 15 then
-		setLatest(9)
-	elseif keys[key] == 28 or keys[key] == 156 then
-		setLatest(13)
+	if lwjgl ~= 1 then -- Escape
+		table.insert(kbdcodes,{type="key_down",addr=address,code=lwjgl or 0})
 	end
-	if keys[key] == 210 then
+	if lwjgl ~= nil and codes[lwjgl] ~= nil then
+		setLatest(codes[lwjgl])
+	end
+	if lwjgl == 210 then
 		if SDL.hasClipboardText() > 0 then
 			table.insert(machine.signals,{"clipboard",address,ffi.string(SDL.getClipboardText())})
 		end
@@ -42,8 +43,11 @@ end
 function elsa.keyup(event)
 	local keyevent = ffi.cast("SDL_KeyboardEvent", event)
 	local key = keyevent.keysym.scancode
-	cprint("keydown",keys[key])
-	table.insert(kbdcodes,{type="key_up",addr=address,code=keys[key],char=code2char[keys[key]]})
+	local lwjgl = keys[key]
+	cprint("keydown",keyevent.keysym.scancode,lwjgl)
+	if key ~= 41 then -- Escape
+		table.insert(kbdcodes,{type="key_up",addr=address,code=lwjgl or 0,char=code2char[lwjgl]})
+	end
 end
 
 -- keyboard component

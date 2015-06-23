@@ -7,8 +7,8 @@ if not okay then
 end
 require("support.http_patch")
 local url = require("socket.url")
-local okay, http = pcall(require, "ssl.https")
-if not okay then
+local httpsok, http = pcall(require, "ssl.https")
+if not httpsok then
 	cprint("Cannot use HTTPS: " .. http)
 	http = require("socket.http")
 end
@@ -16,6 +16,11 @@ end
 component.connect("filesystem",gen_uuid(),nil,"lua/component/internet",true)
 
 local obj = {}
+
+local function string_trim(s)
+	local from = s:match"^%s*()"
+	return from > #s and "" or s:match(".*%S", from)
+end
 
 local function checkUri(address, port)
 	local parsed = url.parse(address)
@@ -117,6 +122,19 @@ function obj.request(url, postData) -- Starts an HTTP request. If this returns t
 		return nil, "http requests are unavailable"
 	end
 	-- TODO: Check for too many connections
+	url = string_trim(url)
+	-- TODO: Use url.parse
+	local protocol = url:match("(.-):")
+	if protocol == "http" then
+	elseif protocol == "https" then
+		if not httpsok then
+			return nil, "unsupported protocol"
+		end
+	elseif protocol == "ftp" or protocol == "mailto" then
+		return nil, "unsupported protocol"
+	else
+		return nil, "invalid address"
+	end
 	if type(postData) ~= "string" then
 		postData = nil
 	end
