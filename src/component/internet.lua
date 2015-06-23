@@ -11,6 +11,8 @@ local httpsok, http = pcall(require, "ssl.https")
 if not httpsok then
 	cprint("Cannot use HTTPS: " .. http)
 	http = require("socket.http")
+else
+	http.PORT = nil
 end
 
 component.connect("filesystem",gen_uuid(),nil,"lua/component/internet",true)
