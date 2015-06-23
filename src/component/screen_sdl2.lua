@@ -5,20 +5,20 @@ compCheckArg(3,maxtier,"number")
 
 local ffi = require("ffi")
 local utf8 = require("utf8")
+local bit = require("bit32")
 local SDL = elsa.SDL
 
 local width, height, tier = maxwidth, maxheight, maxtier
 local scrfgc, scrfgp = 0xFFFFFF
 local scrbgc, scrfgp = 0x000000
-local palcol
-if tier == 3 then
-	palcol = {}
-	for i = 0,15 do
-		palcol[i] = i * 0x111111
-	end
-else
-	palcol = {[0]=0xFFFFFF,0xFFCC33,0xCC66CC,0x6699FF,0xFFFF33,0x33CC33,0xFF6699,0x333333,0xCCCCCC,0x336699,0x9933CC,0x333399,0x663300,0x336600,0xFF3333,0x000000}
+local scrrfc, srcrbc = scrfgc, scrbgc
+local palcol = {}
+
+t3pal = {}
+for i = 0,15 do
+	t3pal[i] = (i+1)*0x0F0F0F
 end
+local t2pal = {[0]=0xFFFFFF,0xFFCC33,0xCC66CC,0x6699FF,0xFFFF33,0x33CC33,0xFF6699,0x333333,0xCCCCCC,0x336699,0x9933CC,0x333399,0x663300,0x336600,0xFF3333,0x000000}
 local screen = {txt = {}, fg = {}, bg = {}, fgp = {}, bgp = {}}
 for y = 1,height do
 	screen.txt[y] = {}
@@ -33,6 +33,26 @@ for y = 1,height do
 		screen.fgp[y][x] = scrfgp
 		screen.bgp[y][x] = scrbgp
 	end
+end
+local function loadPalette()
+	local palcopy
+	if tier == 3 then
+		palcopy = t3pal
+	else
+		palcopy = t2pal
+	end
+	for i = 0,15 do
+		palcol[i] = palcopy[i]
+	end
+	if scrfgp then
+		scrrfc, scrfgc = palcol[scrfgp], palcol[scrfgp]
+	end
+	if scrbgp then
+		scrrbc, scrbgc = palcol[scrbgp], palcol[scrbgp]
+	end
+end
+if tier > 1 then
+	loadPalette()
 end
 
 local buttons = {[SDL.BUTTON_LEFT] = 0, [SDL.BUTTON_RIGHT] = 1}
@@ -169,6 +189,56 @@ local function setPos(x,y,c,fg,bg)
 	end
 end
 
+local function extract(value)
+	return bit.rshift(bit.band(value,0xFF0000),16),
+		bit.rshift(bit.band(value,0xFF00),8),
+		bit.band(value,0xFF)
+end
+
+local function compare(value1, value2)
+	local r1,g1,b1 = extract(value1)
+	local r2,g2,b2 = extract(value2)
+	local dr,dg,db = r1-r2,g1-g2,b1-b2
+	return 0.2126*dr^2 + 0.7152*dg^2 + 0.0722*db^2
+end
+
+local function searchPalette(value)
+	local score, index = math.huge
+	for i = 0,15 do
+		local tscore = compare(value,palcol[i])
+		if score > tscore then
+			score = tscore
+			index = i
+		end
+	end
+	return index, score
+end
+
+local function getColor(value)
+	if tier == 3 then
+		local pi,ps = searchPalette(value)
+		local r,g,b = extract(value)
+		r=math.floor(math.floor(r*5/255+0.5)*255/5+0.5)
+		g=math.floor(math.floor(g*7/255+0.5)*255/7+0.5)
+		b=math.floor(math.floor(b*4/255+0.5)*255/4+0.5)
+		local defc = r*65536 + g*256 + b
+		local defs = compare(value, defc)
+		if defs < ps then
+			return defc
+		else
+			return palcol[pi]
+		end
+	elseif tier == 2 then
+		return palcol[searchPalette(value)]
+	else
+		if value > 0 then
+			return 0xFFFFFF -- TODO: Configuration color
+		else
+			return 0
+		end
+	end
+end
+
 local touchinvert = false
 local precise = false
 
@@ -227,25 +297,27 @@ local cec = {}
 
 function cec.getForeground() -- Get the current foreground color and whether it's from the palette or not.
 	cprint("(cec) screen.getForeground")
-	return scrfgc, nil
+	return scrrfc, scrfgp
 end
 function cec.setForeground(value, palette) -- Sets the foreground color to the specified value. Optionally takes an explicit palette index. Returns the old value and if it was from the palette its palette index.
 	cprint("(cec) screen.setForeground", value, palette)
-	local old = scrfgc
-	scrfgc = palette and palcol[value] or value
+	local oldc, oldp = scrrfc, scrfgp
+	scrrfc = palette and palcol[value] or value
+	scrfgc = palette and scrrfc or getColor(scrrfc)
 	scrfgp = palette and value
-	return old, nil
+	return oldc, oldp
 end
 function cec.getBackground() -- Get the current background color and whether it's from the palette or not.
 	cprint("(cec) screen.getBackground")
-	return scrbgc, nil
+	return scrrbc, scrbgp
 end
 function cec.setBackground(value, palette) -- Sets the background color to the specified value. Optionally takes an explicit palette index. Returns the old value and if it was from the palette its palette index.
 	cprint("(cec) screen.setBackground", value, palette)
-	local old = scrbgc
-	scrbgc = palette and palcol[value] or value
+	local oldc, oldp = scrrbc, scrbgp
+	scrrbc = palette and palcol[value] or value
+	scrbgc = palette and scrrbc or getColor(scrrbc)
 	scrbgp = palette and value
-	return old, nil
+	return oldc, oldp
 end
 function cec.getDepth() -- Returns the currently set color depth.
 	cprint("(cec) screen.getDepth")
@@ -254,6 +326,12 @@ end
 function cec.setDepth(depth) -- Set the color depth. Returns the previous value.
 	cprint("(cec) screen.setDepth", depth)
 	tier = math.min(depth, maxtier)
+	if tier > 1 then
+		loadPalette()
+	end
+	scrfgc = getColor(scrrfc)
+	scrfbc = getColor(scrrbc)
+	-- TODO: Lowering the depth recolors the entire screen
 end
 function cec.maxDepth() -- Get the maximum supported color depth.
 	cprint("(cec) screen.maxDepth")
@@ -297,9 +375,17 @@ function cec.getPaletteColor(index) -- Get the palette color at the specified pa
 	return palcol[index]
 end
 function cec.setPaletteColor(index, color) -- Set the palette color at the specified palette index. Returns the previous value.
-	--TODO
 	cprint("(cec) screen.setPaletteColor", index, color)
+	local old = palcol[index]
 	palcol[index] = color
+	if scrfgp == index then
+		scrrfc, scrfgc = color, color
+	end
+	if scrbgp == index then
+		scrrbc, scrbgc = color, color
+	end
+	-- TODO: Palette changes recolor the screen for respective characters
+	return old
 end
 function cec.get(x, y) -- Get the value displayed on the screen at the specified index, as well as the foreground and background color. If the foreground or background is from the palette, returns the palette indices as fourth and fifth results, else nil, respectively.
 	cprint("(cec) screen.get", x, y)
