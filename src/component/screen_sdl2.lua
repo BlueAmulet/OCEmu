@@ -172,20 +172,22 @@ end
 local function setPos(x,y,c,fg,bg)
 	local renderchange = screen.txt[y][x] ~= utf8.char(c) or screen.bg[y][x] ~= scrbgc or (screen.txt[y][x] ~= " " and screen.fg[y][x] ~= scrfgc)
 	local charWidth = getCharWidth(c)
-	local renderafter = getCharWidth(utf8.byte(screen.txt[y][x])) > 1 and charWidth == 1 and x < width
-	if x > 1 and getCharWidth(utf8.byte(screen.txt[y][x-1])) > 1 then
-		renderchange = false
-	else
-		screenSet(x,y,c)
-	end
-	if renderchange then
-		renderChar(c,(x-1)*8,(y-1)*16,fg,bg)
-		if charWidth > 1 and x < width then
-			screenSet(x+1,y,32)
+	if charWidth == 1 or x < width then
+		local renderafter = getCharWidth(utf8.byte(screen.txt[y][x])) > 1 and charWidth == 1 and x < width
+		if x > 1 and getCharWidth(utf8.byte(screen.txt[y][x-1])) > 1 then
+			renderchange = false
+		else
+			screenSet(x,y,c)
 		end
-	end
-	if renderafter then
-		renderChar(32,x*8,(y-1)*16,screen.fg[y][x+1],screen.bg[y][x+1])
+		if renderchange then
+			renderChar(c,(x-1)*8,(y-1)*16,fg,bg)
+			if charWidth > 1 then
+				screenSet(x+1,y,32)
+			end
+		end
+		if renderafter then
+			renderChar(32,x*8,(y-1)*16,screen.fg[y][x+1],screen.bg[y][x+1])
+		end
 	end
 end
 
@@ -214,7 +216,12 @@ local function searchPalette(value)
 	return index, score
 end
 
-local function getColor(value)
+local function getColor(value, sel)
+	if sel then
+		scrfgp = nil
+	else
+		scrbgp = nil
+	end
 	if tier == 3 then
 		local pi,ps = searchPalette(value)
 		local r,g,b = extract(value)
@@ -226,10 +233,21 @@ local function getColor(value)
 		if defs < ps then
 			return defc
 		else
+			if sel then
+				scrfgp = pi
+			else
+				scrbgp = pi
+			end
 			return palcol[pi]
 		end
 	elseif tier == 2 then
-		return palcol[searchPalette(value)]
+		local pi = searchPalette(value)
+		if sel then
+			scrfgp = pi
+		else
+			scrbgp = pi
+		end
+		return palcol[pi]
 	else
 		if value > 0 then
 			return 0xFFFFFF -- TODO: Configuration color
@@ -303,8 +321,8 @@ function cec.setForeground(value, palette) -- Sets the foreground color to the s
 	cprint("(cec) screen.setForeground", value, palette)
 	local oldc, oldp = scrrfc, scrfgp
 	scrrfc = palette and palcol[value] or value
-	scrfgc = palette and scrrfc or getColor(scrrfc)
 	scrfgp = palette and value
+	scrfgc = palette and scrrfc or getColor(scrrfc,true)
 	return oldc, oldp
 end
 function cec.getBackground() -- Get the current background color and whether it's from the palette or not.
@@ -315,8 +333,8 @@ function cec.setBackground(value, palette) -- Sets the background color to the s
 	cprint("(cec) screen.setBackground", value, palette)
 	local oldc, oldp = scrrbc, scrbgp
 	scrrbc = palette and palcol[value] or value
-	scrbgc = palette and scrrbc or getColor(scrrbc)
 	scrbgp = palette and value
+	scrbgc = palette and scrrbc or getColor(scrrbc,false)
 	return oldc, oldp
 end
 function cec.getDepth() -- Returns the currently set color depth.
@@ -329,8 +347,8 @@ function cec.setDepth(depth) -- Set the color depth. Returns the previous value.
 	if tier > 1 then
 		loadPalette()
 	end
-	scrfgc = getColor(scrrfc)
-	scrfbc = getColor(scrrbc)
+	scrfgc = getColor(scrrfc,true)
+	scrfbc = getColor(scrrbc,false)
 	-- TODO: Lowering the depth recolors the entire screen
 end
 function cec.maxDepth() -- Get the maximum supported color depth.
@@ -355,6 +373,7 @@ function cec.fill(x1, y1, w, h, char) -- Fills a portion of the screen at the sp
 			setPos(x,y,code,scrfgc,scrbgc)
 		end
 	end
+	return true
 end
 function cec.getResolution() -- Get the current screen resolution.
 	cprint("(cec) screen.getResolution")
@@ -362,8 +381,9 @@ function cec.getResolution() -- Get the current screen resolution.
 end
 function cec.setResolution(newwidth, newheight) -- Set the screen resolution. Returns true if the resolution changed.
 	cprint("(cec) screen.setResolution", newwidth, newheight)
+	newwidth,newheight = math.floor(newwidth),math.floor(newheight)
 	local oldwidth, oldheight = width, height
-	width, height = math.min(newwidth, maxwidth), math.min(newheight, maxheight)
+	width, height = newwidth, newheight
 	return oldwidth ~= width or oldheight ~= height
 end
 function cec.maxResolution() -- Get the maximum screen resolution.
@@ -444,8 +464,10 @@ function cec.copy(x1, y1, w, h, tx, ty) -- Copies a portion of the screen from t
 			copy.bgp[y-y1][x-x1] = screen.bgp[y][x]
 		end
 	end
-	for y = math.max(math.min(y1+ty, height), 1), math.max(math.min(y2+ty, height), 1) do
-		for x = math.max(math.min(x1+tx, width), 1), math.max(math.min(x2+tx, width), 1) do
+	local my1,my2 = math.max(math.min(y1+ty, height), 1), math.max(math.min(y2+ty, height), 1)
+	local mx1,mx2 = math.max(math.min(x1+tx, width), 1), math.max(math.min(x2+tx, width), 1)
+	for y = my1,my2 do
+		for x = mx1,mx2 do
 			screen.txt[y][x] = copy.txt[y-y1-ty][x-x1-tx]
 			screen.fg[y][x] = copy.fg[y-y1-ty][x-x1-tx]
 			screen.bg[y][x] = copy.bg[y-y1-ty][x-x1-tx]

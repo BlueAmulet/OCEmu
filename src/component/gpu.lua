@@ -7,7 +7,8 @@ local lua_utf8 = require("utf8")
 
 local bindaddress
 local depthTbl = {1,4,8}
-local rdepthTbl = {1,nil,nil,2,nil,nil,nil,3}
+local rdepthTbl = {1,[4]=2,[8]=3}
+local depthNames = {"OneBit","FourBit","EightBit"}
 
 -- gpu component
 local obj = {}
@@ -82,7 +83,9 @@ function obj.setDepth(depth) -- Set the color depth. Returns the previous value.
 	if rdepthTbl[depth] == nil or rdepthTbl[depth] > math.max(scrmax, maxtier) then
 		error("unsupported depth",3)
 	end
-	return component.cecinvoke(bindaddress, "setDepth", rdepthTbl[depth])
+	local old = depthNames[component.cecinvoke(bindaddress, "getDepth")]
+	component.cecinvoke(bindaddress, "setDepth", rdepthTbl[depth])
+	return old
 end
 function obj.maxDepth() -- Get the maximum supported color depth.
 	cprint("gpu.maxDepth")
@@ -120,6 +123,11 @@ function obj.setResolution(width, height) -- Set the screen resolution. Returns 
 	compCheckArg(2,height,"number")
 	if bindaddress == nil then
 		return nil, "no screen"
+	end
+	local smw,smh = component.cecinvoke(bindaddress, "maxResolution")
+	smw,smh = math.min(smw,maxwidth),math.min(smh,maxheight)
+	if width <= 0 or width >= smw + 1 or height <= 0 or height >= smh + 1 then
+		error("unsupported resolution",3)
 	end
 	return component.cecinvoke(bindaddress, "setResolution", width, height)
 end
@@ -170,7 +178,7 @@ function obj.get(x, y) -- Get the value displayed on the screen at the specified
 		return nil, "no screen"
 	end
 	local w,h = component.cecinvoke(bindaddress, "getResolution")
-	if x < 1 or x > w or y < 1 or y > h then
+	if x < 1 or x >= w+1 or y < 1 or y >= h+1 then
 		error("index out of bounds",3)
 	end
 	return component.cecinvoke(bindaddress, "get", x, y)
