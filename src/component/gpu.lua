@@ -79,6 +79,7 @@ function obj.setDepth(depth) -- Set the color depth. Returns the previous value.
 	if bindaddress == nil then
 		return nil, "no screen"
 	end
+	depth = math.floor(depth)
 	local scrmax = component.cecinvoke(bindaddress, "maxDepth")
 	if rdepthTbl[depth] == nil or rdepthTbl[depth] > math.max(scrmax, maxtier) then
 		error("unsupported depth",3)

@@ -313,8 +313,12 @@ end
 
 local cec = {}
 
+-- TODO: For (get/set)(Fore/Back)ground, they return what was passed in, rather than the current screen state
 function cec.getForeground() -- Get the current foreground color and whether it's from the palette or not.
 	cprint("(cec) screen.getForeground")
+	if scrfgp then
+		return scrfgp, true
+	end
 	return scrrfc, scrfgp
 end
 function cec.setForeground(value, palette) -- Sets the foreground color to the specified value. Optionally takes an explicit palette index. Returns the old value and if it was from the palette its palette index.
@@ -327,6 +331,9 @@ function cec.setForeground(value, palette) -- Sets the foreground color to the s
 end
 function cec.getBackground() -- Get the current background color and whether it's from the palette or not.
 	cprint("(cec) screen.getBackground")
+	if scrbgp then
+		return scrbgp, true
+	end
 	return scrrbc, scrbgp
 end
 function cec.setBackground(value, palette) -- Sets the background color to the specified value. Optionally takes an explicit palette index. Returns the old value and if it was from the palette its palette index.
@@ -404,7 +411,19 @@ function cec.setPaletteColor(index, color) -- Set the palette color at the speci
 	if scrbgp == index then
 		scrrbc, scrbgc = color, color
 	end
-	-- TODO: Palette changes recolor the screen for respective characters
+	for y = 1,height do
+		for x = 1,width do
+			if screen.fgp[y][x] == index or screen.bgp[y][x] == index then
+				if screen.fgp[y][x] == index then
+					screen.fg[y][x] = color
+				end
+				if screen.bgp[y][x] == index then
+					screen.bg[y][x] = color
+				end
+				renderChar(utf8.byte(screen.txt[y][x]),(x-1)*8,(y-1)*16,screen.fg[y][x],screen.bg[y][x])
+			end
+		end
+	end
 	return old
 end
 function cec.get(x, y) -- Get the value displayed on the screen at the specified index, as well as the foreground and background color. If the foreground or background is from the palette, returns the palette indices as fourth and fifth results, else nil, respectively.

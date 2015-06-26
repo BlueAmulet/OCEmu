@@ -2,11 +2,11 @@ local env = ...
 
 local utf8 = require("utf8")
 
-env.unicode = {
-	len = utf8.len,
-	reverse = utf8.reverse,
-	sub = utf8.sub,
-}
+local function cln(str)
+	return str:gsub("%z.*","") .. ""
+end
+
+env.unicode = {}
 
 function env.unicode.char(...)
 	cprint("unicode.char", ...)
@@ -21,17 +21,41 @@ function env.unicode.lower(str)
 	cprint("unicode.lower", str)
 	if type(str) == "number" then str = tostring(str) end
 	checkArg(1,str,"string")
+	str=cln(str)
 	return utf8.lower(str)
 end
 function env.unicode.upper(str)
 	cprint("unicode.upper", str)
 	if type(str) == "number" then str = tostring(str) end
 	checkArg(1,str,"string")
+	str=cln(str)
 	return utf8.upper(str)
+end
+function env.unicode.len(str)
+	cprint("unicode.len", str)
+	checkArg(1,str,"string")
+	str=cln(str)
+	return utf8.len(str)
+end
+function env.unicode.reverse(str)
+	cprint("unicode.reverse", str)
+	checkArg(1,str,"string")
+	str=cln(str)
+	return utf8.reverse(str)
+end
+function env.unicode.sub(str, i, j)
+	cprint("unicode.isWide", str)
+	checkArg(1,str,"string")
+	checkArg(2,i,"number")
+	if j == nil then j = -1 end
+	checkArg(3,j,"number")
+	str=cln(str)
+	return utf8.sub(str,i,j)
 end
 function env.unicode.isWide(str)
 	cprint("unicode.isWide", str)
 	checkArg(1,str,"string")
+	str=cln(str)
 	if #str == 0 then
 		error("String index out of range: 0",3)
 	end
@@ -41,6 +65,7 @@ end
 function env.unicode.charWidth(str)
 	cprint("unicode.charWidth", str)
 	checkArg(1,str,"string")
+	str=cln(str)
 	if #str == 0 then
 		error("String index out of range: 0",3)
 	end
@@ -50,6 +75,7 @@ end
 function env.unicode.wlen(str)
 	cprint("unicode.wlen", str)
 	checkArg(1,str,"string")
+	str=cln(str)
 	local length = 0
 	for _,c in utf8.next, str do
 		length = length + getCharWidth(c)
@@ -60,6 +86,7 @@ function env.unicode.wtrunc(str, count)
 	cprint("unicode.wtrunc", str, count)
 	checkArg(1,str,"string")
 	checkArg(2,count,"number")
+	str=cln(str)
 	if count == math.huge then
 		count = 0
 	end
