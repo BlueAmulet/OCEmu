@@ -98,35 +98,57 @@ function elsa.mousewheel(event)
 	table.insert(machine.signals,{"scroll",address,math.floor(x[0]/8)+1,math.floor(y[0]/16)+1,mwevent.y})
 end
 
-local window = SDL.createWindow("OCEmu - screen@" .. address, SDL.WINDOWPOS_CENTERED, SDL.WINDOWPOS_CENTERED, width*8, height*16, SDL.WINDOW_SHOWN)
-if window == ffi.C.NULL then
-	error(ffi.string(SDL.getError()))
-end
-local flags = SDL.RENDERER_TARGETTEXTURE
-if ffi.os == "Windows" then -- TODO: Investigate why
-	flags = flags + SDL.RENDERER_SOFTWARE
-end
-local renderer = SDL.createRenderer(window, -1, flags)
-if renderer == ffi.C.NULL then
-	error(ffi.string(SDL.getError()))
-end
-local texture = SDL.createTexture(renderer, SDL.PIXELFORMAT_ARGB8888, SDL.TEXTUREACCESS_TARGET, width*8, height*16);
-if texture == ffi.C.NULL then
-	error(ffi.string(SDL.getError()))
-end
-local copytexture = SDL.createTexture(renderer, SDL.PIXELFORMAT_ARGB8888, SDL.TEXTUREACCESS_TARGET, width*8, height*16);
-if copytexture == ffi.C.NULL then
-	error(ffi.string(SDL.getError()))
+local window, renderer, texture, copytexture
+local function createWindow()
+	if not window then
+		window = SDL.createWindow("OCEmu - screen@" .. address, SDL.WINDOWPOS_CENTERED, SDL.WINDOWPOS_CENTERED, width*8, height*16, SDL.WINDOW_SHOWN)
+		if window == ffi.C.NULL then
+			error(ffi.string(SDL.getError()))
+		end
+	end
+	local flags = SDL.RENDERER_TARGETTEXTURE
+	if ffi.os == "Windows" then -- TODO: Investigate why
+		flags = flags + SDL.RENDERER_SOFTWARE
+	end
+	renderer = SDL.createRenderer(window, -1, flags)
+	if renderer == ffi.C.NULL then
+		error(ffi.string(SDL.getError()))
+	end
+	texture = SDL.createTexture(renderer, SDL.PIXELFORMAT_ARGB8888, SDL.TEXTUREACCESS_TARGET, width*8, height*16);
+	if texture == ffi.C.NULL then
+		error(ffi.string(SDL.getError()))
+	end
+	copytexture = SDL.createTexture(renderer, SDL.PIXELFORMAT_ARGB8888, SDL.TEXTUREACCESS_TARGET, width*8, height*16);
+	if copytexture == ffi.C.NULL then
+		error(ffi.string(SDL.getError()))
+	end
+
+	-- Initialize all the textures to black
+	SDL.setRenderDrawColor(renderer, 0, 0, 0, 255)
+	SDL.renderFillRect(renderer, ffi.C.NULL)
+	SDL.setRenderTarget(renderer, texture);
+	SDL.renderFillRect(renderer, ffi.C.NULL)
+	SDL.setRenderTarget(renderer, copytexture);
+	SDL.renderFillRect(renderer, ffi.C.NULL)
+	SDL.setRenderTarget(renderer, ffi.C.NULL);
 end
 
--- Initialize all the textures to black
-SDL.setRenderDrawColor(renderer, 0, 0, 0, 255)
-SDL.renderFillRect(renderer, ffi.C.NULL)
-SDL.setRenderTarget(renderer, texture);
-SDL.renderFillRect(renderer, ffi.C.NULL)
-SDL.setRenderTarget(renderer, copytexture);
-SDL.renderFillRect(renderer, ffi.C.NULL)
-SDL.setRenderTarget(renderer, ffi.C.NULL);
+local function cleanUpWindow(wind)
+	SDL.destroyTexture(texture)
+	SDL.destroyTexture(copytexture)
+	SDL.destroyRenderer(renderer)
+	if wind then
+		SDL.destroyWindow(window)
+		window = nil
+	end
+	texture, copytexture, renderer = nil
+end
+
+createWindow()
+
+elsa.cleanup[#elsa.cleanup+1] = function()
+	cleanUpWindow(true)
+end
 
 function elsa.draw()
 	SDL.renderCopy(renderer, texture, ffi.C.NULL, ffi.C.NULL)
@@ -412,7 +434,42 @@ function cec.setResolution(newwidth, newheight) -- Set the screen resolution. Re
 	newwidth,newheight = math.floor(newwidth),math.floor(newheight)
 	local oldwidth, oldheight = width, height
 	width, height = newwidth, newheight
-	return oldwidth ~= width or oldheight ~= height
+	local changed =  oldwidth ~= width or oldheight ~= height
+	if changed then
+		-- TODO: What magical SDL hacks can I do to make this faster?
+		cleanUpWindow()
+		SDL.setWindowSize(window, width*8, height*16)
+		local xpos, ypos = ffi.new("int[1]"), ffi.new("int[1]")
+		SDL.getWindowPosition(window, xpos, ypos)
+		SDL.setWindowPosition(window, xpos[0] - (width-oldwidth)*4, ypos[0] - (height-oldheight)*4)
+		createWindow()
+		for y = 1,math.min(oldheight,height) do
+			for x = 1,math.min(oldwidth,width) do
+				if (screen.txt[y][x] ~= " " and screen.fg[y][x] ~= 0) or screen.bg[y][x] ~= 0 then
+					renderChar(utf8.byte(screen.txt[y][x]),(x-1)*8,(y-1)*16,screen.fg[y][x],screen.bg[y][x])
+				end
+			end
+		end
+		for y = 1,height do
+			for x = oldwidth+1,width do
+				screen.txt[y][x] = " "
+				screen.fg[y][x] = scrfgc
+				screen.bg[y][x] = scrbgc
+				screen.fgp[y][x] = scrfgp
+				screen.bgp[y][x] = scrbgp
+			end
+		end
+		for y = oldheight+1,height do
+			for x = 1,oldwidth do
+				screen.txt[y][x] = " "
+				screen.fg[y][x] = scrfgc
+				screen.bg[y][x] = scrbgc
+				screen.fgp[y][x] = scrfgp
+				screen.bgp[y][x] = scrbgp
+			end
+		end
+	end
+	return changed
 end
 function cec.maxResolution() -- Get the maximum screen resolution.
 	cprint("(cec) screen.maxResolution")
