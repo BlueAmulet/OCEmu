@@ -6,15 +6,21 @@ local comments = {
 ["computer.lua"]="Settings specific to the Lua architecture.",
 ["computer.lua.allowBytecode"]="Whether to allow loading precompiled bytecode via Lua's `load` function, or related functions (`loadfile`, `dofile`). Enable this only if you absolutely trust all users on your server and all Lua code you run. This can be a MASSIVE SECURITY RISK, since precompiled code can easily be used for exploits, running arbitrary code on the real server! I cannot stress this enough: only enable this is you know what you're doing.",
 ["computer.timeout"]="The time in seconds a program may run without yielding before it is forcibly aborted. This is used to avoid stupidly written or malicious programs blocking other computers by locking down the executor threads. Note that changing this won't have any effect on computers that are already running - they'll have to be rebooted for this to take effect.",
+["emulator"]="Emulator related settings. Components, accuracy, and debugging.",
+["emulator.components"]="Default components available to the computer.",
+["emulator.debug"]="Whether to enable the emulator's extremely verbose logging.",
 ["internet.enableHttp"]="Whether to allow HTTP requests via internet cards. When enabled, the `request` method on internet card components becomes available.",
 ["internet.enableTcp"]="Whether to allow TCP connections via internet cards. When enabled, the `connect` method on internet card components becomes available.",
+["misc"]="Other settings that you might find useful to tweak.",
+["misc.maxNetworkPacketSize"]="The maximum size of network packets to allow sending via network cards. This has *nothing to do* with real network traffic, it's just a limit for the network cards, mostly to reduce the chance of computer with a lot of RAM killing those with less by sending huge packets. This does not apply to HTTP traffic.",
+["misc.maxWirelessRange"]="The maximum distance a wireless message can be sent. In other words, this is the maximum signal strength a wireless network card supports. This is used to limit the search range in which to check for modems, which may or may not lead to performance issues for ridiculous ranges - like, you know, more than the loaded area. See also: `wirelessCostPerRange`.",
 }
 
 local function writeComment(text,file,size)
 	file:write(string.rep(" ",size) .. "--")
 	local line = ""
 	for word in text:gmatch("[%S]+") do
-		if #line + #word + 1 > 78 then
+		if #line + #word + 1 > 78-size then
 			line = ""
 			file:write("\n" .. string.rep(" ",size) .. "--")
 		end
@@ -40,10 +46,32 @@ function serialize(tbl,key,path,file,size)
 		if comments[spath] then
 			writeComment(comments[spath],file,size)
 		end
-		if type(v) == "table" then
+		if spath == "emulator.components" then
+			file:write(string.rep(" ",size) .. k .. " {\n\n")
+			for i = 1,#v do
+				local comp = v[i]
+				file:write(string.rep(" ",size+2) .. "{")
+				for i = 1,#comp do
+					if type(comp[i]) == "string" then
+						file:write(string.format("%q",comp[i]))
+					else
+						file:write(tostring(comp[i]))
+					end
+					if i < #comp then
+						file:write(", ")
+					end
+				end
+				file:write("}")
+				if i < #v then
+					file:write(",")
+				end
+				file:write("\n")
+			end
+			file:write(string.rep(" ",size) .. "}\n")
+		elseif type(v) == "table" then
 			local list = true
 			for k,l in pairs(v) do
-				if type(l) ~= "number" then
+				if type(k) ~= "number" or type(l) ~= "number" then
 					list = false
 					break
 				end
@@ -81,19 +109,19 @@ function config.load()
 	rawdata = (rawdata .. "\n"):reverse():match("\n+(.*)"):reverse()
 	local data = ""
 	for line in (rawdata .. "\n"):gmatch("(.-)\n") do
-		if line:sub(-2) == " {" then
-			line = line:sub(1,-3) .. "={"
+		if line:match("{%s-$") then
+			line = line:gsub("{%s-$","={")
 		end
-		if line:sub(-1) == "[" then
-			line = line:sub(1,-2) .. "{"
+		if line:match("%[%s-$") then
+			line = line:gsub("%[%s-$","{")
 		end
-		if line:sub(-1) == "]" then
-			line = line:sub(1,-2) .. "}"
+		if line:match("%]%s-$") then
+			line = line:gsub("%]%s-$","}")
 		end
-		if line ~= "" and line:sub(-1) ~= "{" and line:sub(-1) ~= "[" and line:sub(-1) ~= "," then
+		if line:gsub("%s","") ~= "" and not line:match("{%s-$") and not line:match(",%s-$") then
 			line = line .. ","
 		end
-		if line == "ocemu={" then
+		if line:match("ocemu%s-=%s-{") then
 			line = "return {"
 		end
 		data = data .. line .. "\n"

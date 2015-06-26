@@ -35,12 +35,12 @@ end
 function env.computer.freeMemory()
 	--STUB
 	cprint("computer.freeMemory")
-	return 10000
+	return machine.totalMemory
 end
 function env.computer.totalMemory()
 	--STUB
 	cprint("computer.totalMemory")
-	return 10000
+	return machine.totalMemory
 end
 function env.computer.pushSignal(name, ...)
 	cprint("computer.pushSignal", name, ...)
@@ -73,6 +73,7 @@ function env.computer.energy()
 	return math.huge
 end
 function env.computer.maxEnergy()
+	-- TODO: What is this ...
 	cprint("computer.maxEnergy")
-	return config.get("power.buffer.computer",500)
+	return 1500
 end

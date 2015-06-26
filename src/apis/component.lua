@@ -17,9 +17,11 @@ local doclist = {}
 
 component = {}
 
-function component.connect(...)
+function component.connect(info, ...)
 	local address
-	local info = table.pack(...)
+	if type(info) ~= "table" then
+		info = table.pack(info, ...)
+	end
 	checkArg(2,info[2],"string","number")
 	if type(info[2]) == "string" then
 		address = info[2]
@@ -109,10 +111,10 @@ function component.cecinvoke(address, method, ...)
 end
 
 -- Load components
-local components = conf.components
+local components = settings.components
 for k,v in pairs(components) do
 	v[2] = v[2] or k
-	component.connect(table.unpack(v))
+	component.connect(v)
 end
 
 env.component = {list = component.list}

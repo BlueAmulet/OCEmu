@@ -7,45 +7,6 @@ function math.trunc(n)
 	return n < 0 and math.ceil(n) or math.floor(n)
 end
 
--- load configuration
-elsa.filesystem.load("config.lua")()
-config.load()
-
-elsa.cleanup = {}
-function elsa.quit()
-	config.save()
-	for k,v in pairs(elsa.cleanup) do
-		v()
-	end
-end
-
-conf = {
-	-- Format: string:type, (string or number or nil):address, (number or nil):slot, component parameters
-	-- Read component files for parameter documentation
-	components = {
-		{"gpu",nil,0,160,50,3},
-		{"eeprom",nil,9,"lua/bios.lua"},
-		{"filesystem",nil,7,"loot/OpenOS",true},
-		{"filesystem",nil,nil,"tmpfs",false},
-		{"filesystem",nil,5,nil,false},
-		{"internet"},
-		{"computer"},
-		{"ocemu"},
-	}
-}
-if elsa.SDL then
-	table.insert(conf.components, {"screen_sdl2",nil,nil,80,25,3})
-	table.insert(conf.components, {"keyboard_sdl2"})
-else
-	-- TODO: Alternatives
-end
-
-machine = {
-	starttime = elsa.timer.getTime(),
-	deadline = elsa.timer.getTime(),
-	signals = {},
-}
-
 local function check(have, want, ...)
 	if not want then
 		return false
@@ -70,7 +31,49 @@ function compCheckArg(n, have, ...)
 	end
 end
 
-if true then
+-- load configuration
+elsa.filesystem.load("config.lua")()
+config.load()
+elsa.filesystem.load("settings.lua")()
+
+elsa.cleanup = {}
+function elsa.quit()
+	config.save()
+	for k,v in pairs(elsa.cleanup) do
+		v()
+	end
+end
+
+if settings.components == nil then
+	-- Format: string:type, (string or number or nil):address, (number or nil):slot, component parameters
+	-- Read component files for parameter documentation
+	settings.components = {
+		{"gpu",nil,0,160,50,3},
+		{"eeprom",nil,9,"lua/bios.lua"},
+		{"filesystem",nil,7,"loot/OpenOS",true},
+		{"filesystem",nil,nil,"tmpfs",false},
+		{"filesystem",nil,5,nil,false},
+		{"internet"},
+		{"computer"},
+		{"ocemu"},
+	}
+	if elsa.SDL then
+		table.insert(settings.components, {"screen_sdl2",nil,nil,80,25,3})
+		table.insert(settings.components, {"keyboard_sdl2"})
+	else
+		-- TODO: Alternatives
+	end
+	config.set("emulator.components",settings.components)
+end
+
+machine = {
+	starttime = elsa.timer.getTime(),
+	deadline = elsa.timer.getTime(),
+	signals = {},
+	totalMemory = 2*1024*1024,
+}
+
+if settings.emulatorDebug then
 	cprint = print
 else
 	cprint = function() end
@@ -292,6 +295,7 @@ function resume_thread(...)
 			if results[2] then
 				boot_machine()
 			else
+				elsa.quit()
 				error("Machine power off",0)
 			end
 		end

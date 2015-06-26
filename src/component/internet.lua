@@ -38,18 +38,18 @@ end
 
 function obj.isTcpEnabled() -- Returns whether TCP connections can be made (config setting).
 	cprint("internet.isTcpEnabled")
-	return config.get("internet.enableTcp",true)
+	return settings.tcpEnabled
 end
 function obj.isHttpEnabled() -- Returns whether HTTP requests can be made (config setting).
 	cprint("internet.isHttpEnabled")
-	return config.get("internet.enableHttp",true)
+	return settings.httpEnabled
 end
 function obj.connect(address, port) -- Opens a new TCP connection. Returns the handle of the connection.
 	cprint("internet.connect",address, port)
 	if port == nil then port = -1 end
 	compCheckArg(1,address,"string")
 	compCheckArg(2,port,"number")
-	if not config.get("internet.enableTcp",true) then
+	if not settings.tcpEnabled then
 		return nil, "tcp connections are unavailable"
 	end
 	-- TODO Check for too many connections
@@ -120,7 +120,7 @@ end
 function obj.request(url, postData) -- Starts an HTTP request. If this returns true, further results will be pushed using `http_response` signals.
 	cprint("internet.request",url, postData)
 	compCheckArg(1,url,"string")
-	if not config.get("internet.enableHttp",true) then
+	if not settings.httpEnabled then
 		return nil, "http requests are unavailable"
 	end
 	-- TODO: Check for too many connections
