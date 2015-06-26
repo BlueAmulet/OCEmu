@@ -2,6 +2,8 @@
 local _config
 local comments = {
 [1]="OCEmu configuration. Designed to mimic HOCON syntax, but is not exactly HOCON syntax.",
+["client"]="Client side settings, presentation and performance related stuff.",
+["client.monochromeColor"]="The color of monochrome text (i.e. displayed when in 1-bit color depth, e.g. tier one screens / GPUs, or higher tier set to 1-bit color depth). Defaults to white, feel free to make it some other color, tho!",
 ["computer"]="Computer related settings, concerns server performance and security.",
 ["computer.lua"]="Settings specific to the Lua architecture.",
 ["computer.lua.allowBytecode"]="Whether to allow loading precompiled bytecode via Lua's `load` function, or related functions (`loadfile`, `dofile`). Enable this only if you absolutely trust all users on your server and all Lua code you run. This can be a MASSIVE SECURITY RISK, since precompiled code can easily be used for exploits, running arbitrary code on the real server! I cannot stress this enough: only enable this is you know what you're doing.",

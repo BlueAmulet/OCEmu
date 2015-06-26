@@ -6,13 +6,15 @@ Installation
 
 Needs luafilesystem, utf8, and luaffi.
 
-luasocket is required for the Internet Component.
+luasocket is optional but is required for the Internet Component and higher precision timing.
 
 luasec is optional but is required for HTTPS.
 
 ```
 luarocks-5.2 install luafilesystem
 luarocks-5.2 install utf8
+luarocks-5.2 install luasocket
+luarocks-5.2 install luasec
 git clone https://github.com/gamax92/luaffi.git
 cd luaffi
 make

@@ -1,4 +1,6 @@
 settings = {
+	monochromeColor = tonumber(config.get("client.monochromeColor", "0xFFFFFF")),
+
 	allowBytecode = config.get("computer.lua.allowBytecode",false),
 	timeout = config.get("computer.timeout",5),
 
@@ -11,3 +13,8 @@ settings = {
 	maxNetworkPacketSize = config.get("misc.maxNetworkPacketSize",8192),
 	maxWirelessRange = config.get("misc.maxWirelessRange",400),
 }
+
+if settings.monochromeColor == nil then
+	settings.monochromeColor = 0xFFFFFF
+	config.set("client.monochromeColor", "0xFFFFFF")
+end

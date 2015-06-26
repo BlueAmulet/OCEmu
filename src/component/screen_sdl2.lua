@@ -9,8 +9,8 @@ local bit = require("bit32")
 local SDL = elsa.SDL
 
 local width, height, tier = maxwidth, maxheight, maxtier
-local scrfgc, scrfgp = 0xFFFFFF
-local scrbgc, scrfgp = 0x000000
+local scrfgc, scrfgp, scrrfp = 0xFFFFFF
+local scrbgc, scrfgp, scrrbp = 0x000000
 local scrrfc, srcrbc = scrfgc, scrbgc
 local palcol = {}
 
@@ -44,11 +44,11 @@ local function loadPalette()
 	for i = 0,15 do
 		palcol[i] = palcopy[i]
 	end
-	if scrfgp then
-		scrrfc, scrfgc = palcol[scrfgp], palcol[scrfgp]
+	if scrrfp then
+		scrrfc, scrfgc = palcol[scrrfp], palcol[scrrfp]
 	end
-	if scrbgp then
-		scrrbc, scrbgc = palcol[scrbgp], palcol[scrbgp]
+	if scrrbp then
+		scrrbc, scrbgc = palcol[scrrbp], palcol[scrrbp]
 	end
 end
 if tier > 1 then
@@ -216,12 +216,15 @@ local function searchPalette(value)
 	return index, score
 end
 
-local function getColor(value, sel)
+local function selectPal(pi, sel)
 	if sel then
-		scrfgp = nil
+		scrfgp = pi
 	else
-		scrbgp = nil
+		scrbgp = pi
 	end
+end
+local function getColor(value, sel)
+	selectPal(nil, sel)
 	if tier == 3 then
 		local pi,ps = searchPalette(value)
 		local r,g,b = extract(value)
@@ -233,24 +236,16 @@ local function getColor(value, sel)
 		if defs < ps then
 			return defc
 		else
-			if sel then
-				scrfgp = pi
-			else
-				scrbgp = pi
-			end
+			selectPal(pi, sel)
 			return palcol[pi]
 		end
 	elseif tier == 2 then
 		local pi = searchPalette(value)
-		if sel then
-			scrfgp = pi
-		else
-			scrbgp = pi
-		end
+		selectPal(pi, sel)
 		return palcol[pi]
 	else
 		if value > 0 then
-			return 0xFFFFFF -- TODO: Configuration color
+			return settings.monochromeColor
 		else
 			return 0
 		end
@@ -313,35 +308,42 @@ end
 
 local cec = {}
 
--- TODO: For (get/set)(Fore/Back)ground, they return what was passed in, rather than the current screen state
 function cec.getForeground() -- Get the current foreground color and whether it's from the palette or not.
 	cprint("(cec) screen.getForeground")
-	if scrfgp then
-		return scrfgp, true
+	if scrrfp then
+		return scrrfp, true
 	end
-	return scrrfc, scrfgp
+	return scrrfc, false
 end
 function cec.setForeground(value, palette) -- Sets the foreground color to the specified value. Optionally takes an explicit palette index. Returns the old value and if it was from the palette its palette index.
 	cprint("(cec) screen.setForeground", value, palette)
-	local oldc, oldp = scrrfc, scrfgp
+	local oldc, oldp = scrrfc, scrrfp
 	scrrfc = palette and palcol[value] or value
-	scrfgp = palette and value
-	scrfgc = palette and scrrfc or getColor(scrrfc,true)
+	scrrfp = palette and value
+	if palette then
+		scrfgc, scrfgp = scrrfc, scrrfp
+	else
+		scrfgc = getColor(scrrfc,true)
+	end
 	return oldc, oldp
 end
 function cec.getBackground() -- Get the current background color and whether it's from the palette or not.
 	cprint("(cec) screen.getBackground")
-	if scrbgp then
-		return scrbgp, true
+	if scrrbp then
+		return scrrbp, true
 	end
-	return scrrbc, scrbgp
+	return scrrbc, false
 end
 function cec.setBackground(value, palette) -- Sets the background color to the specified value. Optionally takes an explicit palette index. Returns the old value and if it was from the palette its palette index.
 	cprint("(cec) screen.setBackground", value, palette)
-	local oldc, oldp = scrrbc, scrbgp
+	local oldc, oldp = scrrbc, scrrbp
 	scrrbc = palette and palcol[value] or value
-	scrbgp = palette and value
-	scrbgc = palette and scrrbc or getColor(scrrbc,false)
+	scrrbp = palette and value
+	if palette then
+		scrbgc, scrbgp = scrrbc, scrrbp
+	else
+		scrbgc = getColor(scrrbc,false)
+	end
 	return oldc, oldp
 end
 function cec.getDepth() -- Returns the currently set color depth.
@@ -354,9 +356,28 @@ function cec.setDepth(depth) -- Set the color depth. Returns the previous value.
 	if tier > 1 then
 		loadPalette()
 	end
-	scrfgc = getColor(scrrfc,true)
-	scrfbc = getColor(scrrbc,false)
-	-- TODO: Lowering the depth recolors the entire screen
+	for y = 1,height do
+		for x = 1,width do
+			local oldfc,oldbc = screen.fg[y][x],screen.bg[y][x]
+			screen.fg[y][x] = getColor(screen.fg[y][x],true)
+			screen.fgp[y][x] = scrfgp
+			screen.bg[y][x] = getColor(screen.bg[y][x],false)
+			screen.bgp[y][x] = scrbgp
+			if screen.fg[y][x] ~= oldfc or screen.bg[y][x] ~= oldbc then
+				renderChar(utf8.byte(screen.txt[y][x]),(x-1)*8,(y-1)*16,screen.fg[y][x],screen.bg[y][x])
+			end
+		end
+	end
+	if scrrfp and tier > 1 then
+		scrfgc = palcol[scrrfp]
+	else
+		scrfgc = getColor(scrrfc,true)
+	end
+	if scrrbp and tier > 1 then
+		scrbgc = palcol[scrrbp]
+	else
+		scrbgc = getColor(scrrbc,false)
+	end
 end
 function cec.maxDepth() -- Get the maximum supported color depth.
 	cprint("(cec) screen.maxDepth")

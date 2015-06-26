@@ -9,13 +9,15 @@ end
 function obj.beep(frequency, duration) -- Plays a tone, useful to alert users via audible feedback.
 	--STUB
 	cprint("computer.beep", frequency, duration)
-	compCheckArg(1,frequency,"number","nil")
-	compCheckArg(2,duration,"number","nil")
-	frequency = frequency or 440
-	duration = duration or 0.1
+	if frequency == nil then frequency = 440 end
+	compCheckArg(1,frequency,"number")
+	frequency = math.floor(frequency)
 	if frequency < 20 or frequency > 2000 then
 		error("invalid frequency, must be in [20, 2000]",3)
 	end
+	if duration == nil then duration = 0.1 end
+	compCheckArg(2,duration,"number")
+	--local durationInMilliseconds = math.max(50, math.min(5000, math.floor(duration * 1000)))
 end
 function obj.stop() -- Stops the computer. Returns true if the state changed.
 	--STUB
