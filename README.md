@@ -26,7 +26,9 @@ sudo cp ffi.so /appropriate/path/for/lua/libraries/
 
 Windows users will have to manually compile everything, as luarocks seems to hate MSYS2/Cygwin
 
-Native binaries will be provided for Windows when its ready.
+The provided script ```msys2_setup_ocemu.sh``` will automated the compiling process for Windows, run it in [MSYS2](https://msys2.github.io/)
+
+Native binaries will be provided when its ready.
 
 Running
 -------
