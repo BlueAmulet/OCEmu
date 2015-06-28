@@ -6,6 +6,13 @@ local lfs = require("lfs")
 
 local sdlinit = false
 
+local args = table.pack(...)
+local emulationInstancePath = (os.getenv("HOME") or os.getenv("APPDATA")) .. "/.ocemu"
+
+if #args > 0 then
+	emulationInstancePath = args[1]
+end
+
 local function boot()
 	local ret, err = not b(SDL.init(SDL.INIT_AUDIO + SDL.INIT_EVENTS + SDL.INIT_VIDEO))
 
@@ -108,7 +115,7 @@ local function boot()
 				return lfs.attributes(path,"size")
 			end,
 			getSaveDirectory = function()
-				return (os.getenv("HOME") or os.getenv("APPDATA")) .. "/.ocemu"
+				return emulationInstancePath
 			end,
 			remove = function(path)
 				return recursiveDelete(path)
@@ -149,6 +156,7 @@ local function boot()
 		SDL.delay(1)
 	end
 end
+
 print(xpcall(boot,debug.traceback))
 if sdlinit then
 	SDL.quit()
