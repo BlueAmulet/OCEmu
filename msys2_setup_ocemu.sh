@@ -1,7 +1,6 @@
 #!/bin/bash
 MACHINE_TYPE=`uname -m`
-pacman --needed --noconfirm -S mingw-w64-${MACHINE_TYPE}-toolchain
-pacman --needed --noconfirm -S winpty patch make git subversion
+pacman --needed --noconfirm -S mingw-w64-${MACHINE_TYPE}-toolchain winpty patch make git subversion mingw-w64-${MACHINE_TYPE}-SDL2
 mkdir mingw-w64-lua
 cd mingw-w64-lua
 curl -L https://github.com/Alexpux/MINGW-packages/raw/541d0da31a4d2e648689655e49ddfffbe7ff5dfe/mingw-w64-lua/PKGBUILD -o PKGBUILD
@@ -16,6 +15,8 @@ fi
 pacman --noconfirm -U mingw-w64-${MACHINE_TYPE}-lua-5.2.4-1-any.pkg.tar.xz
 cd ..
 rm -r mingw-w64-lua
+mkdir extras
+cd extras
 git clone -b v_1_6_3 --depth=1 https://github.com/keplerproject/luafilesystem.git
 if [ ! -e luafilesystem ]; then
 	echo "Failed to download luafilesystem"
@@ -139,4 +140,5 @@ fi
 DESTDIR=../.. LUAPATH= LUACPATH= make install
 cd ..
 rm -r luasec
+cd ..
 echo "Built everything!"
