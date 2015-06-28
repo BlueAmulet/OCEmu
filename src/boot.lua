@@ -149,7 +149,18 @@ local function boot()
 		SDL.delay(1)
 	end
 end
-print(xpcall(boot,debug.traceback))
+
+local args = table.pack(...)
+local emulationInstancePath = os.getenv("HOME") or os.getenv("APPDATA")
+
+local arg1 = args[1]
+if (arg1) then
+	if (type(arg1) == "string") then
+		emulationInstancePath = arg1
+	end
+end
+
+print(xpcall(boot,debug.traceback,emulationInstancePath))
 if sdlinit then
 	SDL.quit()
 end
