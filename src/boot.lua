@@ -153,7 +153,7 @@ local function boot()
 			elsa.draw()
 		end
 
-		SDL.delay(1)
+		SDL.delay(16)
 	end
 end
 
