@@ -5,7 +5,7 @@ component.connect("filesystem",gen_uuid(),nil,"customlua/ocemu",true)
 local obj = {}
 
 function obj.connect(kind, address, slot, ...)
-	cprint("screen.isTouchModeInverted")
+	cprint("ocemu.connect", kind, address, slot, ...)
 	compCheckArg(1,kind,"string")
 	compCheckArg(2,address,"string","number","nil")
 	compCheckArg(3,slot,"number","nil")
@@ -19,9 +19,15 @@ function obj.connect(kind, address, slot, ...)
 	end
 	return component.connect(kind, address, slot, ...)
 end
+
 function obj.disconnect(address)
+	cprint("ocemu.disconnect", address)
 	checkArg(1,address,"string")
 	return component.disconnect(address)
+end
+
+function obj.log(...)
+	print(...)
 end
 
 local cec = {}
