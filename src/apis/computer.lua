@@ -77,3 +77,7 @@ function env.computer.maxEnergy()
 	cprint("computer.maxEnergy")
 	return 1500
 end
+
+function env.computer.log(...)
+	print(...)
+end
