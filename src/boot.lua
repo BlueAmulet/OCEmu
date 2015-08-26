@@ -49,8 +49,6 @@ local function boot()
 		end
 	end
 
-	local os_remove_leaf = os.remove
-
 	local recursiveDelete
 	function recursiveDelete(path)
 		local mode = lfs.attributes(path,"mode")
@@ -64,11 +62,11 @@ local function boot()
 					if mode == "directory" then
 						recursiveDelete(path .. "/" .. entry)
 					end
-					os_remove_leaf(path .. "/" .. entry)
+					os.remove(path .. "/" .. entry)
 				end
 			end
 		end
-		return os_remove_leaf(path)
+		return os.remove(path)
 	end
 
 	elsa = {
@@ -133,9 +131,9 @@ local function boot()
 	}
 
 	-- redirect os.remove is non posix
-	if os.getenv('os') == 'Windows_NT' then
+	if ffi.os == 'Windows' then
 		local os_remove = os.remove
-		os_remove_leaf = function(path)
+		os.remove = function(path)
 			local mode = lfs.attributes(path,"mode")
 			if mode == nil then
 				return false
@@ -145,7 +143,6 @@ local function boot()
 				return os_remove(path)
 			end
 		end
-		os.remove = elsa.remove
 	end
 
 	require("main")
