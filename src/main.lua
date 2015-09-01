@@ -53,7 +53,7 @@ if settings.components == nil then
 		{"filesystem",nil,7,"loot/OpenOS",true},
 		{"filesystem",nil,nil,"tmpfs",false},
 		{"filesystem",nil,5,nil,false},
-    {"modem",nil,nil,false},
+		{"modem",nil,nil,false},
 		{"internet"},
 		{"computer"},
 		{"ocemu"},
@@ -314,7 +314,7 @@ function elsa.update(dt)
 		table.remove(kbdcodes,1)
 		table.insert(machine.signals,{kbdcode.type,kbdcode.addr,kbdcode.char or 0,kbdcode.code})
 	end
-  modem_host.processPendingMessages()
+	modem_host.processPendingMessages()
 	if #machine.signals > 0 then
 		signal = machine.signals[1]
 		table.remove(machine.signals, 1)
