@@ -314,7 +314,9 @@ function elsa.update(dt)
 		table.remove(kbdcodes,1)
 		table.insert(machine.signals,{kbdcode.type,kbdcode.addr,kbdcode.char or 0,kbdcode.code})
 	end
-	modem_host.processPendingMessages()
+	if modem_host then
+		modem_host.processPendingMessages()
+	end
 	if #machine.signals > 0 then
 		signal = machine.signals[1]
 		table.remove(machine.signals, 1)
