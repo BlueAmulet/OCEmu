@@ -189,12 +189,6 @@ function modem_host.dispatchPacket(packet)
 end
 
 function modem_host.processPendingMessages()
-	-- computer address seems to be applied late
-	if not modem_host.id then
-		modem_host.id = component.list("computer",true)()
-		assert(modem_host.id)
-	end
-
 	-- do not try to process anything if this machine is not even connected to a message board
 	-- not wrong without this, this is a simple optimization
 	if not modem_host.connected then
@@ -335,6 +329,12 @@ function modem_host.connectMessageBoard()
 	modem_host.connected = true
 	modem_host.clients = {}
 	modem_host.messages = {}
+
+	-- computer address seems to be applied late
+	if not modem_host.id then
+		modem_host.id = component.list("computer",true)()
+		assert(modem_host.id)
+	end
 
 	return true
 end
