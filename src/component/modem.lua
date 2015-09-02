@@ -82,20 +82,15 @@ end
 
 function modem_host.datagramToPacketArray(datagram)
 	compCheckArg(1,datagram,type(""))
-	local packed = ser.unserialize(datagram)
-	return packed
+	return ser.unserialize(datagram)
 end
 
 function modem_host.datagramToPacket(datagram)
-	local packed = modem_host.datagramToPacketArray(datagram)
-	local packet = modem_host.packedToPacket(packed)
-	return packet
+	return modem_host.packedToPacket(modem_host.datagramToPacketArray(datagram))
 end
 
 function modem_host.packetToDatagram(packet)
-	local packed = modem_host.packetToPacketArray(packet)
-	local datagram = modem_host.packetArrayToDatagram(packed)
-	return datagram
+	return modem_host.packetArrayToDatagram(modem_host.packetToPacketArray(packet))
 end
 
 function modem_host.readDatagram(client) -- client:receive()
@@ -198,6 +193,12 @@ function modem_host.processPendingMessages()
 	if not modem_host.id then
 		modem_host.id = component.list("computer",true)()
 		assert(modem_host.id)
+	end
+
+	-- do not try to process anything if this machine is not even connected to a message board
+	-- not wrong without this, this is a simple optimization
+	if not modem_host.connected then
+		return
 	end
 
 	modem_host.recvPendingMessages()
@@ -380,11 +381,19 @@ function obj.close(port) -- Closes the specified port (default: all ports). Retu
 		port=checkPort(port)
 	end
 
-	if not obj.isOpen(port) then
-		return false;
+	-- nil port case
+	if not port then
+		if not next(modem_host.open_ports) then
+			return false, "no open ports"
+		else
+			modem_host.open_ports = {} -- close them all
+		end
+	elseif not obj.isOpen(port) then
+		return false, "port not open"
+	else
+		modem_host.open_ports[port] = nil
 	end
 
-	modem_host.open_ports[port] = nil
 	return true
 end
 
