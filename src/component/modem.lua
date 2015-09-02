@@ -454,17 +454,17 @@ end
 local cec = {}
 
 local doc = {
-["send"]="function(address:string, port:number, data...) -- Sends the specified data to the specified target.",
-["getWakeMessage"]="function():string -- Get the current wake-up message.",
-["setWakeMessage"]="function(message:string):string -- Set the wake-up message.",
-["close"]="function([port:number]):boolean -- Closes the specified port (default: all ports). Returns true if ports were closed.",
-["maxPacketSize"]="function():number -- Gets the maximum packet size (config setting).",
-["getStrength"]="function():number -- Get the signal strength (range) used when sending messages.",
-["setStrength"]="function(strength:number):number -- Set the signal strength (range) used when sending messages.",
-["isOpen"]="function(port:number):boolean -- Whether the specified port is open.",
-["open"]="function(port:number):boolean -- Opens the specified port. Returns true if the port was opened.",
-["isWireless"]="function():boolean -- Whether this is a wireless network card.",
-["broadcast"]="function(port:number, data...) -- Broadcasts the specified data on the specified port.",
+	["send"]="function(address:string, port:number, data...) -- Sends the specified data to the specified target.",
+	["getWakeMessage"]="function():string -- Get the current wake-up message.",
+	["setWakeMessage"]="function(message:string):string -- Set the wake-up message.",
+	["close"]="function([port:number]):boolean -- Closes the specified port (default: all ports). Returns true if ports were closed.",
+	["maxPacketSize"]="function():number -- Gets the maximum packet size (config setting).",
+	["getStrength"]="function():number -- Get the signal strength (range) used when sending messages.",
+	["setStrength"]="function(strength:number):number -- Set the signal strength (range) used when sending messages.",
+	["isOpen"]="function(port:number):boolean -- Whether the specified port is open.",
+	["open"]="function(port:number):boolean -- Opens the specified port. Returns true if the port was opened.",
+	["isWireless"]="function():boolean -- Whether this is a wireless network card.",
+	["broadcast"]="function(port:number, data...) -- Broadcasts the specified data on the specified port.",
 }
 
 return obj,cec,doc
