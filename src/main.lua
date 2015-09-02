@@ -49,6 +49,7 @@ if settings.components == nil then
 	-- Read component files for parameter documentation
 	settings.components = {
 		{"gpu",nil,0,160,50,3},
+		{"modem",nil,1,false},
 		{"eeprom",nil,9,"lua/bios.lua"},
 		{"filesystem",nil,7,"loot/OpenOS",true},
 		{"filesystem",nil,nil,"tmpfs",false},
@@ -312,6 +313,9 @@ function elsa.update(dt)
 		local kbdcode = kbdcodes[1]
 		table.remove(kbdcodes,1)
 		table.insert(machine.signals,{kbdcode.type,kbdcode.addr,kbdcode.char or 0,kbdcode.code})
+	end
+	if modem_host then
+		modem_host.processPendingMessages()
 	end
 	if #machine.signals > 0 then
 		signal = machine.signals[1]
