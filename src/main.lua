@@ -49,11 +49,11 @@ if settings.components == nil then
 	-- Read component files for parameter documentation
 	settings.components = {
 		{"gpu",nil,0,160,50,3},
+		{"modem",nil,1,false},
 		{"eeprom",nil,9,"lua/bios.lua"},
 		{"filesystem",nil,7,"loot/OpenOS",true},
 		{"filesystem",nil,nil,"tmpfs",false},
 		{"filesystem",nil,5,nil,false},
-		{"modem",nil,nil,false},
 		{"internet"},
 		{"computer"},
 		{"ocemu"},
