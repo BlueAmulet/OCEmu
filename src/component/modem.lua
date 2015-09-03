@@ -24,14 +24,14 @@ modem_host.clients = {}
 -- [port_number] = true when open
 modem_host.open_ports = {}
 
-function modem_host.createPacketArray(t, address, port, ...)
-	compCheckArg(1,t,type(""))
-	compCheckArg(2,address,type(""),type(0))
-	compCheckArg(3,port,type(0))
+function modem_host.createPacketArray(packetType, address, port, ...)
+	compCheckArg(1,packetType,"string")
+	compCheckArg(2,address,"string","number")
+	compCheckArg(3,port,"number")
 
 	local packed =
 	{
-		t,
+		packetType,
 		address,
 		modem_host.id,
 		port,
@@ -43,7 +43,7 @@ function modem_host.createPacketArray(t, address, port, ...)
 end
 
 function modem_host.packetArrayToPacket(packed)
-	compCheckArg(1,packed,type({}))
+	compCheckArg(1,packed,"table")
 	assert(#packed >= 5)
 
 	local packet = {}
@@ -62,7 +62,7 @@ function modem_host.packetArrayToPacket(packed)
 end
 
 function modem_host.packetArrayToDatagram(packed)
-	compCheckArg(1,packed,type({}))
+	compCheckArg(1,packed,"table")
 
 	local datagram = ser.serialize(packed)
 	return datagram .. '\n'
@@ -81,7 +81,7 @@ function modem_host.packetToPacketArray(packet)
 end
 
 function modem_host.datagramToPacketArray(datagram)
-	compCheckArg(1,datagram,type(""))
+	compCheckArg(1,datagram,"string")
 	return ser.unserialize(datagram)
 end
 
@@ -101,13 +101,13 @@ end
 
 function modem_host.readPacketArray(client) -- client:receive()
 	local datagram, err = modem_host.readDatagram(client)
-	if not datagram then return nil, err end
+	if datagram == nil then return nil, err end
 	return modem_host.datagramToPacketArray(datagram)
 end
 
 function modem_host.readPacket(client) -- client:receive()
 	local packed, err = modem_host.readPacketArray(client)
-	if not packed then return nil, err end
+	if packed == nil then return nil, err end
 	return modem_host.packetArrayToPacket(packed)
 end
 
@@ -219,12 +219,12 @@ function modem_host.recvPendingMessages()
 	if modem_host.hosting then
 		while true do
 			local client = modem_host.socket:accept()
-			if not client then
+			if client == nil then
 				break;
 			end
 
 			local handshake, err = modem_host.readPacket(client) -- client:receive()
-			if not handshake then
+			if handshake == nil then
 				client:close()
 			else
 
@@ -331,7 +331,7 @@ function modem_host.connectMessageBoard()
 	modem_host.messages = {}
 
 	-- computer address seems to be applied late
-	if not modem_host.id then
+	if modem_host.id == nil then
 		modem_host.id = component.list("computer",true)()
 		assert(modem_host.id)
 	end
@@ -382,7 +382,7 @@ function obj.close(port) -- Closes the specified port (default: all ports). Retu
 	end
 
 	-- nil port case
-	if not port then
+	if port == nil then
 		if not next(modem_host.open_ports) then
 			return false, "no open ports"
 		else
