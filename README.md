@@ -24,6 +24,21 @@ sudo cp ffi.so /appropriate/path/for/lua/libraries/
 # If you hate svn, manually download assets/loot, assets/lua, and assets/unifont.hex into src/
 ```
 
+Mac users can get up and running quickly by using [brew](http://brew.sh/).
+
+Brew installs luarocks as part of the lua package.
+```
+#run this before the luarocks install steps above
+brew install lua
+brew install sdl2
+```
+At this point, follow the luarock steps above. Then build luaffi as instructed. Then:
+
+```
+#at the time of this writing, the path is for version 5.2
+sudo cp ffi.so /usr/local/lib/lua/5.2/
+```
+
 Windows users will have to manually compile everything, as luarocks seems to hate MSYS2/Cygwin
 
 The provided script ```msys2_setup_ocemu.sh``` will automated the compiling process for Windows, run it in [MSYS2](https://msys2.github.io/)
@@ -32,6 +47,18 @@ Native binaries will be provided when its ready.
 
 Running
 -------
-Launch boot.lua with lua5.2, and provided everything is installed, you'll have a working Emulator
+Launch boot.lua with lua5.2, and provided everything is installed, you'll have a working Emulator. OCEmu stores its files in $HOME/.ocemu or %APPDATA%\\.ocemu, whichever happens to exist first. 
 
-OCEmu stores its files in $HOME/.ocemu or %APPDATA%\\.ocemu, whichever happens to exist first
+```
+cd src/
+lua boot.lua
+```
+
+
+If you want to use a custom path (for example, for running multiple machines with unique filesystems) you can specify the machine path as an argument to boot.lua.
+
+```
+cd src/
+lua boot.lua /path/to/my/emulated/machine_a
+```
+
