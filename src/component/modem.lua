@@ -57,7 +57,6 @@ function modem_host.createPacketArray(packetType, address, port, ...)
 		...
 	}
 
-	cerror("resultant packed", packed)
 	return packed
 end
 
@@ -124,7 +123,7 @@ end
 
 function modem_host.readDatagram(client) -- client:receive()
 	local raw, err = client:receive()
-	if raw then cerror("received: " .. raw) end
+	if raw then cerror("readDatagram", raw) end
 	return raw, err
 end
 
@@ -141,7 +140,7 @@ function modem_host.readPacket(client) -- client:receive()
 end
 
 function modem_host.sendDatagram(client, datagram)
-	cerror("sending: " .. datagram)
+	cerror("sendDatagram", datagram)
 	return client:send(datagram)
 end
 
@@ -502,26 +501,5 @@ local function containsValue(t, v)
 	end
 	return false
 end
-
--- print all function calls
-local function logAll(t, ...)
-	local ignores = table.pack(...)
-	for k,v in pairs(t) do
-		if (type(v) == "function") and not containsValue(ignores, k) then
-			t[k] = function(...)
-				cerror(k, ...)
-				return v(...)
-			end
-		end
-	end
-end
-
-logAll(obj)
-logAll(modem_host, 
-	"processPendingMessages", 
-	"recvPendingMessages",
-	"readDatagram",
-	"readPacket",
-	"readPacketArray")
 
 return obj,cec,doc
