@@ -10,12 +10,13 @@ local function cerror(...)
 
 	local sep = ''
 
-	for _,arg in ipairs(args) do
+	for _,arg in pairs(args) do
 		local p;
 		if (type(arg) == "userdata") then p = "userdata"
+		elseif (type(arg) == "string") then p = arg
 		else p = ser.serialize(arg) end
-		io.stderr:write(p .. sep)
-		sep = '\t'
+		io.stderr:write(sep .. tostring(_) .. '=' .. p)
+		sep = ','
 	end
 
 	io.stderr:write('\n')
@@ -55,6 +56,7 @@ function modem_host.createPacketArray(packetType, address, port, ...)
 		0, -- distance
 		...
 	}
+
 	cerror("resultant packed", packed)
 	return packed
 end
@@ -71,8 +73,11 @@ function modem_host.packetArrayToPacket(packed)
 	packet.distance = packed[5]
 	packet.payload = {}
 
-	for i=6,#packed do
-		table.insert(packet.payload, packed[i])
+	-- all other keys will be index values but may skip some (nils)
+	for k,v in pairs(packed) do
+		if k > 5 then
+			packet.payload[k-5] = v
+		end
 	end
 
 	return packet
@@ -86,15 +91,22 @@ function modem_host.packetArrayToDatagram(packed)
 end
 
 function modem_host.packetToPacketArray(packet)
-	return
+	local packed =
 	{
 		packet.type,
 		packet.target,
 		packet.source,
 		packet.port,
 		packet.distance,
-		table.unpack(packet.payload or {})
 	}
+
+	if packet.payload then
+		for i,v in pairs(packet.payload) do
+			packed[i+5] = v
+		end
+	end
+
+	return packed
 end
 
 function modem_host.datagramToPacketArray(datagram)
@@ -248,17 +260,17 @@ function modem_host.recvPendingMessages()
 				local connectionResponse
 				local accepted = false
 				if handshake.type ~= "handshake" then
-					connectionResponse = modem_host.createPacketArray("handshake", modem_host.id, -1, 
+					connectionResponse = modem_host.createPacketArray("handshake", 0, -1, 
 						false, "unsupported message type");
 				elseif modem_host.validTarget(handshake.source) then -- repeated client
-					connectionResponse = modem_host.createPacketArray("handshake", modem_host.id, -1, 
+					connectionResponse = modem_host.createPacketArray("handshake", 0, -1, 
 						false, "computer address conflict detected, ignoring connection");
 				else
 					client:settimeout(0, 't')
 					modem_host.clients[handshake.source] = client
 					accepted = true
 
-					connectionResponse = modem_host.createPacketArray("handshake", modem_host.id, -1, true);
+					connectionResponse = modem_host.createPacketArray("handshake", 0, -1, true);
 				end
 
 				modem_host.sendPacketArray(client, connectionResponse)
@@ -505,6 +517,11 @@ local function logAll(t, ...)
 end
 
 logAll(obj)
-logAll(modem_host, "processPendingMessages", "recvPendingMessages")
+logAll(modem_host, 
+	"processPendingMessages", 
+	"recvPendingMessages",
+	"readDatagram",
+	"readPacket",
+	"readPacketArray")
 
 return obj,cec,doc
