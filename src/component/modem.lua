@@ -5,6 +5,24 @@ compCheckArg(1,wireless,"boolean")
 local socket = require("socket")
 local ser = require("loot.OpenOS.lib.serialization")
 
+local function cerror(...)
+	local args = table.pack(...)
+
+	local sep = ''
+
+	for _,arg in pairs(args) do
+		local p;
+		if (type(arg) == "userdata") then p = "userdata"
+		elseif (type(arg) == "string") then p = arg
+		else p = ser.serialize(arg) end
+		io.stderr:write(sep .. tostring(_) .. '=' .. p)
+		sep = ','
+	end
+
+	io.stderr:write('\n')
+	io.stderr:flush()
+end
+
 -- yes, global
 modem_host = {}
 
@@ -24,14 +42,14 @@ modem_host.clients = {}
 -- [port_number] = true when open
 modem_host.open_ports = {}
 
-function modem_host.createPacketArray(t, address, port, ...)
-	compCheckArg(1,t,type(""))
-	compCheckArg(2,address,type(""),type(0))
-	compCheckArg(3,port,type(0))
+function modem_host.createPacketArray(packetType, address, port, ...)
+	compCheckArg(1,packetType,"string")
+	compCheckArg(2,address,"string","number")
+	compCheckArg(3,port,"number")
 
 	local packed =
 	{
-		t,
+		packetType,
 		address,
 		modem_host.id,
 		port,
@@ -43,7 +61,7 @@ function modem_host.createPacketArray(t, address, port, ...)
 end
 
 function modem_host.packetArrayToPacket(packed)
-	compCheckArg(1,packed,type({}))
+	compCheckArg(1,packed,"table")
 	assert(#packed >= 5)
 
 	local packet = {}
@@ -54,70 +72,75 @@ function modem_host.packetArrayToPacket(packed)
 	packet.distance = packed[5]
 	packet.payload = {}
 
-	for i=6,#packed do
-		table.insert(packet.payload, packed[i])
+	-- all other keys will be index values but may skip some (nils)
+	for k,v in pairs(packed) do
+		if k > 5 then
+			packet.payload[k-5] = v
+		end
 	end
 
 	return packet
 end
 
 function modem_host.packetArrayToDatagram(packed)
-	compCheckArg(1,packed,type({}))
+	compCheckArg(1,packed,"table")
 
 	local datagram = ser.serialize(packed)
 	return datagram .. '\n'
 end
 
 function modem_host.packetToPacketArray(packet)
-	return
+	local packed =
 	{
 		packet.type,
 		packet.target,
 		packet.source,
 		packet.port,
 		packet.distance,
-		table.unpack(packet.payload or {})
 	}
-end
 
-function modem_host.datagramToPacketArray(datagram)
-	compCheckArg(1,datagram,type(""))
-	local packed = ser.unserialize(datagram)
+	if packet.payload then
+		for i,v in pairs(packet.payload) do
+			packed[i+5] = v
+		end
+	end
+
 	return packed
 end
 
+function modem_host.datagramToPacketArray(datagram)
+	compCheckArg(1,datagram,"string")
+	return ser.unserialize(datagram)
+end
+
 function modem_host.datagramToPacket(datagram)
-	local packed = modem_host.datagramToPacketArray(datagram)
-	local packet = modem_host.packedToPacket(packed)
-	return packet
+	return modem_host.packedToPacket(modem_host.datagramToPacketArray(datagram))
 end
 
 function modem_host.packetToDatagram(packet)
-	local packed = modem_host.packetToPacketArray(packet)
-	local datagram = modem_host.packetArrayToDatagram(packed)
-	return datagram
+	return modem_host.packetArrayToDatagram(modem_host.packetToPacketArray(packet))
 end
 
 function modem_host.readDatagram(client) -- client:receive()
 	local raw, err = client:receive()
-	if raw then cprint("received: " .. raw) end
+	if raw then cerror("readDatagram", raw) end
 	return raw, err
 end
 
 function modem_host.readPacketArray(client) -- client:receive()
 	local datagram, err = modem_host.readDatagram(client)
-	if not datagram then return nil, err end
+	if datagram == nil then return nil, err end
 	return modem_host.datagramToPacketArray(datagram)
 end
 
 function modem_host.readPacket(client) -- client:receive()
 	local packed, err = modem_host.readPacketArray(client)
-	if not packed then return nil, err end
+	if packed == nil then return nil, err end
 	return modem_host.packetArrayToPacket(packed)
 end
 
 function modem_host.sendDatagram(client, datagram)
-	cprint("sending: " .. datagram)
+	cerror("sendDatagram", datagram)
 	return client:send(datagram)
 end
 
@@ -194,10 +217,10 @@ function modem_host.dispatchPacket(packet)
 end
 
 function modem_host.processPendingMessages()
-	-- computer address seems to be applied late
-	if not modem_host.id then
-		modem_host.id = component.list("computer",true)()
-		assert(modem_host.id)
+	-- do not try to process anything if this machine is not even connected to a message board
+	-- not wrong without this, this is a simple optimization
+	if not modem_host.connected then
+		return
 	end
 
 	modem_host.recvPendingMessages()
@@ -224,29 +247,29 @@ function modem_host.recvPendingMessages()
 	if modem_host.hosting then
 		while true do
 			local client = modem_host.socket:accept()
-			if not client then
+			if client == nil then
 				break;
 			end
 
 			local handshake, err = modem_host.readPacket(client) -- client:receive()
-			if not handshake then
+			if handshake == nil then
 				client:close()
 			else
 
 				local connectionResponse
 				local accepted = false
 				if handshake.type ~= "handshake" then
-					connectionResponse = modem_host.createPacketArray("handshake", modem_host.id, -1, 
+					connectionResponse = modem_host.createPacketArray("handshake", 0, -1, 
 						false, "unsupported message type");
 				elseif modem_host.validTarget(handshake.source) then -- repeated client
-					connectionResponse = modem_host.createPacketArray("handshake", modem_host.id, -1, 
+					connectionResponse = modem_host.createPacketArray("handshake", 0, -1, 
 						false, "computer address conflict detected, ignoring connection");
 				else
 					client:settimeout(0, 't')
 					modem_host.clients[handshake.source] = client
 					accepted = true
 
-					connectionResponse = modem_host.createPacketArray("handshake", modem_host.id, -1, true);
+					connectionResponse = modem_host.createPacketArray("handshake", 0, -1, true);
 				end
 
 				modem_host.sendPacketArray(client, connectionResponse)
@@ -316,6 +339,12 @@ function modem_host.connectMessageBoard()
 		return true
 	end
 
+	-- computer address seems to be applied late
+	if modem_host.id == nil then
+		modem_host.id = component.list("computer",true)()
+		assert(modem_host.id)
+	end
+
 	local ok, info, critical = modem_host.joinExistingMessageBoard()
 
 	if not ok and critical then
@@ -352,7 +381,6 @@ local function checkPort(port)
 end
 
 function obj.send(address, port, ...) -- Sends the specified data to the specified target.
-	cprint("modem.send",address, port, ...)
 	compCheckArg(1,address,"string")
 	compCheckArg(2,port,"number")
 	port=checkPort(port)
@@ -363,56 +391,56 @@ function obj.send(address, port, ...) -- Sends the specified data to the specifi
 end
 
 function obj.getWakeMessage() -- Get the current wake-up message.
-	cprint("modem.getWakeMessage")
 	return wakeMessage
 end
 
 function obj.setWakeMessage(message) -- Set the wake-up message.
-	cprint("modem.setWakeMessage",message)
 	compCheckArg(1,message,"string","nil")
 	wakeMessage = message
 end
 
 function obj.close(port) -- Closes the specified port (default: all ports). Returns true if ports were closed.
-	cprint("modem.close",port)
 	compCheckArg(1,port,"number","nil")
 	if port ~= nil then
 		port=checkPort(port)
 	end
 
-	if not obj.isOpen(port) then
-		return false;
+	-- nil port case
+	if port == nil then
+		if not next(modem_host.open_ports) then
+			return false, "no open ports"
+		else
+			modem_host.open_ports = {} -- close them all
+		end
+	elseif not obj.isOpen(port) then
+		return false, "port not open"
+	else
+		modem_host.open_ports[port] = nil
 	end
 
-	modem_host.open_ports[port] = nil
 	return true
 end
 
 function obj.maxPacketSize() -- Gets the maximum packet size (config setting).
-	cprint("modem.maxPacketSize")
 	return settings.maxNetworkPacketSize
 end
 
 if wireless then
 	function obj.getStrength() -- Get the signal strength (range) used when sending messages.
-		cprint("modem.getStrength")
 		return strength
 	end
 	function obj.setStrength(newstrength) -- Set the signal strength (range) used when sending messages.
-		cprint("modem.setStrength",newstrength)
 		compCheckArg(1,newstrength,"number")
 		strength = newstrength
 	end
 end
 
 function obj.isOpen(port) -- Whether the specified port is open.
-	cprint("modem.isOpen",port)
 	compCheckArg(1,port,"number")
 	return modem_host.open_ports[port] ~= nil
 end
 
 function obj.open(port) -- Opens the specified port. Returns true if the port was opened.
-	cprint("modem.open",port)
 	compCheckArg(1,port,"number")
 	port=checkPort(port)
 
@@ -432,12 +460,10 @@ function obj.open(port) -- Opens the specified port. Returns true if the port wa
 end
 
 function obj.isWireless() -- Whether this is a wireless network card.
-	cprint("modem.isWireless")
 	return wireless
 end
 
 function obj.broadcast(port, ...) -- Broadcasts the specified data on the specified port.
-	cprint("modem.broadcast",port, ...)
 	compCheckArg(1,port,"number")
 	port=checkPort(port)
 
@@ -466,5 +492,14 @@ local doc = {
 	["isWireless"]="function():boolean -- Whether this is a wireless network card.",
 	["broadcast"]="function(port:number, data...) -- Broadcasts the specified data on the specified port.",
 }
+
+local function containsValue(t, v)
+	for ek,ev in pairs(t) do
+		if ev == v then
+			return true
+		end
+	end
+	return false
+end
 
 return obj,cec,doc
