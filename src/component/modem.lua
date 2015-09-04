@@ -493,13 +493,4 @@ local doc = {
 	["broadcast"]="function(port:number, data...) -- Broadcasts the specified data on the specified port.",
 }
 
-local function containsValue(t, v)
-	for ek,ev in pairs(t) do
-		if ev == v then
-			return true
-		end
-	end
-	return false
-end
-
 return obj,cec,doc
