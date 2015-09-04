@@ -5,6 +5,23 @@ compCheckArg(1,wireless,"boolean")
 local socket = require("socket")
 local ser = require("loot.OpenOS.lib.serialization")
 
+local function cerror(...)
+	local args = table.pack(...)
+
+	local sep = ''
+
+	for _,arg in ipairs(args) do
+		local p;
+		if (type(arg) == "userdata") then p = "userdata"
+		else p = ser.serialize(arg) end
+		io.stderr:write(p .. sep)
+		sep = '\t'
+	end
+
+	io.stderr:write('\n')
+	io.stderr:flush()
+end
+
 -- yes, global
 modem_host = {}
 
@@ -38,7 +55,7 @@ function modem_host.createPacketArray(packetType, address, port, ...)
 		0, -- distance
 		...
 	}
-
+	cerror("resultant packed", packed)
 	return packed
 end
 
@@ -95,7 +112,7 @@ end
 
 function modem_host.readDatagram(client) -- client:receive()
 	local raw, err = client:receive()
-	if raw then cprint("received: " .. raw) end
+	if raw then cerror("received: " .. raw) end
 	return raw, err
 end
 
@@ -112,7 +129,7 @@ function modem_host.readPacket(client) -- client:receive()
 end
 
 function modem_host.sendDatagram(client, datagram)
-	cprint("sending: " .. datagram)
+	cerror("sending: " .. datagram)
 	return client:send(datagram)
 end
 
@@ -353,7 +370,6 @@ local function checkPort(port)
 end
 
 function obj.send(address, port, ...) -- Sends the specified data to the specified target.
-	cprint("modem.send",address, port, ...)
 	compCheckArg(1,address,"string")
 	compCheckArg(2,port,"number")
 	port=checkPort(port)
@@ -364,18 +380,15 @@ function obj.send(address, port, ...) -- Sends the specified data to the specifi
 end
 
 function obj.getWakeMessage() -- Get the current wake-up message.
-	cprint("modem.getWakeMessage")
 	return wakeMessage
 end
 
 function obj.setWakeMessage(message) -- Set the wake-up message.
-	cprint("modem.setWakeMessage",message)
 	compCheckArg(1,message,"string","nil")
 	wakeMessage = message
 end
 
 function obj.close(port) -- Closes the specified port (default: all ports). Returns true if ports were closed.
-	cprint("modem.close",port)
 	compCheckArg(1,port,"number","nil")
 	if port ~= nil then
 		port=checkPort(port)
@@ -398,30 +411,25 @@ function obj.close(port) -- Closes the specified port (default: all ports). Retu
 end
 
 function obj.maxPacketSize() -- Gets the maximum packet size (config setting).
-	cprint("modem.maxPacketSize")
 	return settings.maxNetworkPacketSize
 end
 
 if wireless then
 	function obj.getStrength() -- Get the signal strength (range) used when sending messages.
-		cprint("modem.getStrength")
 		return strength
 	end
 	function obj.setStrength(newstrength) -- Set the signal strength (range) used when sending messages.
-		cprint("modem.setStrength",newstrength)
 		compCheckArg(1,newstrength,"number")
 		strength = newstrength
 	end
 end
 
 function obj.isOpen(port) -- Whether the specified port is open.
-	cprint("modem.isOpen",port)
 	compCheckArg(1,port,"number")
 	return modem_host.open_ports[port] ~= nil
 end
 
 function obj.open(port) -- Opens the specified port. Returns true if the port was opened.
-	cprint("modem.open",port)
 	compCheckArg(1,port,"number")
 	port=checkPort(port)
 
@@ -441,12 +449,10 @@ function obj.open(port) -- Opens the specified port. Returns true if the port wa
 end
 
 function obj.isWireless() -- Whether this is a wireless network card.
-	cprint("modem.isWireless")
 	return wireless
 end
 
 function obj.broadcast(port, ...) -- Broadcasts the specified data on the specified port.
-	cprint("modem.broadcast",port, ...)
 	compCheckArg(1,port,"number")
 	port=checkPort(port)
 
@@ -475,5 +481,30 @@ local doc = {
 	["isWireless"]="function():boolean -- Whether this is a wireless network card.",
 	["broadcast"]="function(port:number, data...) -- Broadcasts the specified data on the specified port.",
 }
+
+local function containsValue(t, v)
+	for ek,ev in pairs(t) do
+		if ev == v then
+			return true
+		end
+	end
+	return false
+end
+
+-- print all function calls
+local function logAll(t, ...)
+	local ignores = table.pack(...)
+	for k,v in pairs(t) do
+		if (type(v) == "function") and not containsValue(ignores, k) then
+			t[k] = function(...)
+				cerror(k, ...)
+				return v(...)
+			end
+		end
+	end
+end
+
+logAll(obj)
+logAll(modem_host, "processPendingMessages", "recvPendingMessages")
 
 return obj,cec,doc
