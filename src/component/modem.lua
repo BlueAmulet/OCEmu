@@ -311,6 +311,12 @@ function modem_host.connectMessageBoard()
 		return true
 	end
 
+	-- computer address seems to be applied late
+	if modem_host.id == nil then
+		modem_host.id = component.list("computer",true)()
+		assert(modem_host.id)
+	end
+
 	local ok, info, critical = modem_host.joinExistingMessageBoard()
 
 	if not ok and critical then
@@ -329,12 +335,6 @@ function modem_host.connectMessageBoard()
 	modem_host.connected = true
 	modem_host.clients = {}
 	modem_host.messages = {}
-
-	-- computer address seems to be applied late
-	if modem_host.id == nil then
-		modem_host.id = component.list("computer",true)()
-		assert(modem_host.id)
-	end
 
 	return true
 end
