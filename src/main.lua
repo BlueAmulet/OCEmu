@@ -294,8 +294,10 @@ function resume_thread(...)
 			machine.deadline = elsa.timer.getTime() + results[2]
 		elseif type(results[2]) == "boolean" then
 			if results[2] then
+				modem_host.halt(true)
 				boot_machine()
 			else
+				modem_host.halt(false)
 				elsa.quit()
 				error("Machine power off",0)
 			end

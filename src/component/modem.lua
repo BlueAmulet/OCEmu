@@ -155,33 +155,37 @@ function modem_host.sendPacket(client, packet)
 end
 
 function modem_host.broadcast(packet)
-	-- only host broadcasts
-	-- this method will be hit for all broadcasted messages
-	-- but nonhosting clients will simply not repeat the broadcast
+	-- we assume packet.target == 0
 	if modem_host.hosting then
-		local datagram = modem_host.packetToDatagram(packet)
 		for addr,client in pairs(modem_host.clients) do
-			modem_host.sendDatagram(client, datagram)
+			packet.target = addr
+			modem_host.sendPacket(client, packet)
 		end
+		-- and self
+		packet.target = modem_host.id
+		modem_host.dispatchPacket(packet)
+	else
+		-- let host broadcast to all clients
+		modem_host.sendPacket(modem_host.socket, packet)
 	end
 end
 
 function modem_host.validTarget(target)
 	if target ==  0 then
-		return true
+		return true -- broadcast
 	end
 
 	if target == modem_host.id then
-		return true
+		return true -- dispatch will add to machine signals
 	end
 
 	if not modem_host.hosting then
-		return false
+		return true -- dispatch can handle sending to host
 	end
 
 	for address,client in pairs(modem_host.clients) do
 		if address == target then
-			return true
+			return true -- we are hosting and know about this target
 		end
 	end
 
@@ -201,9 +205,9 @@ end
 
 function modem_host.dispatchPacket(packet)
 	if packet.target == modem_host.id then
-			if obj.isOpen(packet.port) then
-				table.insert(machine.signals, modem_host.packetToPacketArray(packet))
-			end
+		if obj.isOpen(packet.port) then
+			table.insert(machine.signals, modem_host.packetToPacketArray(packet))
+		end
 	elseif modem_host.hosting then -- if hosting we will route
 		for source,client in pairs(modem_host.clients) do
 			if source == packet.target then
@@ -223,27 +227,27 @@ function modem_host.processPendingMessages()
 		return
 	end
 
+	modem_host.acceptPendingClients()
 	modem_host.recvPendingMessages()
 
-	for _,packet in pairs(modem_host.messages) do
+	for _,packet in ipairs(modem_host.messages) do
 
 		if packet.type == 'modem_message' then
 			-- broadcast if no target
 			if packet.target == 0 then
-				modem_host.broadcast(packet) -- ignored by clients
-
-				-- clean up for broadcasting to self
-				packet.target = modem_host.id
+				modem_host.broadcast(packet)
+			else
+				modem_host.dispatchPacket(packet)
 			end
-
-			modem_host.dispatchPacket(packet)
+		elseif packet.type == 'host_shutdown' then
+			modem_host.host_shutdown = true
 		end
 	end
 
 	modem_host.messages = {}
 end
 
-function modem_host.recvPendingMessages()
+function modem_host.acceptPendingClients()
 	if modem_host.hosting then
 		while true do
 			local client = modem_host.socket:accept()
@@ -279,8 +283,11 @@ function modem_host.recvPendingMessages()
 				end
 			end
 		end
+	end
+end
 
-		-- recv all pending packets
+function modem_host.recvPendingMessages()
+	if modem_host.hosting then
 		for source, client in pairs(modem_host.clients) do
 			local packet, err = modem_host.readPacket(client)
 			if packet then
@@ -296,6 +303,13 @@ function modem_host.recvPendingMessages()
 			if packet then
 				modem_host.pushMessage(packet)
 			else
+				if err ~= "timeout" then
+					if not modem_host.host_shutdown then
+						error("modem host was unexpectedly lost")
+					end
+					modem_host.connected = false
+					modem_host.connectMessageBoard()
+				end
 				break
 			end
 		end
@@ -339,6 +353,15 @@ function modem_host.connectMessageBoard()
 		return true
 	end
 
+	if modem_host.host_shutdown then
+		modem_host.socket:close()
+	end
+
+	modem_host.socket = nil
+	modem_host.clients = {}
+	modem_host.messages = {}
+	modem_host.host_shutdown = nil
+
 	-- computer address seems to be applied late
 	if modem_host.id == nil then
 		modem_host.id = component.list("computer",true)()
@@ -361,10 +384,35 @@ function modem_host.connectMessageBoard()
 
 	modem_host.socket:settimeout(0, 't') -- accept calls must be already pending
 	modem_host.connected = true
-	modem_host.clients = {}
-	modem_host.messages = {}
 
 	return true
+end
+
+function modem_host.halt(bReboot)
+	compCheckArg(1,bReboot,"boolean")
+	obj.close() -- close all virtual ports
+
+	-- if only rebooting, pending messages don't need to be pumped and no one needs to be notified
+	if modem_host.connected and not bReboot then
+
+		if modem_host.hosting then
+			for addr,csocket in pairs(modem_host.clients) do
+				local notification = modem_host.createPacketArray("host_shutdown", addr, -1);
+				modem_host.sendPacketArray(csocket, notification)
+			end
+
+			-- close all client connections
+			for _,c in pairs(modem_host.clients) do
+				c:close()
+			end
+
+			modem_host.hosting = false
+			modem_host.clients = {} -- forget client socket data
+		end
+
+		-- close real port
+		modem_host.socket:close()
+	end
 end
 
 local wakeMessage
@@ -385,9 +433,15 @@ function obj.send(address, port, ...) -- Sends the specified data to the specifi
 	compCheckArg(2,port,"number")
 	port=checkPort(port)
 
+	-- we cannot send unless we are connected to the message board
+	if not modem_host.connectMessageBoard() then
+		return false
+	end
+
 	local packed = modem_host.createPacketArray("modem_message", address, port, ...)
 	local packet = modem_host.packetArrayToPacket(packed)
-	return modem_host.dispatchPacket(packet)
+	modem_host.pushMessage(packet)
+	return true
 end
 
 function obj.getWakeMessage() -- Get the current wake-up message.
@@ -474,7 +528,8 @@ function obj.broadcast(port, ...) -- Broadcasts the specified data on the specif
 
 	local packed = modem_host.createPacketArray("modem_message", 0, port, ...)
 	local packet = modem_host.packetArrayToPacket(packed)
-	return modem_host.dispatchPacket(packet)
+	modem_host.pushMessage(packet)
+	return true
 end
 
 local cec = {}
