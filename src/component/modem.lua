@@ -228,10 +228,8 @@ function modem_host.processPendingMessages()
 	end
 
 	modem_host.acceptPendingClients()
-	modem_host.recvPendingMessages()
 
-	for _,packet in ipairs(modem_host.messages) do
-
+	for _,packet in modem_host.allPendingMessages() do
 		if packet.type == 'modem_message' then
 			-- broadcast if no target
 			if packet.target == 0 then
@@ -243,8 +241,6 @@ function modem_host.processPendingMessages()
 			modem_host.host_shutdown = true
 		end
 	end
-
-	modem_host.messages = {}
 end
 
 function modem_host.acceptPendingClients()
@@ -286,34 +282,42 @@ function modem_host.acceptPendingClients()
 	end
 end
 
-function modem_host.recvPendingMessages()
-	if modem_host.hosting then
-		for source, client in pairs(modem_host.clients) do
-			local packet, err = modem_host.readPacket(client)
-			if packet then
-				modem_host.pushMessage(packet)
-			elseif err ~= "timeout" then
-				client:close()
-				modem_host.clients[source] = nil
-			end
+function modem_host.allPendingMessages()
+	local msgIt = function(...)
+		if #modem_host.messages > 0 then
+			return 0, table.remove(modem_host.messages, 1)
 		end
-	elseif modem_host.socket then
-		while true do
-			local packet, err = modem_host.readPacket(modem_host.socket)
-			if packet then
-				modem_host.pushMessage(packet)
-			else
-				if err ~= "timeout" then
-					if not modem_host.host_shutdown then
-						error("modem host was unexpectedly lost")
-					end
-					modem_host.connected = false
-					modem_host.connectMessageBoard()
+
+		if modem_host.hosting then
+			for source, client in pairs(modem_host.clients) do
+				local packet, err = modem_host.readPacket(client)
+				if packet then
+					return 0, packet
+				elseif err ~= "timeout" then
+					client:close()
+					modem_host.clients[source] = nil
 				end
-				break
+			end
+		elseif modem_host.socket then
+			while true do
+				local packet, err = modem_host.readPacket(modem_host.socket)
+				if packet then
+					return 0, packet
+				else
+					if err ~= "timeout" then
+						if not modem_host.host_shutdown then
+							error("modem host was unexpectedly lost")
+						end
+						modem_host.connected = false
+						modem_host.connectMessageBoard()
+					end
+					break
+				end
 			end
 		end
 	end
+
+	return msgIt, nil, 0
 end
 
 function modem_host.createNewMessageBoard()
