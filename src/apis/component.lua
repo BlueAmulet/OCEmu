@@ -114,7 +114,10 @@ end
 local components = settings.components
 for k,v in pairs(components) do
 	v[2] = v[2] or k
-	component.connect(v)
+	local ok, err=component.connect(v)
+	if not ok then
+		error(err,0)
+	end
 end
 
 env.component = {list = component.list}

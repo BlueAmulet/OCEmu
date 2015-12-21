@@ -15,17 +15,17 @@ local function setLatest(char)
 end
 
 function elsa.textinput(event)
-	local textevent = ffi.cast("SDL_TextInputEvent", event)
+	local textevent = ffi.cast("SDL_TextInputEvent*", event)
 	local text = ffi.string(textevent.text)
 	cprint("textinput",text)
 	setLatest(lua_utf8.byte(text))
 end
 
 function elsa.keydown(event)
-	local keyevent = ffi.cast("SDL_KeyboardEvent", event)
-	local key = keyevent.keysym.scancode
+	local keyevent = ffi.cast("SDL_KeyboardEvent*", event)
+	local key = tonumber(keyevent.keysym.scancode)
 	local lwjgl = keys[key]
-	cprint("keydown",keyevent.keysym.scancode,lwjgl)
+	cprint("keydown",key,lwjgl)
 	-- TODO: Lovely SDL Hacks
 	if lwjgl ~= 1 then -- Escape
 		table.insert(kbdcodes,{type="key_down",addr=address,code=lwjgl or 0})
@@ -41,10 +41,10 @@ function elsa.keydown(event)
 end
 
 function elsa.keyup(event)
-	local keyevent = ffi.cast("SDL_KeyboardEvent", event)
-	local key = keyevent.keysym.scancode
+	local keyevent = ffi.cast("SDL_KeyboardEvent*", event)
+	local key = tonumber(keyevent.keysym.scancode)
 	local lwjgl = keys[key]
-	cprint("keydown",keyevent.keysym.scancode,lwjgl)
+	cprint("keyup",key,lwjgl)
 	if key ~= 41 then -- Escape
 		table.insert(kbdcodes,{type="key_up",addr=address,code=lwjgl or 0,char=code2char[lwjgl]})
 	end

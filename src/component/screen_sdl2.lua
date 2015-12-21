@@ -58,7 +58,7 @@ end
 local buttons = {[SDL.BUTTON_LEFT] = 0, [SDL.BUTTON_RIGHT] = 1}
 local moved, bttndown, lx, ly = false
 function elsa.mousebuttondown(event)
-	local mbevent = ffi.cast("SDL_MouseButtonEvent", event)
+	local mbevent = ffi.cast("SDL_MouseButtonEvent*", event)
 	if buttons[mbevent.button] then
 		if not bttndown then
 			lx, ly = math.floor(mbevent.x/8)+1,math.floor(mbevent.y/16)+1
@@ -69,7 +69,7 @@ function elsa.mousebuttondown(event)
 end
 
 function elsa.mousebuttonup(event)
-	local mbevent = ffi.cast("SDL_MouseButtonEvent", event)
+	local mbevent = ffi.cast("SDL_MouseButtonEvent*", event)
 	if bttndown and buttons[mbevent.button] then
 		if moved then
 			moved = false
@@ -80,7 +80,7 @@ function elsa.mousebuttonup(event)
 end
 
 function elsa.mousemotion(event)
-	local mmevent = ffi.cast("SDL_MouseMotionEvent", event)
+	local mmevent = ffi.cast("SDL_MouseMotionEvent*", event)
 	if bttndown then
 		local nx, ny = math.floor(mmevent.x/8)+1,math.floor(mmevent.y/16)+1
 		if nx ~= lx or ny ~= ly then
@@ -92,7 +92,7 @@ function elsa.mousemotion(event)
 end
 
 function elsa.mousewheel(event)
-	local mwevent = ffi.cast("SDL_MouseWheelEvent", event)
+	local mwevent = ffi.cast("SDL_MouseWheelEvent*", event)
 	local x,y = ffi.new("int[1]"),ffi.new("int[1]")
 	SDL.getMouseState(ffi.cast("int*",x), ffi.cast("int*",y))
 	table.insert(machine.signals,{"scroll",address,math.floor(x[0]/8)+1,math.floor(y[0]/16)+1,mwevent.y})
@@ -116,6 +116,7 @@ local function createWindow()
 	if renderer == ffi.C.NULL then
 		error(ffi.string(SDL.getError()))
 	end
+	SDL.setRenderDrawBlendMode(renderer, SDL.BLENDMODE_BLEND)
 	texture = SDL.createTexture(renderer, SDL.PIXELFORMAT_ARGB8888, SDL.TEXTUREACCESS_TARGET, width*8, height*16);
 	if texture == ffi.C.NULL then
 		error(ffi.string(SDL.getError()))
@@ -128,11 +129,10 @@ local function createWindow()
 	-- Initialize all the textures to black
 	SDL.setRenderDrawColor(renderer, 0, 0, 0, 255)
 	SDL.renderFillRect(renderer, ffi.C.NULL)
-	SDL.setRenderTarget(renderer, texture);
-	SDL.renderFillRect(renderer, ffi.C.NULL)
 	SDL.setRenderTarget(renderer, copytexture);
 	SDL.renderFillRect(renderer, ffi.C.NULL)
-	SDL.setRenderTarget(renderer, ffi.C.NULL);
+	SDL.setRenderTarget(renderer, texture);
+	SDL.renderFillRect(renderer, ffi.C.NULL)
 end
 
 local function cleanUpWindow(wind)
@@ -153,17 +153,23 @@ elsa.cleanup[#elsa.cleanup+1] = function()
 end
 
 function elsa.draw()
+	SDL.setRenderTarget(renderer, ffi.C.NULL);
 	SDL.renderCopy(renderer, texture, ffi.C.NULL, ffi.C.NULL)
 	SDL.renderPresent(renderer)
+	SDL.setRenderTarget(renderer, texture);
 end
 
+local function extract(value)
+	return bit.rshift(bit.band(value,0xFF0000),16),
+		bit.rshift(bit.band(value,0xFF00),8),
+		bit.band(value,0xFF)
+end
+
+local charCache={}
 local char8 = ffi.new("uint32_t[?]", 8*16)
 local char16 = ffi.new("uint32_t[?]", 16*16)
-local function renderChar(char,x,y,fg,bg)
-	if unifont[char] == nil then
-		char = 63
-	end
-	char = unifont[char]
+local function _renderChar(ochar)
+	char = unifont[ochar]
 	local size,pchar = #char/16
 	if size == 2 then
 		pchar = char8
@@ -176,13 +182,32 @@ local function renderChar(char,x,y,fg,bg)
 		local cx = 0
 		for j = size*4-1,0,-1 do
 			local bit = math.floor(line/2^j)%2
-			local color = bit == 0 and bg or fg
-			pchar[cy*size*4+cx] = color + 0xFF000000
+			pchar[cy*size*4+cx] = (bit == 0 and 0 or 0xFFFFFFFF)
 			cx = cx + 1
 		end
 		cy = cy + 1
 	end
-	SDL.updateTexture(texture, ffi.new("SDL_Rect",{x=x,y=y,w=size*4,h=16}), pchar, (size*4) * ffi.sizeof("uint32_t"))
+	local texture = SDL.createTexture(renderer, SDL.PIXELFORMAT_ARGB8888, SDL.TEXTUREACCESS_STATIC, size*4, 16);
+	SDL.setTextureBlendMode(texture, SDL.BLENDMODE_BLEND)
+	SDL.updateTexture(texture, ffi.C.NULL, pchar, (size*4) * ffi.sizeof("uint32_t"))
+	charCache[ochar] = texture
+end
+
+local function renderChar(char,x,y,fg,bg)
+	if unifont[char] == nil then
+		char = 63
+	end
+	if not charCache[char] then
+		_renderChar(char)
+	end
+	local br, bg, bb = extract(bg)
+	SDL.setRenderDrawColor(renderer, br, bg, bb, 255)
+	local dest = ffi.new("SDL_Rect",{x=x,y=y,w=#unifont[char]/4,h=16})
+	SDL.renderFillRect(renderer, dest)
+	if char~=32 then
+		SDL.setTextureColorMod(charCache[char], extract(fg))
+		SDL.renderCopy(renderer, charCache[char], ffi.C.NULL, dest)
+	end
 end
 
 local function screenSet(x,y,c)
@@ -213,12 +238,6 @@ local function setPos(x,y,c,fg,bg)
 			renderChar(32,x*8,(y-1)*16,screen.fg[y][x+1],screen.bg[y][x+1])
 		end
 	end
-end
-
-local function extract(value)
-	return bit.rshift(bit.band(value,0xFF0000),16),
-		bit.rshift(bit.band(value,0xFF00),8),
-		bit.band(value,0xFF)
 end
 
 local function compare(value1, value2)
@@ -577,7 +596,6 @@ function cec.copy(x1, y1, w, h, tx, ty) -- Copies a portion of the screen from t
 	SDL.setRenderTarget(renderer, copytexture);
 	SDL.renderCopy(renderer, texture, ffi.C.NULL, ffi.C.NULL)
 	SDL.renderCopy(renderer, texture, ffi.new("SDL_Rect",{x=(x1-1)*8,y=(y1-1)*16,w=w*8,h=h*16}), ffi.new("SDL_Rect",{x=(x1+tx-1)*8,y=(y1+ty-1)*16,w=w*8,h=h*16}))
-	SDL.setRenderTarget(renderer, ffi.C.NULL);
 	texture,copytexture=copytexture,texture
 end
 
