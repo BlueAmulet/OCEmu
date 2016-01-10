@@ -140,6 +140,29 @@ function obj.maxResolution() -- Get the maximum screen resolution.
 	local smw,smh = component.cecinvoke(bindaddress, "maxResolution")
 	return math.min(smw, maxwidth), math.min(smh, maxheight)
 end
+--STUB: Actually Implement viewport
+function obj.getViewport() -- Get the current viewport resolution.
+	cprint("gpu.getViewport")
+	if bindaddress == nil then
+		return nil, "no screen"
+	end
+	return component.cecinvoke(bindaddress, "getResolution")
+end
+--STUB: Actually Implement viewport
+function obj.setViewport(width, height) -- Set the viewport resolution. Returns true if the resolution changed.
+	cprint("gpu.setViewport", width, height)
+	compCheckArg(1,width,"number")
+	compCheckArg(2,height,"number")
+	if bindaddress == nil then
+		return nil, "no screen"
+	end
+	local smw,smh = component.cecinvoke(bindaddress, "maxResolution")
+	smw,smh = math.min(smw,maxwidth),math.min(smh,maxheight)
+	if width <= 0 or width >= smw + 1 or height <= 0 or height >= smh + 1 then
+		error("unsupported viewport size",3)
+	end
+	return component.cecinvoke(bindaddress, "setResolution", width, height)
+end
 function obj.getPaletteColor(index) -- Get the palette color at the specified palette index.
 	cprint("gpu.getPaletteColor", index)
 	compCheckArg(1,index,"number")
@@ -225,6 +248,8 @@ local doc = {
 	["getResolution"]="function():number, number -- Get the current screen resolution.",
 	["setResolution"]="function(width:number, height:number):boolean -- Set the screen resolution. Returns true if the resolution changed.",
 	["maxResolution"]="function():number, number -- Get the maximum screen resolution.",
+	["getViewport"]="function():number, number -- Get the current viewport resolution.",
+	["setViewport"]="function(width:number, height:number):boolean -- Set the viewport resolution. Returns true if the resolution changed.",
 	["getPaletteColor"]="function(index:number):number -- Get the palette color at the specified palette index.",
 	["setPaletteColor"]="function(index:number, color:number):number -- Set the palette color at the specified palette index. Returns the previous value.",
 	["get"]="function(x:number, y:number):string, number, number, number or nil, number or nil -- Get the value displayed on the screen at the specified index, as well as the foreground and background color. If the foreground or background is from the palette, returns the palette indices as fourth and fifth results, else nil, respectively.",
