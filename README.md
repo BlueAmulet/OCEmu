@@ -4,40 +4,50 @@ OCEmu - OpenComputers Emulator
 Installation
 ------------
 
-Needs luafilesystem, utf8, and luaffi.
+Needs lua-5.2, luafilesystem, utf8, luaffi, and SDL2.
 
 luasocket is optional but is required for the Internet Component and higher precision timing.
 
 luasec is optional but is required for HTTPS.
 
+**Ubuntu**
 ```
-luarocks-5.2 install luafilesystem
-luarocks-5.2 install utf8
-luarocks-5.2 install luasocket
-luarocks-5.2 install luasec
-git clone https://github.com/gamax92/luaffi.git
-cd luaffi
-make
-sudo cp ffi.so /appropriate/path/for/lua/libraries/
+apt-get install lua5.2 liblua5.2-dev libsdl2-dev subversion
+```
+Install a versioned luarocks for 5.2 as described in: http://stackoverflow.com/a/20359102
+```
+# Download and unpack the latest luarocks from: http://luarocks.org/releases
+./configure --lua-version=5.2 --lua-suffix=5.2 --versioned-rocks-dir
+make build
+sudo make install
+```
+Follow the luarocks steps below.
 
-# OpenComputer's lua source code is not provided, if you have svn then use the provided Makefile
-# If you hate svn, manually download assets/loot, assets/lua, and assets/unifont.hex into src/
-```
+**Mac**
 
 Mac users can get up and running quickly by using [brew](http://brew.sh/).
 
 Brew installs luarocks as part of the lua package.
 ```
-#run this before the luarocks install steps above
+# Run this before the luarocks install steps below
 brew install lua
 brew install sdl2
 ```
-At this point, follow the luarock steps above. Then build luaffi as instructed. Then:
+Follow the luarocks steps below.
 
+**Lua Libraries**
 ```
-#at the time of this writing, the path is for version 5.2
-sudo cp ffi.so /usr/local/lib/lua/5.2/
+luarocks-5.2 install luafilesystem
+luarocks-5.2 install utf8
+luarocks-5.2 install luasocket
+luarocks-5.2 install luasec
+luarocks-5.2 install --server=http://luarocks.org/dev luaffi
+
+# OpenComputer's lua source code is not provided, if you have svn then use the provided Makefile
+# If you hate svn, manually download assets/loot, assets/lua, and assets/unifont.hex into src/
 ```
+
+**Windows**
 
 Windows users will have to manually compile everything, as luarocks seems to hate MSYS2/Cygwin
 
@@ -50,15 +60,13 @@ Running
 Launch boot.lua with lua5.2, and provided everything is installed, you'll have a working Emulator. OCEmu stores its files in $HOME/.ocemu or %APPDATA%\\.ocemu, whichever happens to exist first. 
 
 ```
-cd src/
+cd src
 lua boot.lua
 ```
 
-
-If you want to use a custom path (for example, for running multiple machines with unique filesystems) you can specify the machine path as an argument to boot.lua.
+If you want to use a custom path (for example, for running multiple machines with unique filesystems) you can specify the machine path as an argument to boot.lua:
 
 ```
-cd src/
+cd src
 lua boot.lua /path/to/my/emulated/machine_a
 ```
-
