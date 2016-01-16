@@ -3,7 +3,7 @@ compCheckArg(1,maxwidth,"number")
 compCheckArg(2,maxheight,"number")
 compCheckArg(3,maxtier,"number")
 
-local lua_utf8 = require("utf8")
+local utf8 = require("lua-utf8")
 
 local bindaddress
 local depthTbl = {1,4,8}
@@ -102,7 +102,7 @@ function obj.fill(x, y, width, height, char) -- Fills a portion of the screen at
 	if bindaddress == nil then
 		return nil, "no screen"
 	end
-	if lua_utf8.len(char) ~= 1 then
+	if utf8.len(char) ~= 1 then
 		return nil, "invalid fill value"
 	end
 	return component.cecinvoke(bindaddress, "fill", x, y, width, height, char)

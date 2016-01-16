@@ -124,7 +124,6 @@ local env = {
 		upvalueid = debug.upvalueid,
 		upvaluejoin = debug.upvaluejoin,
 	},
-	dofile = dofile,
 	error = error,
 	getmetatable = getmetatable,
 	io = {
@@ -145,7 +144,6 @@ local env = {
 	},
 	ipairs = ipairs,
 	load = load,
-	loadfile = loadfile,
 	math = {
 		abs = math.abs,
 		acos = math.acos,
@@ -166,7 +164,7 @@ local env = {
 		max = math.max,
 		min = math.min,
 		modf = math.modf,
-		pi = 3.1415926535898,
+		pi = math.pi,
 		pow = math.pow,
 		rad = math.rad,
 		random = math.random,
@@ -230,6 +228,23 @@ local env = {
 	type = type,
 	xpcall = xpcall,
 }
+if _VERSION == "Lua 5.3" then
+	env._VERSION = "Lua 5.3"
+	env.coroutine.isyieldable = coroutine.isyieldable
+	env.math.maxinteger = math.maxinteger
+	env.math.mininteger = math.mininteger
+	env.math.tointeger = math.tointeger
+	env.math.type = math.type
+	env.math.ult = math.ult
+	env.string.pack = string.pack
+	env.string.packsize = string.packsize
+	env.string.unpack = string.unpack
+	env.table.move = table.move
+	env.utf8 = {}
+	for k,v in pairs(utf8) do
+		env.utf8[k] = v
+	end
+end
 setmetatable(env,{
 	__index = function(_,k)
 		cprint("Missing environment access", "env." .. k)

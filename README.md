@@ -4,7 +4,7 @@ OCEmu - OpenComputers Emulator
 Installation
 ------------
 
-Needs lua-5.2, luafilesystem, utf8, luaffi, and SDL2.
+Needs lua-5.2, luafilesystem, luautf8, luaffi, and SDL2.
 
 luasocket is optional but is required for the Internet Component and higher precision timing.
 
@@ -38,7 +38,7 @@ Follow the luarocks steps below.
 **Lua Libraries**
 ```
 luarocks-5.2 install luafilesystem
-luarocks-5.2 install utf8
+luarocks-5.2 install luautf8
 luarocks-5.2 install luasocket
 luarocks-5.2 install luasec
 luarocks-5.2 install --server=http://luarocks.org/dev luaffi

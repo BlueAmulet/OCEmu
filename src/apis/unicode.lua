@@ -1,6 +1,6 @@
 local env = ...
 
-local utf8 = require("utf8")
+local utf8 = require("lua-utf8")
 
 local function cln(str)
 	return str:gsub("%z.*","") .. ""

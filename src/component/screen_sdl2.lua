@@ -4,7 +4,7 @@ compCheckArg(2,maxheight,"number")
 compCheckArg(3,maxtier,"number")
 
 local ffi = require("ffi")
-local utf8 = require("utf8")
+local utf8 = require("lua-utf8")
 local bit = require("bit32")
 local SDL = elsa.SDL
 

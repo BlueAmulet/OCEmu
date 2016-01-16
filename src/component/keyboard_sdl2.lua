@@ -1,7 +1,7 @@
 local address = ...
 
 local ffi = require("ffi")
-local lua_utf8 = require("utf8")
+local utf8 = require("lua-utf8")
 local SDL = elsa.SDL
 
 -- Conversion table for SDL2 keys to LWJGL key codes
@@ -18,7 +18,7 @@ function elsa.textinput(event)
 	local textevent = ffi.cast("SDL_TextInputEvent*", event)
 	local text = ffi.string(textevent.text)
 	cprint("textinput",text)
-	setLatest(lua_utf8.byte(text))
+	setLatest(utf8.byte(text))
 end
 
 function elsa.keydown(event)
