@@ -1,4 +1,9 @@
 #!/usr/bin/lua5.2
+if package.cpath:find(".dll",nil,true) then
+	package.cpath=".\\extras\\?.dll;" .. package.cpath
+	package.path=".\\extras\\?\\init.lua;.\\extras\\?.lua;" .. package.path
+end
+
 local function b(a) return a ~= 0 end
 local ffi = require("ffi")
 local SDL = require("sdl2.init")
