@@ -120,7 +120,11 @@ for k,v in pairs(components) do
 	end
 end
 
-env.component = {list = component.list}
+env.component = setmetatable({list = component.list},{
+	__index = function(_,k)
+		cprint("Missing environment access", "env.component." .. k)
+	end,
+})
 
 function env.component.type(address)
 	checkArg(1,address,"string")

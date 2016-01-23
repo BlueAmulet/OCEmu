@@ -6,7 +6,11 @@ local function cln(str)
 	return str:gsub("%z.*","") .. ""
 end
 
-env.unicode = {}
+env.unicode = setmetatable({},{
+	__index = function(_,k)
+		cprint("Missing environment access", "env.unicode." .. k)
+	end,
+})
 
 function env.unicode.char(...)
 	cprint("unicode.char", ...)

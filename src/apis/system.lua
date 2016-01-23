@@ -1,6 +1,10 @@
 local env = ...
 
-env.system = {}
+env.system = setmetatable({},{
+	__index = function(_,k)
+		cprint("Missing environment access", "env.system." .. k)
+	end,
+})
 
 function env.system.allowBytecode()
 	cprint("system.allowBytecode")

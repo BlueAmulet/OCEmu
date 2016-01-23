@@ -16,7 +16,11 @@ function computer.setTempAddress(str)
 	tmpaddr = str
 end
 
-env.computer = {}
+env.computer = setmetatable({},{
+	__index = function(_,k)
+		cprint("Missing environment access", "env.computer." .. k)
+	end,
+})
 
 function env.computer.realTime()
 	--TODO
@@ -76,4 +80,23 @@ function env.computer.maxEnergy()
 	-- TODO: What is this ...
 	cprint("computer.maxEnergy")
 	return 1500
+end
+function env.computer.getArchitectures()
+	--STUB
+	cprint("computer.getArchitectures")
+	return {_VERSION,n=1}
+end
+function env.computer.getArchitecture()
+	--STUB
+	cprint("computer.getArchitecure")
+	return _VERSION
+end
+function env.computer.setArchitecture(archName)
+	--STUB
+	cprint("computer.setArchitecture")
+	compCheckArg(1,archName,"string")
+	if archName ~= _VERSION then
+		return nil, "unknown architecture"
+	end
+	return false
 end
