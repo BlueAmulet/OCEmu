@@ -26,6 +26,10 @@ function obj.disconnect(address)
 	return component.disconnect(address)
 end
 
+function obj.biglist()
+	machine.biglistgen=true
+end
+
 function obj.log(...)
 	print(...)
 end

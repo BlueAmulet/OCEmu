@@ -1,5 +1,4 @@
 local address, _, wireless = ...
-print(address, _, wireless);
 compCheckArg(1,wireless,"boolean")
 
 local socket = require("socket")

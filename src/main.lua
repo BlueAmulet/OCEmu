@@ -176,19 +176,6 @@ local env = {
 		tanh = math.tanh,
 	},
 	next = next,
-	os = {
-		clock = os.clock,
-		date = os.date,
-		difftime = os.difftime,
-		execute = os.execute,
-		exit = os.exit,
-		getenv = os.getenv,
-		remove = os.remove,
-		rename = os.rename,
-		setlocale = os.setlocale,
-		time = os.time,
-		tmpname = os.tmpname,
-	},
 	pairs = pairs,
 	pcall = pcall,
 	print = print,
@@ -294,6 +281,12 @@ function boot_machine()
 	cprint("Machine.lua booted ...")
 end
 
+local biglist, err = loadfile("biglist.lua")
+if not biglist then
+	error(err)
+end
+biglist=biglist()
+
 boot_machine()
 
 local resume_thread
@@ -301,7 +294,7 @@ function resume_thread(...)
 	timeoffset = 0
 	if coroutine.status(machine.thread) ~= "dead" then
 		cprint("resume",...)
-		local results = { coroutine.resume(machine.thread, ...) }
+		local results = table.pack(coroutine.resume(machine.thread, ...))
 		cprint("yield",table.unpack(results))
 		if type(results[2]) == "function" then
 			resume_thread(results[2]())
@@ -319,6 +312,12 @@ function resume_thread(...)
 		end
 		if coroutine.status(machine.thread) == "dead" and type(results[2]) ~= "function" then
 			cprint("machine.lua has died")
+		end
+		if machine.biglistgen then
+			print("BigList")
+			machine.biglistgen = false
+			collectgarbage("collect")
+			biglist.dump(machine.thread,"(main)")
 		end
 	end
 end
