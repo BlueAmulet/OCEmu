@@ -60,12 +60,12 @@ if [ ! -e luautf8 ]; then
 fi
 cd luautf8
 gcc -O2 -c -o lutf8lib.o lutf8lib.c
-gcc -O -shared -o utf8.dll lutf8lib.o -llua
-if [ ! -e utf8.dll ]; then
+gcc -O -shared -o lua-utf8.dll lutf8lib.o -llua
+if [ ! -e lua-utf8.dll ]; then
 	echo "Failed to build luautf8"
 	exit 1
 fi
-mv utf8.dll ..
+mv lua-utf8.dll ..
 cd ..
 rm -r luautf8
 git clone --depth=1 https://github.com/gamax92/luaffi.git
