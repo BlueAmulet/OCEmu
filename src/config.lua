@@ -7,6 +7,7 @@ local comments = {
 ["computer"]="Computer related settings, concerns server performance and security.",
 ["computer.lua"]="Settings specific to the Lua architecture.",
 ["computer.lua.allowBytecode"]="Whether to allow loading precompiled bytecode via Lua's `load` function, or related functions (`loadfile`, `dofile`). Enable this only if you absolutely trust all users on your server and all Lua code you run. This can be a MASSIVE SECURITY RISK, since precompiled code can easily be used for exploits, running arbitrary code on the real server! I cannot stress this enough: only enable this is you know what you're doing.",
+["computer.lua.allowGC"]="Whether to allow user defined __gc callbacks, i.e. __gc callbacks defined *inside* the sandbox. Since garbage collection callbacks are not sandboxed (hooks are disabled while they run), this is not recommended.",
 ["computer.timeout"]="The time in seconds a program may run without yielding before it is forcibly aborted. This is used to avoid stupidly written or malicious programs blocking other computers by locking down the executor threads. Note that changing this won't have any effect on computers that are already running - they'll have to be rebooted for this to take effect.",
 ["emulator"]="Emulator related settings. Components, accuracy, and debugging.",
 ["emulator.components"]="Default components available to the computer.",
