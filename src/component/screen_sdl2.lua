@@ -101,18 +101,20 @@ end
 local window, renderer, texture, copytexture
 local function createWindow()
 	if not window then
-		window = SDL.createWindow("OCEmu - screen@" .. address, SDL.WINDOWPOS_CENTERED, SDL.WINDOWPOS_CENTERED, width*8, height*16, SDL.WINDOW_SHOWN)
-		SDL.setWindowGrab(window, SDL.FALSE)
-
+		window = SDL.createWindow("OCEmu - screen@" .. address, SDL.WINDOWPOS_CENTERED, SDL.WINDOWPOS_CENTERED, width*8, height*16, SDL.WINDOW_SHOWN + SDL.WINDOW_RESIZABLE)
 		if window == ffi.C.NULL then
 			error(ffi.string(SDL.getError()))
 		end
+
+		-- Attempt to fix random issues on Windows 64bit
+		SDL.setWindowFullscreen(window, 0)
+		SDL.restoreWindow(window)
+		SDL.setWindowSize(window, width*8, height*16)
+		SDL.setWindowPosition(window, SDL.WINDOWPOS_CENTERED, SDL.WINDOWPOS_CENTERED)
+		SDL.setWindowGrab(window, SDL.FALSE)
+		--]]
 	end
-	local flags = SDL.RENDERER_TARGETTEXTURE
-	if ffi.os == "Windows" then -- TODO: Investigate why
-		flags = flags + SDL.RENDERER_SOFTWARE
-	end
-	renderer = SDL.createRenderer(window, -1, flags)
+	renderer = SDL.createRenderer(window, -1, SDL.RENDERER_TARGETTEXTURE)
 	if renderer == ffi.C.NULL then
 		error(ffi.string(SDL.getError()))
 	end
@@ -135,6 +137,7 @@ local function createWindow()
 	SDL.renderFillRect(renderer, ffi.C.NULL)
 end
 
+local charCache={}
 local function cleanUpWindow(wind)
 	SDL.destroyTexture(texture)
 	SDL.destroyTexture(copytexture)
@@ -144,6 +147,7 @@ local function cleanUpWindow(wind)
 		window = nil
 	end
 	texture, copytexture, renderer = nil
+	charCache={}
 end
 
 createWindow()
@@ -165,7 +169,6 @@ local function extract(value)
 		bit.band(value,0xFF)
 end
 
-local charCache={}
 local char8 = ffi.new("uint32_t[?]", 8*16)
 local char16 = ffi.new("uint32_t[?]", 16*16)
 local function _renderChar(ochar)
