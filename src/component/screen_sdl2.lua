@@ -570,6 +570,11 @@ function cec.copy(x1, y1, w, h, tx, ty) -- Copies a portion of the screen from t
 	if x1 < 1 or y1 < 1 or x2 > width or y2 > height then
 		return true
 	end
+	local ty1,ty2 = y1+ty, y2+ty
+	local tx1,tx2 = x1+tx, x2+tx
+	if ty2<1 or ty1>height or tx2<1 or tx1>width then
+		return true
+	end
 	local copy = {txt={},fg={},bg={},fgp={},bgp={}}
 	for y = y1,y2 do
 		copy.txt[y-y1] = {}
