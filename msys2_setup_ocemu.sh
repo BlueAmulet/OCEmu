@@ -1,4 +1,8 @@
 #!/bin/bash
+if [ "$MSYSTEM" = "MSYS" ]; then
+	echo This script does not work in a 'MSYS2 Shell', use a 'MinGW-w64 Win Shell'
+	exit 1
+fi
 MACHINE_TYPE=`uname -m`
 pacman --needed --noconfirm -S mingw-w64-${MACHINE_TYPE}-toolchain winpty patch make git subversion mingw-w64-${MACHINE_TYPE}-SDL2
 mkdir mingw-w64-lua
@@ -68,13 +72,13 @@ fi
 mv lua-utf8.dll ..
 cd ..
 rm -r luautf8
-git clone --depth=1 https://github.com/gamax92/luaffi.git
-if [ ! -e luaffi ]; then
-	echo "Failed to download luaffi"
+git clone --depth=1 https://github.com/gamax92/luaffifb.git
+if [ ! -e luaffifb ]; then
+	echo "Failed to download luaffifb"
 	exit 1
 fi
-cd luaffi
-cat << 'EOF' > luaffi_mingw.patch
+cd luaffifb
+cat << 'EOF' > luaffifb_mingw.patch
 --- Makefile-old	2015-06-27 10:41:00.288971000 -0600
 +++ Makefile.win	2015-06-27 10:41:18.062998000 -0600
 @@ -6,2 +6,3 @@
@@ -84,15 +88,15 @@ cat << 'EOF' > luaffi_mingw.patch
 +SOCFLAGS=-llua
 +CC=gcc
 EOF
-patch < luaffi_mingw.patch
+patch < luaffifb_mingw.patch
 make -f Makefile.win ffi.dll
 if [ ! -e ffi.dll ]; then
-	echo "Failed to build luaffi"
+	echo "Failed to build luaffifb"
 	exit 1
 fi
 mv ffi.dll ..
 cd ..
-rm -r luaffi
+rm -r luaffifb
 git clone -b v3.0-rc1 --depth=1 https://github.com/diegonehab/luasocket.git
 if [ ! -e luasocket ]; then
 	echo "Failed to download luasocket"
@@ -132,7 +136,7 @@ cat << 'EOF' > luasec_mingw.patch
 +	$(LD) $(LDFLAGS) -o $@ $(OBJS) $(LIBS) -llua -lws2_32
 EOF
 patch -p0 < luasec_mingw.patch
-LD=gcc CC=gcc make linux
+INC_PATH= LD=gcc CC=gcc make linux
 if [ ! -e src/ssl.dll ]; then
 	echo "Failed to build luasec"
 	exit 1
