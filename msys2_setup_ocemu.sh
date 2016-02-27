@@ -3,6 +3,7 @@ if [ "$MSYSTEM" = "MSYS" ]; then
 	echo This script does not work in a 'MSYS2 Shell', use a 'MinGW-w64 Win Shell'
 	exit 1
 fi
+case ${PWD} in *\ * ) echo "Your path has spaces in it which may prevent this script from building correctly."; read -p "Press [Enter] key to continue." ;; esac
 MACHINE_TYPE=`uname -m`
 pacman --needed --noconfirm -S mingw-w64-${MACHINE_TYPE}-toolchain winpty patch make git subversion mingw-w64-${MACHINE_TYPE}-SDL2
 mkdir mingw-w64-lua
