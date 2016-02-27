@@ -49,7 +49,14 @@ end
 function env.computer.pushSignal(name, ...)
 	cprint("computer.pushSignal", name, ...)
 	compCheckArg(1,name,"string")
-	table.insert(machine.signals, {name, ... })
+	local signal = {n = select("#", ...) + 1, name, ... }
+	for i = 2, signal.n do
+		local kind = type(signal[i])
+		if kind == "table" or kind == "function" then
+			signal[i] = nil
+		end
+	end
+	table.insert(machine.signals, signal)
 end
 function env.computer.tmpAddress()
 	cprint("computer.tmpAddress")

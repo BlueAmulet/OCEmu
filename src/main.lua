@@ -336,7 +336,7 @@ function elsa.update(dt)
 	if #machine.signals > 0 then
 		signal = machine.signals[1]
 		table.remove(machine.signals, 1)
-		resume_thread(table.unpack(signal))
+		resume_thread(table.unpack(signal, 1, signal.n or #signal))
 	elseif elsa.timer.getTime() >= machine.deadline then
 		resume_thread()
 	end
