@@ -46,13 +46,13 @@ function env.computer.totalMemory()
 	cprint("computer.totalMemory")
 	return machine.totalMemory
 end
+local signalWhitelist={["nil"]=true,boolean=true,string=true,number=true}
 function env.computer.pushSignal(name, ...)
 	cprint("computer.pushSignal", name, ...)
 	compCheckArg(1,name,"string")
 	local signal = {n = select("#", ...) + 1, name, ... }
 	for i = 2, signal.n do
-		local kind = type(signal[i])
-		if kind == "table" or kind == "function" then
+		if not signalWhitelist[type(signal[i])] then
 			signal[i] = nil
 		end
 	end
