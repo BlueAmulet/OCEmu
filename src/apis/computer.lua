@@ -1,6 +1,6 @@
 local env = ...
 
-local sok,socket = pcall(require,"socket")
+local sok, socket = tryrequire("socket")
 if sok then
 	gettime = socket.gettime
 else

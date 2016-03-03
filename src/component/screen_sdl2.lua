@@ -102,7 +102,7 @@ local window, renderer, texture, copytexture
 local function createWindow()
 	if not window then
 		window = SDL.createWindow("OCEmu - screen@" .. address, SDL.WINDOWPOS_CENTERED, SDL.WINDOWPOS_CENTERED, width*8, height*16, SDL.WINDOW_SHOWN)
-		if window == ffi.C.NULL then
+		if window == ffi.NULL then
 			error(ffi.string(SDL.getError()))
 		end
 
@@ -115,26 +115,26 @@ local function createWindow()
 		--]]
 	end
 	renderer = SDL.createRenderer(window, -1, SDL.RENDERER_TARGETTEXTURE)
-	if renderer == ffi.C.NULL then
+	if renderer == ffi.NULL then
 		error(ffi.string(SDL.getError()))
 	end
 	SDL.setRenderDrawBlendMode(renderer, SDL.BLENDMODE_BLEND)
 	texture = SDL.createTexture(renderer, SDL.PIXELFORMAT_ARGB8888, SDL.TEXTUREACCESS_TARGET, width*8, height*16);
-	if texture == ffi.C.NULL then
+	if texture == ffi.NULL then
 		error(ffi.string(SDL.getError()))
 	end
 	copytexture = SDL.createTexture(renderer, SDL.PIXELFORMAT_ARGB8888, SDL.TEXTUREACCESS_TARGET, width*8, height*16);
-	if copytexture == ffi.C.NULL then
+	if copytexture == ffi.NULL then
 		error(ffi.string(SDL.getError()))
 	end
 
 	-- Initialize all the textures to black
 	SDL.setRenderDrawColor(renderer, 0, 0, 0, 255)
-	SDL.renderFillRect(renderer, ffi.C.NULL)
+	SDL.renderFillRect(renderer, ffi.NULL)
 	SDL.setRenderTarget(renderer, copytexture);
-	SDL.renderFillRect(renderer, ffi.C.NULL)
+	SDL.renderFillRect(renderer, ffi.NULL)
 	SDL.setRenderTarget(renderer, texture);
-	SDL.renderFillRect(renderer, ffi.C.NULL)
+	SDL.renderFillRect(renderer, ffi.NULL)
 end
 
 local charCache={}
@@ -157,8 +157,8 @@ elsa.cleanup[#elsa.cleanup+1] = function()
 end
 
 function elsa.draw()
-	SDL.setRenderTarget(renderer, ffi.C.NULL);
-	SDL.renderCopy(renderer, texture, ffi.C.NULL, ffi.C.NULL)
+	SDL.setRenderTarget(renderer, ffi.NULL);
+	SDL.renderCopy(renderer, texture, ffi.NULL, ffi.NULL)
 	SDL.renderPresent(renderer)
 	SDL.setRenderTarget(renderer, texture);
 end
@@ -192,7 +192,7 @@ local function _renderChar(ochar)
 	end
 	local texture = SDL.createTexture(renderer, SDL.PIXELFORMAT_ARGB8888, SDL.TEXTUREACCESS_STATIC, size*4, 16);
 	SDL.setTextureBlendMode(texture, SDL.BLENDMODE_BLEND)
-	SDL.updateTexture(texture, ffi.C.NULL, pchar, (size*4) * ffi.sizeof("uint32_t"))
+	SDL.updateTexture(texture, ffi.NULL, pchar, (size*4) * ffi.sizeof("uint32_t"))
 	charCache[ochar] = texture
 end
 
@@ -209,7 +209,7 @@ local function renderChar(char,x,y,fg,bg)
 	SDL.renderFillRect(renderer, dest)
 	if char~=32 then
 		SDL.setTextureColorMod(charCache[char], extract(fg))
-		SDL.renderCopy(renderer, charCache[char], ffi.C.NULL, dest)
+		SDL.renderCopy(renderer, charCache[char], ffi.NULL, dest)
 	end
 end
 
@@ -602,7 +602,7 @@ function cec.copy(x1, y1, w, h, tx, ty) -- Copies a portion of the screen from t
 		end
 	end
 	SDL.setRenderTarget(renderer, copytexture);
-	SDL.renderCopy(renderer, texture, ffi.C.NULL, ffi.C.NULL)
+	SDL.renderCopy(renderer, texture, ffi.NULL, ffi.NULL)
 	SDL.renderCopy(renderer, texture, ffi.new("SDL_Rect",{x=(x1-1)*8,y=(y1-1)*16,w=w*8,h=h*16}), ffi.new("SDL_Rect",{x=(x1+tx-1)*8,y=(y1+ty-1)*16,w=w*8,h=h*16}))
 	texture,copytexture=copytexture,texture
 end

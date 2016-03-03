@@ -17,7 +17,9 @@ function obj.beep(frequency, duration) -- Plays a tone, useful to alert users vi
 	end
 	if duration == nil then duration = 0.1 end
 	compCheckArg(2,duration,"number")
-	--local durationInMilliseconds = math.max(50, math.min(5000, math.floor(duration * 1000)))
+	local durationMS = math.max(50, math.min(5000, math.floor(duration * 1000)))
+	machine.beep(frequency, durationMS)
+	machine.sleep(durationMS/1000)
 end
 function obj.stop() -- Stops the computer. Returns true if the state changed.
 	--STUB

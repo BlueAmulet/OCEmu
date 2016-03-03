@@ -4,12 +4,24 @@ local ffi = require("ffi")
 local utf8 = require("lua-utf8")
 local SDL = elsa.SDL
 
+local kbdstate = SDL.getKeyboardState(ffi.NULL)
+
 -- Conversion table for SDL2 keys to LWJGL key codes
 local keys,codes = elsa.filesystem.load("support/sdl_to_lwjgl.lua")()
 
 local code2char = {}
 
 local function setLatest(char)
+	-- HACK: Check if Control is pressed and generate control codes
+	if kbdstate[SDL.SCANCODE_LCTRL] ~= 0 or kbdstate[SDL.SCANCODE_RCTRL] ~= 0 then
+		if char >= 97 and char <= 122 then
+			char = char - 96
+		elseif char >= 91 and char <= 95 then
+			char = char - 64
+		elseif char == 64 then
+			char = 0
+		end
+	end
 	kbdcodes[#kbdcodes].char = char
 	code2char[kbdcodes[#kbdcodes].code] = char
 end
@@ -24,6 +36,7 @@ end
 function elsa.keydown(event)
 	local keyevent = ffi.cast("SDL_KeyboardEvent*", event)
 	local key = tonumber(keyevent.keysym.scancode)
+	local char = tonumber(keyevent.keysym.sym)
 	local lwjgl = keys[key]
 	cprint("keydown",key,lwjgl)
 	-- TODO: Lovely SDL Hacks
@@ -32,6 +45,8 @@ function elsa.keydown(event)
 	end
 	if lwjgl ~= nil and codes[lwjgl] ~= nil then
 		setLatest(codes[lwjgl])
+	elseif char < 2^30 then -- 2^30 and above are scancodes
+		setLatest(char)
 	end
 	if lwjgl == 210 then
 		if SDL.hasClipboardText() > 0 then

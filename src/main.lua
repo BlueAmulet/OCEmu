@@ -18,7 +18,7 @@ end
 function checkArg(n, have, ...)
 	have = type(have)
 	if not check(have, ...) then
-	    local msg = string.format("bad argument #%d (%s expected, got %s)", n, table.concat({...}, " or "), have)
+		local msg = string.format("bad argument #%d (%s expected, got %s)", n, table.concat({...}, " or "), have)
 		error(msg, 3)
 	end
 end
@@ -26,9 +26,13 @@ end
 function compCheckArg(n, have, ...)
 	have = type(have)
 	if not check(have, ...) then
-	    local msg = string.format("bad arguments #%d (%s expected, got %s)", n, table.concat({...}, " or "), have)
+		local msg = string.format("bad arguments #%d (%s expected, got %s)", n, table.concat({...}, " or "), have)
 		error(msg, 4)
 	end
+end
+
+function tryrequire(...)
+	return pcall(require, ...)
 end
 
 -- load configuration
@@ -73,6 +77,38 @@ machine = {
 	signals = {},
 	totalMemory = 2*1024*1024,
 }
+
+-- SDL2 causes Segmentation faults when both the Callback and Lua are running.
+-- (Removed, code is garbage)
+
+-- Attempt to use SoX's synthesizer, this is safe to use.
+--[[
+if not machine.beep and os.execute("type sox") then
+	function machine.beep(frequency, duration)
+		os.execute("play -q -n synth " .. (duration/1000) .. " square " .. frequency .. " vol 0.3 &")
+	end
+end
+--]]
+if not machine.beep then
+	function machine.beep(frequency, duration)
+		cprint("BEEP", frequency, duration)
+	end
+end
+
+if not machine.sleep and elsa.SDL then
+	function machine.sleep(s)
+		elsa.SDL.delay(s*1000)
+	end
+end if not machine.sleep then
+	local sok, socket = tryrequire("socket")
+	if sok then
+		function machine.sleep(s)
+			socket.sleep(s)
+		end
+	end
+end if not machine.sleep then
+	function machine.sleep() end
+end
 
 if settings.emulatorDebug then
 	cprint = print
