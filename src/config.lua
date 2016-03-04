@@ -12,6 +12,7 @@ local comments = {
 ["emulator"]="Emulator related settings. Components, accuracy, and debugging.",
 ["emulator.components"]="Default components available to the computer.",
 ["emulator.debug"]="Whether to enable the emulator's extremely verbose logging.",
+["emulator.vague"]="Whether to return vague error messages like OpenComputers.",
 ["internet.enableHttp"]="Whether to allow HTTP requests via internet cards. When enabled, the `request` method on internet card components becomes available.",
 ["internet.enableTcp"]="Whether to allow TCP connections via internet cards. When enabled, the `connect` method on internet card components becomes available.",
 ["misc"]="Other settings that you might find useful to tweak.",
@@ -31,6 +32,16 @@ local function writeComment(text,file,size)
 		line = line .. (line == "" and "" or " ") .. word
 	end
 	file:write("\n")
+end
+
+local function tlen(t)
+	local n = -math.huge
+	for k in pairs(t) do
+		if type(k) == "number" and k >= n then
+			n = k
+		end
+	end
+	return n
 end
 
 local serialize
@@ -54,13 +65,14 @@ function serialize(tbl,key,path,file,size)
 			for i = 1,#v do
 				local comp = v[i]
 				file:write(string.rep(" ",size+2) .. "{")
-				for i = 1,#comp do
+				comp.n=tlen(comp)
+				for i = 1,comp.n do
 					if type(comp[i]) == "string" then
 						file:write(string.format("%q",comp[i]))
 					else
 						file:write(tostring(comp[i]))
 					end
-					if i < #comp then
+					if i < comp.n then
 						file:write(", ")
 					end
 				end

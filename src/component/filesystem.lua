@@ -13,6 +13,8 @@ if not elsa.filesystem.exists(directory) then
 	elsa.filesystem.createDirectory(directory)
 end
 
+local vague = settings.vagueErrors
+
 local label = ("/" .. directory):match(".*/(.+)")
 if label == address then
 	label = nil
@@ -28,7 +30,7 @@ local function cleanPath(path)
    			if part == ".." and #tPath > 0 and tPath[#tPath] ~= ".." then
    				table.remove(tPath)
    			else
-   				table.insert(tPath, part:sub(1,255))
+   				table.insert(tPath, part)
    			end
    		end
 	end
@@ -72,6 +74,7 @@ end
 function obj.rename(from, to) -- Renames/moves an object from the first specified absolute path in the file system to the second.
 	cprint("filesystem.rename", from, to)
 	compCheckArg(1,from,"string")
+	local ofrom = from
 	from = cleanPath(from)
 	if from == ".." or from:sub(1,3) == "../" then
 		return nil,"file not found"
@@ -84,7 +87,14 @@ function obj.rename(from, to) -- Renames/moves an object from the first specifie
 	if readonly then
 		return false
 	end
-	return os.rename(directory .. "/" .. from, directory .. "/" .. to) == true
+	local ok, err = os.rename(directory .. "/" .. from, directory .. "/" .. to)
+	if ok then
+		return true
+	elseif vague then
+		return nil, ofrom
+	else
+		return nil, err
+	end
 end
 function obj.close(handle) -- Closes an open file descriptor with the specified handle.
 	cprint("filesystem.close", handle)
@@ -150,7 +160,7 @@ function obj.setLabel(value) -- Sets the label of the file system. Returns the n
 	--TODO: treat functions as nil
 	cprint("filesystem.setLabel", value)
 	compCheckArg(1,value,"string")
-	if readonly then
+	if readonly or directory:sub(-6) == "/tmpfs" then
 		error("label is read only",3)
 	end
 	label = value:sub(1,16)
@@ -160,18 +170,21 @@ function obj.open(path, mode) -- Opens a new file descriptor and returns its han
 	if mode == nil then mode = "r" end
 	compCheckArg(1,path,"string")
 	compCheckArg(2,mode,"string")
+	local opath = path
 	path = cleanPath(path)
 	if path == ".." or path:sub(1,3) == "../" then
-		return nil,"file not found"
+		return nil, (vague and opath or "file not found")
 	end
 	if mode ~= "r" and mode ~= "rb" and mode ~= "w" and mode ~= "wb" and mode ~= "a" and mode ~= "ab" then
 		error("unsupported mode",3)
 	end
-	if (not (mode == "r" or mode == "rb") and readonly) or ((mode == "r" or mode == "rb") and not elsa.filesystem.exists(directory .. "/" .. path)) then
-		return nil,"file not found"
+	if (mode == "r" or mode == "rb") and not elsa.filesystem.exists(directory .. "/" .. path) then
+		return nil, (vague and opath or "file not found")
+	elseif not (mode == "r" or mode == "rb") and readonly then
+		return nil, (vague and opath or "filesystem is read only")
 	end
 	local file, err = elsa.filesystem.newFile(directory .. "/" .. path, mode:sub(1,1))
-	if not file then return nil, err end
+	if not file then return nil, (vague and opath or err) end
 	while true do
 		local rnddescrpt = math.random(1000000000,9999999999)
 		if handles[rnddescrpt] == nil then
@@ -209,6 +222,7 @@ function obj.list(path) -- Returns a list of names of objects in the directory a
 			list[i] = list[i] .. "/"
 		end
 	end
+	list.n = #list
 	return list
 end
 function obj.isReadOnly() -- Returns whether the file system is read-only.

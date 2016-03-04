@@ -7,6 +7,7 @@ settings = {
 
 	components = config.get("emulator.components"),
 	emulatorDebug = config.get("emulator.debug",true),
+	vagueErrors = config.get("emulator.vague",true),
 
 	httpEnabled = config.get("internet.enableHttp",true),
 	tcpEnabled = config.get("internet.enableTcp",true),

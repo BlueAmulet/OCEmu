@@ -42,15 +42,15 @@ function elsa.keydown(event)
 	-- TODO: Lovely SDL Hacks
 	if lwjgl ~= 1 then -- Escape
 		table.insert(kbdcodes,{type="key_down",addr=address,code=lwjgl or 0})
-	end
-	if lwjgl ~= nil and codes[lwjgl] ~= nil then
-		setLatest(codes[lwjgl])
-	elseif char < 2^30 then -- 2^30 and above are scancodes
-		setLatest(char)
-	end
-	if lwjgl == 210 then
-		if SDL.hasClipboardText() > 0 then
-			table.insert(machine.signals,{"clipboard",address,ffi.string(SDL.getClipboardText())})
+		if lwjgl ~= nil and codes[lwjgl] ~= nil then
+			setLatest(codes[lwjgl])
+		elseif char < 2^30 then -- 2^30 and above are scancodes
+			setLatest(char)
+		end
+		if lwjgl == 210 then
+			if SDL.hasClipboardText() > 0 then
+				table.insert(machine.signals,{"clipboard",address,ffi.string(SDL.getClipboardText())})
+			end
 		end
 	end
 end
