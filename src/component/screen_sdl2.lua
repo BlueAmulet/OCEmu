@@ -442,6 +442,12 @@ function cec.fill(x1, y1, w, h, char) -- Fills a portion of the screen at the sp
 	if x2 < 1 or y2 < 1 or x1 > width or y1 > height then
 		return true
 	end
+	if x1 < 1 then
+		x1, x2 = 1, x2 - 1 + x1
+	end
+	if y1 < 1 then
+		y1, y2 = 1, y2 - 1 + y1
+	end
 	for y = y1,y2 do
 		for x = x1,x2,getCharWidth(code) do
 			setPos(x,y,code,scrfgc,scrbgc)
