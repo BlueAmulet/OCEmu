@@ -437,19 +437,18 @@ function cec.fill(x1, y1, w, h, char) -- Fills a portion of the screen at the sp
 		return true
 	end
 	local code = utf8.byte(char)
-	local x2 = x1+(w*getCharWidth(code))-1
+	local charWidth = getCharWidth(code)
+	if charWidth > 1 and x1 < 1 then
+		x1 = x1*2-1
+	end
+	local x2 = x1+(w*charWidth)-1
 	local y2 = y1+h-1
 	if x2 < 1 or y2 < 1 or x1 > width or y1 > height then
 		return true
 	end
-	if x1 < 1 then
-		x1, x2 = 1, x2 - 1 + x1
-	end
-	if y1 < 1 then
-		y1, y2 = 1, y2 - 1 + y1
-	end
+	x1, y1, x2, y2 = math.max(x1, 1), math.max(y1, 1), math.min(x2, width), math.min(y2, height)
 	for y = y1,y2 do
-		for x = x1,x2,getCharWidth(code) do
+		for x = x1,x2,charWidth do
 			setPos(x,y,code,scrfgc,scrbgc)
 		end
 	end
@@ -464,8 +463,7 @@ function cec.setResolution(newwidth, newheight) -- Set the screen resolution. Re
 	newwidth,newheight = math.floor(newwidth),math.floor(newheight)
 	local oldwidth, oldheight = width, height
 	width, height = newwidth, newheight
-	local changed =  oldwidth ~= width or oldheight ~= height
-	if changed then
+	if oldwidth ~= width or oldheight ~= height then
 		-- TODO: What magical SDL hacks can I do to make this faster?
 		cleanUpWindow()
 		SDL.setWindowSize(window, width*8, height*16)
@@ -499,7 +497,8 @@ function cec.setResolution(newwidth, newheight) -- Set the screen resolution. Re
 			end
 		end
 	end
-	return changed
+	table.insert(machine.signals,{"screen_resized",address,width,height})
+	return true
 end
 function cec.maxResolution() -- Get the maximum screen resolution.
 	cprint("(cec) screen.maxResolution")
