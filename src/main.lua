@@ -274,15 +274,15 @@ setmetatable(env,{
 	end,
 })
 
--- load unifont
-unifont = {}
-for line in elsa.filesystem.lines("unifont.hex") do
+-- load font
+font = {}
+for line in elsa.filesystem.lines("font.hex") do
 	local a,b = line:match("(.+):(.*)")
-	unifont[tonumber(a,16)] = b
+	font[tonumber(a,16)] = b
 end
 function getCharWidth(char)
-	if unifont[char] ~= nil then
-		return #unifont[char] / 32
+	if font[char] ~= nil then
+		return #font[char] / 32
 	end
 	return 1
 end

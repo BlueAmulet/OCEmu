@@ -44,7 +44,7 @@ luarocks-5.2 install luasec
 luarocks-5.2 install --server=http://luarocks.org/dev luaffi
 
 # OpenComputer's lua source code is not provided, if you have svn then use the provided Makefile
-# If you hate svn, manually download assets/loot, assets/lua, and assets/unifont.hex into src/
+# If you hate svn, manually download assets/loot, assets/lua, and assets/font.hex into src/
 ```
 
 **Windows**

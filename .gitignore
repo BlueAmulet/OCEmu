@@ -1,5 +1,5 @@
 src/lua
 src/loot
-src/unifont.hex
+src/font.hex
 src/tmpfs
 log.txt

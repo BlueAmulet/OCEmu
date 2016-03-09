@@ -172,7 +172,7 @@ end
 local char8 = ffi.new("uint32_t[?]", 8*16)
 local char16 = ffi.new("uint32_t[?]", 16*16)
 local function _renderChar(ochar)
-	char = unifont[ochar]
+	char = font[ochar]
 	local size,pchar = #char/16
 	if size == 2 then
 		pchar = char8
@@ -197,7 +197,7 @@ local function _renderChar(ochar)
 end
 
 local function renderChar(char,x,y,fg,bg)
-	if unifont[char] == nil then
+	if font[char] == nil then
 		char = 63
 	end
 	if not charCache[char] then
@@ -205,7 +205,7 @@ local function renderChar(char,x,y,fg,bg)
 	end
 	local br, bg, bb = extract(bg)
 	SDL.setRenderDrawColor(renderer, br, bg, bb, 255)
-	local dest = ffi.new("SDL_Rect",{x=x,y=y,w=#unifont[char]/4,h=16})
+	local dest = ffi.new("SDL_Rect",{x=x,y=y,w=#font[char]/4,h=16})
 	SDL.renderFillRect(renderer, dest)
 	if char~=32 then
 		SDL.setTextureColorMod(charCache[char], extract(fg))
