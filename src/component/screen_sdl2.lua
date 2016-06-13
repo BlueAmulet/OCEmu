@@ -222,7 +222,10 @@ local function screenSet(x,y,c)
 end
 
 local function setPos(x,y,c,fg,bg)
-	local renderchange = screen.txt[y][x] ~= utf8.char(c) or screen.bg[y][x] ~= scrbgc or (screen.txt[y][x] ~= " " and screen.fg[y][x] ~= scrfgc)
+	local renderchange = true
+    --screen.txt[y][x] ~= utf8.char(c) or 
+    --screen.bg[y][x] ~= scrbgc or 
+    --(screen.txt[y][x] ~= " " and screen.fg[y][x] ~= scrfgc)
 	local charWidth = getCharWidth(c)
 	if charWidth == 1 or x < width then
 		local renderafter = getCharWidth(utf8.byte(screen.txt[y][x])) > 1 and charWidth == 1 and x < width
