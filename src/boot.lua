@@ -148,6 +148,11 @@ local function boot()
 				return os_remove(path)
 			end
 		end
+		os_date = os.date
+		os.date = function(format,...)
+			format=(format and format:gsub("%%F","%%Y-%%m-%%d")) or format
+			return os_date(format,...)
+		end
 	end
 
 	require("main")
