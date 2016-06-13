@@ -2,7 +2,7 @@ local address, _, wireless = ...
 compCheckArg(1,wireless,"boolean")
 
 local socket = require("socket")
-local ser = require("loot.OpenOS.lib.serialization")
+local ser = require("support.serialization")
 
 local function cerror(...)
 	local args = table.pack(...)
@@ -305,7 +305,7 @@ function modem_host.allPendingMessages()
 				else
 					if err ~= "timeout" then
 						if not modem_host.host_shutdown then
-							error("modem host was unexpectedly lost")
+							cerror("modem host was unexpectedly lost")
 						end
 						modem_host.connected = false
 						modem_host.connectMessageBoard()
