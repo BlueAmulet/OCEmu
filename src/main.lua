@@ -3,6 +3,23 @@ if elsa == nil then
 	return
 end
 
+local requirements = true
+if not elsa.filesystem.exists("lua") then
+	requirements = false
+	print("Missing lua/ folder, please use Makefile or download from OpenComputers's repo")
+end
+if not elsa.filesystem.exists("loot") then
+	requirements = false
+	print("Missing loot/ folder, please use Makefile or download from OpenComputers's repo")
+end
+if not elsa.filesystem.exists("font.hex") then
+	requirements = false
+	print("Missing font.hex file, please use Makefile or download from OpenComputers's repo")
+end
+if not requirements then
+	error("Missing required resources", 0)
+end
+
 function math.trunc(n)
 	return n < 0 and math.ceil(n) or math.floor(n)
 end
