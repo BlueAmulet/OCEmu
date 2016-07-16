@@ -77,4 +77,45 @@ function serialization.unserialize(data)
   return output
 end
 
+-- This serialzier is bad, it is supposed to be bad. Don't use it.
+function serialization.javaserialize(t)
+	local tTracking = {}
+	local function serializeImpl(t)
+		local sType = type(t)
+		if sType == "table" then
+			if tTracking[t] ~= nil then
+				return nil
+			end
+			tTracking[t] = true
+
+			local result = "{"
+			for k,v in pairs(t) do
+				local cache1 = serializeImpl(k)
+				local cache2 = serializeImpl(v)
+				result = result..cache1.."="..cache2..", "
+			end
+			if result:sub(-2,-1) == ", " then result = result:sub(1,-3) end
+			result = result.."}"
+			return result
+		elseif sType == "string" then
+			return t
+		elseif sType == "number" then
+			if t == math.huge then
+				return "Infinity"
+			elseif t == -math.huge then
+				return "-Infinity"
+			elseif t ~= t then
+				return "NaN"
+			else
+				return tostring(t):gsub("^[^e.]+%f[^0-9.]","%1.0"):gsub("e%+","e"):upper()
+			end
+		elseif sType == "boolean" then
+			return tostring(t)
+		else
+			return string.format("%s@%x", "li.cil.repack.com.naef.jnlua.LuaState$LuaValueProxyImpl", math.random(0, 0xffffffff))
+		end
+	end
+	return serializeImpl(t)
+end
+
 return serialization

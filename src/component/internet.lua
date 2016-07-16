@@ -14,8 +14,8 @@ if not httpsok then
 else
 	http.PORT = nil
 end
-
-component.connect("filesystem",gen_uuid(),nil,"lua/component/internet",true)
+local ltn12 = require("ltn12")
+local javaserialize = require("support.serialization").javaserialize
 
 local obj = {}
 
@@ -62,6 +62,7 @@ function obj.connect(address, port) -- Opens a new TCP connection. Returns the h
 	client:settimeout(10)
 	local connected = false
 	local closed = false
+	local id = gen_uuid()
 	local function connect()
 		cprint("(socket) connect",host,port)
 		local did, err = client:connect(host,port)
@@ -69,12 +70,19 @@ function obj.connect(address, port) -- Opens a new TCP connection. Returns the h
 		if did then
 			connected = true
 			client:settimeout(0)
+			-- I'd put internet_ready here but it's broken in OC
 		else
 			pcall(client.close,client)
 			closed = true
 		end
 	end
 	local fakesocket = {
+		finishConnect = function()
+			cprint("(socket) finishConnect")
+			-- TODO: Does this actually error?
+			if closed then return nil, "connection lost" end
+			return connected
+		end,
 		read = function(n)
 			cprint("(socket) read",n)
 			-- TODO: Better Error handling
@@ -108,17 +116,14 @@ function obj.connect(address, port) -- Opens a new TCP connection. Returns the h
 			pcall(client.close,client)
 			closed = true
 		end,
-		finishConnect = function()
-			cprint("(socket) finishConnect")
-			-- TODO: Does this actually error?
-			if closed then return nil, "connection lost" end
-			return connected
+		id = function()
+			return id
 		end
 	}
 	return fakesocket
 end
-function obj.request(url, postData) -- Starts an HTTP request. If this returns true, further results will be pushed using `http_response` signals.
-	cprint("internet.request",url, postData)
+function obj.request(url, postData, headers) -- Starts an HTTP request. If this returns true, further results will be pushed using `http_response` signals.
+	cprint("internet.request", url, postData, headers)
 	compCheckArg(1,url,"string")
 	if not settings.httpEnabled then
 		return nil, "http requests are unavailable"
@@ -140,15 +145,37 @@ function obj.request(url, postData) -- Starts an HTTP request. If this returns t
 	if type(postData) ~= "string" then
 		postData = nil
 	end
+	local cleanheaders = {}
+	if type(headers) == "table" then
+		for k, v in pairs(headers) do
+			if type(k) == "string" then
+				cleanheaders[k:lower()] = javaserialize(v)
+			end
+		end
+	end
+	local body = {}
+	local reqt = {
+		method = (postData and "POST" or "GET"),
+		url = url,
+		headers = cleanheaders,
+		sink = ltn12.sink.table(body)
+	}
+	if postData then
+		reqt.source = ltn12.source.string(postData)
+		reqt.headers["content-length"] = #postData
+		reqt.headers["content-type"] = "application/x-www-form-urlencoded"
+	end
 	-- TODO: This works ... but is slow.
 	-- TODO: Infact so slow, it can trigger the machine's sethook, so we have to work around that.
 	local starttime = gettime()
-	local page, err, headers, status = http.request(url, postData)
+	local page, err, headers, status = http.request(reqt)
 	local offset = gettime() - starttime
 	timeoffset = timeoffset + offset
 	cprint("(request.hack) Going back in time: " .. offset .. "s")
 	if not page then
 		cprint("(request) request failed",err)
+	else
+		page = table.concat(body)
 	end
 	-- Experimental fix for headers
 	if headers ~= nil then
@@ -231,7 +258,7 @@ local doc = {
 	["isTcpEnabled"]="function():boolean -- Returns whether TCP connections can be made (config setting).",
 	["isHttpEnabled"]="function():boolean -- Returns whether HTTP requests can be made (config setting).",
 	["connect"]="function(address:string[, port:number]):userdata -- Opens a new TCP connection. Returns the handle of the connection.",
-	["request"]="function(url:string[, postData:string]):userdata -- Starts an HTTP request. If this returns true, further results will be pushed using `http_response` signals.",
+	["request"]="function(url:string[, postData:string[, headers:table]]):userdata -- Starts an HTTP request. If this returns true, further results will be pushed using `http_response` signals.",
 }
 
 return obj,cec,doc
