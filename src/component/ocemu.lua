@@ -87,6 +87,9 @@ function obj.lootremove(name)
 			offset=offset+1
 		end
 	end
+	if offset ~= 0 then
+		config.save()
+	end
 	return true
 end
 

@@ -81,7 +81,9 @@ function obj.connect(address, port) -- Opens a new TCP connection. Returns the h
 			cprint("(socket) finishConnect")
 			-- TODO: Does this actually error?
 			if closed then return nil, "connection lost" end
-			return connected
+			local laststate = connected
+			if not connected then connect() end
+			return laststate
 		end,
 		read = function(n)
 			cprint("(socket) read",n)
