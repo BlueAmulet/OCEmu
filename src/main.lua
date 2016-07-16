@@ -20,6 +20,8 @@ if not requirements then
 	error("Missing required resources", 0)
 end
 
+local windows = (elsa.system.getOS() == "Windows")
+
 function math.trunc(n)
 	return n < 0 and math.ceil(n) or math.floor(n)
 end
@@ -99,13 +101,11 @@ machine = {
 -- (Removed, code is garbage)
 
 -- Attempt to use SoX's synthesizer, this is safe to use.
---[[
-if not machine.beep and os.execute("type sox") then
+if not machine.beep and (not windows and os.execute("type sox")) then
 	function machine.beep(frequency, duration)
 		os.execute("play -q -n synth " .. (duration/1000) .. " square " .. frequency .. " vol 0.3 &")
 	end
 end
---]]
 if not machine.beep then
 	function machine.beep(frequency, duration)
 		cprint("BEEP", frequency, duration)

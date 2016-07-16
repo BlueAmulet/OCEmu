@@ -131,6 +131,11 @@ local function boot()
 				return SDL.getTicks()/1000
 			end,
 		},
+		system = {
+			getOS = function()
+				return ffi.os
+			end,
+		},
 		SDL = SDL,
 		windowEventID = wen,
 	}
