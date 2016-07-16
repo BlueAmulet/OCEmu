@@ -51,7 +51,7 @@ function obj.read(handle, count) -- Reads up to the specified amount of data fro
 	if handles[handle] == nil or handles[handle][2] ~= "r" then
 		return nil, "bad file descriptor"
 	end
-	count = math.max(count,0)
+	count = math.min(math.max(count, 0), settings.maxReadBuffer)
 	if count == math.huge then count = "*a" end
 	local ret = { handles[handle][1]:read(count) }
 	if ret[1] == "" and count ~= 0 then ret[1] = nil end

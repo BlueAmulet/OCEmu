@@ -13,6 +13,7 @@ local comments = {
 ["emulator.components"]="Default components available to the computer.",
 ["emulator.debug"]="Whether to enable the emulator's extremely verbose logging.",
 ["emulator.vague"]="Whether to return vague error messages like OpenComputers.",
+["filesystem.maxReadBuffer"]="The maximum block size that can be read in one 'read' call on a file system. This is used to limit the amount of memory a call from a user program can cause to be allocated on the host side: when 'read' is, called a byte array with the specified size has to be allocated. So if this weren't limited, a Lua program could trigger massive memory allocations regardless of the amount of RAM installed in the computer it runs on. As a side effect this pretty much determines the read performance of file systems.",
 ["internet.enableHttp"]="Whether to allow HTTP requests via internet cards. When enabled, the `request` method on internet card components becomes available.",
 ["internet.enableTcp"]="Whether to allow TCP connections via internet cards. When enabled, the `connect` method on internet card components becomes available.",
 ["misc"]="Other settings that you might find useful to tweak.",
@@ -142,7 +143,7 @@ function config.load()
 		data = data .. line .. "\n"
 	end
 	data = data:sub(1,-3)
-	local fn, err = load(data,"=ocemu.cfg","t",{})
+	local fn, err = load(data,"=ocemu.cfg","t",{inf=math.huge})
 	if not fn then
 		error("Problem loading configuration: " .. err,0)
 	end

@@ -9,6 +9,8 @@ settings = {
 	emulatorDebug = config.get("emulator.debug",true),
 	vagueErrors = config.get("emulator.vague",true),
 
+	maxReadBuffer = config.get("filesystem.maxReadBuffer",2048),
+
 	httpEnabled = config.get("internet.enableHttp",true),
 	tcpEnabled = config.get("internet.enableTcp",true),
 

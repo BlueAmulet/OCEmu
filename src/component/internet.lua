@@ -87,10 +87,12 @@ function obj.connect(address, port) -- Opens a new TCP connection. Returns the h
 		end,
 		read = function(n)
 			cprint("(socket) read",n)
+			if n == nil then n = math.huge end
+			checkArg(1,n,"number")
 			-- TODO: Better Error handling
 			if closed then return nil, "connection lost" end
 			if not connected then connect() return "" end
-			if type(n) ~= "number" then n = math.huge end
+			n = math.min(math.max(n, 0), settings.maxReadBuffer)
 			local data, err, part = client:receive(n)
 			if err == nil or err == "timeout" or part ~= "" then
 				return data or part
@@ -211,7 +213,8 @@ function obj.request(url, postData, headers) -- Starts an HTTP request. If this 
 	local fakesocket = {
 		read = function(n)
 			cprint("(socket) read",n)
-			-- OC doesn't actually return n bytes when requested.
+			if n == nil then n = math.huge end
+			checkArg(1,n,"number")
 			if closed then
 				return nil, "connection lost"
 			elseif headers == nil then
@@ -221,9 +224,9 @@ function obj.request(url, postData, headers) -- Starts an HTTP request. If this 
 			elseif bad then
 				return nil, page
 			else
-				-- Return up to 8192 bytes
-				local data = page:sub(1,8192)
-				page = page:sub(8193)
+				n = math.min(math.max(n, 0), settings.maxReadBuffer)
+				local data = page:sub(1,n)
+				page = page:sub(n+1)
 				return data
 			end
 		end,
