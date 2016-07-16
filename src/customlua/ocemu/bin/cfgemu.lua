@@ -2,6 +2,7 @@ local component = require("component")
 local kbd = require("keyboard")
 local event = require("event")
 local term = require("term")
+local unicode = require("unicode")
 
 if not component.isAvailable("ocemu") then
 	io.stderr:write("This program requires OCEmu to run.")
@@ -11,6 +12,16 @@ end
 local ocemu = component.ocemu
 local gpu = component.gpu
 local keys = kbd.keys
+
+local floppy = {
+"\226\150\137\238\161\129\238\161\129\238\161\129\238\161\129\238\132\132",
+"\226\150\137\238\161\129\238\161\129\238\161\129\238\161\129\238\132\132",
+"\238\132\163\226\150\140\226\150\174\32\226\150\144\226\150\136"
+}
+local floppyTop = "\226\161\164\226\160\164\226\160\164\226\160\164\226\160\164\226\160\164\226\160\164\226\162\164"
+local floppyBott = "\226\160\147\226\160\146\226\160\146\226\160\146\226\160\146\226\160\146\226\160\146\226\160\154"
+local floppyLeft = unicode.char(0x258C)
+local floppyRight = unicode.char(0x2590)
 
 local gpuW,gpuH = gpu.getResolution()
 
@@ -24,6 +35,57 @@ end
 local function setStatus(status)
 	gpu.fill(1,gpuH,gpuW,1," ")
 	gpu.set((gpuW-#status)/2,gpuH,status)
+end
+
+local function floppySelect()
+	setTitle("Loot Disk Configuration Utility")
+	local list = ocemu.lootlist()
+	local listpos = 1
+	local cx=math.floor(gpuW/2)
+	local cy=math.floor(gpuH/2)-3
+
+	local function drawFloppy(ox, oy, name)
+		for y=0,2 do
+			gpu.set(ox-3, oy+y, floppy[y+1])
+		end
+		gpu.set(ox-(#name/2), oy+4, name)
+		if ocemu.lootattached(name) then
+			gpu.set(ox-4, oy-1, floppyTop)
+			gpu.set(ox-4, oy+3, floppyBott)
+			gpu.fill(ox-4, oy, 1, 3, floppyLeft)
+			gpu.fill(ox+3, oy, 1, 3, floppyRight)
+		end
+	end
+	local function drawLoot()
+		gpu.fill(1, 1, gpuW, gpuH, " ")
+		drawFloppy(cx, cy, list[listpos])
+		-- TODO: Draw full name at bottom of screen 
+		-- setStatus()
+	end
+	drawLoot()
+
+	while true do
+		local evnt = table.pack(event.pull())
+		if evnt[1] == "key_down" then
+			if evnt[4] == keys.left and listpos > 1 then
+				listpos = listpos - 1
+				drawLoot()
+			elseif evnt[4] == keys.right and listpos < #list then
+				listpos = listpos + 1
+				drawLoot()
+			elseif evnt[4] == keys.enter then
+				if ocemu.lootattached(list[listpos]) then
+					ocemu.lootremove(list[listpos])
+					drawLoot()
+				else
+					ocemu.lootinsert(list[listpos])
+					drawLoot()
+				end
+			elseif evnt[3] == string.byte("q") then
+				return
+			end
+		end
+	end
 end
 
 local function componentConfig()
@@ -134,6 +196,7 @@ local function componentConfig()
 end
 
 local menu = {
+	{"Add and Remove Floppies",floppySelect},
 	{"Configure Components",componentConfig},
 	{"Exit",os.exit}
 }

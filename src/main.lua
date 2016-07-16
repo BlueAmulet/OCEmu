@@ -312,6 +312,8 @@ elsa.filesystem.load("apis/unicode.lua")(env)
 elsa.filesystem.load("apis/userdata.lua")(env)
 elsa.filesystem.load("apis/component.lua")(env)
 
+config.save()
+
 function boot_machine()
 	-- load machine.lua
 	local machine_data, err = elsa.filesystem.read("lua/machine.lua")
