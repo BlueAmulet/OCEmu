@@ -20,8 +20,12 @@ fi
 pacman --noconfirm -U mingw-w64-${MACHINE_TYPE}-lua-5.2.4-1-any.pkg.tar.xz
 cd ..
 rm -r mingw-w64-lua
-mkdir extras
-cd extras
+mkdir src/extras
+if [ ! -e src/extras ]; then
+	echo "Failed to create src/extras folder"
+	exit 1
+fi
+cd src/extras
 git clone -b v_1_6_3 --depth=1 https://github.com/keplerproject/luafilesystem.git
 if [ ! -e luafilesystem ]; then
 	echo "Failed to download luafilesystem"
@@ -145,5 +149,11 @@ fi
 DESTDIR=../.. LUAPATH= LUACPATH= make install
 cd ..
 rm -r luasec
-cd ..
+cd ../..
 echo "Built everything!"
+read -p "Download required resources? [Y/n] " -n 1 -r
+echo
+if [[ $REPLY =~ ^[Yy]$ ]] || [ -z $REPLY ]; then
+	echo sdfsdfs
+	make all
+fi
