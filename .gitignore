@@ -1,6 +1,7 @@
-src/lua
-src/loot
+extras/
+src/extras/
+src/lua/
+src/loot/
 src/font.hex
-src/tmpfs
+src/tmpfs/
 log.txt
-/extras/
