@@ -19,11 +19,6 @@ local javaserialize = require("support.serialization").javaserialize
 
 local obj = {}
 
-local function string_trim(s)
-	local from = s:match"^%s*()"
-	return from > #s and "" or s:match(".*%S", from)
-end
-
 local function checkUri(address, port)
 	local parsed = url.parse(address)
 	if parsed ~= nil and parsed.host ~= nil and (parsed.port ~= nil or port > -1) then

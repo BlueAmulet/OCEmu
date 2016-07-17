@@ -37,14 +37,23 @@ end
 
 function obj.lootlist()
 	cprint("ocemu.lootlist")
+	local info={}
+	for line in io.lines("loot/loot.properties") do
+		line = string_trim(line)
+		if line ~= "" and line:sub(1, 1) ~= "#" then
+			local path, name, color=line:match("(.-)=(.+):%d+:(.+)")
+			info[path]={name,color}
+		end
+	end
 	local list=elsa.filesystem.getDirectoryItems("loot")
 	local dirs={}
 	for i=1, #list do
-		if elsa.filesystem.isDirectory("loot/"..list[i]) then
-			dirs[#dirs+1]=list[i]
+		local path=list[i]
+		if elsa.filesystem.isDirectory("loot/"..path) then
+			dirs[#dirs+1]={path, info[path] and info[path][1] or "(No Name)", info[path] and info[path][2] or "dyeGray"}
 		end
 	end
-	table.sort(dirs)
+	table.sort(dirs, function(a, b) return a[1]<b[1] end)
 	dirs.n=#dirs
 	return dirs
 end

@@ -54,6 +54,11 @@ function tryrequire(...)
 	return pcall(require, ...)
 end
 
+function string_trim(s)
+	local from = s:match"^%s*()"
+	return from > #s and "" or s:match(".*%S", from)
+end
+
 -- load configuration
 elsa.filesystem.load("config.lua")()
 config.load()
