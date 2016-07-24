@@ -10,6 +10,14 @@ luasocket is optional but is required for the Internet Component and higher prec
 
 luasec is optional but is required for HTTPS.
 
+**Windows**
+
+Binaries: [Windows 32bit](http://gamax92.pc-logix.com/ocemu/OCEmu-x32.zip) and [Windows 64bit](http://gamax92.pc-logix.com/ocemu/OCEmu-x64.zip) [(Build Date)](http://gamax92.pc-logix.com/ocemu/builddate.txt)
+
+Windows users will have to manually compile everything, as luarocks seems to hate MSYS2/Cygwin
+
+The provided script ```msys2_setup_ocemu.sh``` will automated the compiling process for Windows, run it in [MSYS2](https://msys2.github.io/)
+
 **Ubuntu**
 ```
 apt-get install lua5.2 liblua5.2-dev libsdl2-dev subversion
@@ -56,14 +64,6 @@ luarocks-5.2 install --server=http://luarocks.org/dev luaffi
 # OpenComputer's lua source code is not provided, if you have svn then use the provided Makefile
 # If you hate svn, manually download assets/loot, assets/lua, and assets/font.hex into src/
 ```
-
-**Windows**
-
-Windows users will have to manually compile everything, as luarocks seems to hate MSYS2/Cygwin
-
-The provided script ```msys2_setup_ocemu.sh``` will automated the compiling process for Windows, run it in [MSYS2](https://msys2.github.io/)
-
-Native binaries will be provided when its ready.
 
 Running
 -------

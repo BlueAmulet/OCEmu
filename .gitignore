@@ -5,3 +5,6 @@ src/loot/
 src/font.hex
 src/tmpfs/
 log.txt
+src/*.dll
+src/OCEmu.exe
+src/builddate.txt

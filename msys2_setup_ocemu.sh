@@ -4,7 +4,16 @@ if [ "$MSYSTEM" = "MSYS" ]; then
 	exit 1
 fi
 case ${PWD} in *\ * ) echo "Your path has spaces in it which may prevent this script from building correctly."; read -p "Press [Enter] key to continue." ;; esac
-MACHINE_TYPE=`uname -m`
+case "$MSYSTEM" in
+MINGW32) MACHINE_TYPE="i686"
+	;;
+MINGW64) MACHINE_TYPE="x86_64"
+	;;
+*) echo "Unknown environment: $MSYSTEM"
+	exit 1
+	;;
+esac
+echo "Building OCEmu dependencies for $MACHINE_TYPE"
 pacman --needed --noconfirm -S mingw-w64-${MACHINE_TYPE}-toolchain winpty patch make git subversion mingw-w64-${MACHINE_TYPE}-SDL2
 mkdir mingw-w64-lua
 cd mingw-w64-lua
@@ -20,6 +29,15 @@ fi
 pacman --noconfirm -U mingw-w64-${MACHINE_TYPE}-lua-5.2.4-1-any.pkg.tar.xz
 cd ..
 rm -r mingw-w64-lua
+if [ -e src/extras ]; then
+	read -p "src/extras already exists, remove? [y/N] " -n 1 -r
+	echo
+	if [[ ! $REPLY =~ ^[Yy]$ ]] || [ -z $REPLY ]; then
+		echo "Not removing existing folder."
+		exit 1
+	fi
+	rm -r src/extras
+fi
 mkdir src/extras
 if [ ! -e src/extras ]; then
 	echo "Failed to create src/extras folder"
@@ -149,11 +167,33 @@ fi
 DESTDIR=../.. LUAPATH= LUACPATH= make install
 cd ..
 rm -r luasec
-cd ../..
+cd ..
+echo "Built dependencies!"
+gcc -s -o OCEmu.exe winstub.c -Wl,--subsystem,windows -mwindows -llua
+case "$MACHINE_TYPE" in
+i686)
+	cp /mingw32/bin/lua52.dll .
+	cp /mingw32/bin/libgcc_s_dw2-1.dll .
+	cp /mingw32/bin/libwinpthread-1.dll .
+	cp /mingw32/bin/libeay32.dll .
+	cp /mingw32/bin/ssleay32.dll .
+	cp /mingw32/bin/SDL2.dll .
+	;;
+x86_64)
+	cp /mingw64/bin/lua52.dll .
+	cp /mingw64/bin/libgcc_s_seh-1.dll .
+	cp /mingw64/bin/libwinpthread-1.dll .
+	cp /mingw64/bin/libeay32.dll .
+	cp /mingw64/bin/ssleay32.dll .
+	cp /mingw64/bin/SDL2.dll .
+	;;
+esac
+strip -s OCEmu.exe *.dll extras/*.dll extras/*/core.dll
+date '+%Y%m%d%H%M%S' > builddate.txt
+cd ..
 echo "Built everything!"
 read -p "Download required resources? [Y/n] " -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]] || [ -z $REPLY ]; then
-	echo sdfsdfs
 	make all
 fi
