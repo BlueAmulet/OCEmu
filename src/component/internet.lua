@@ -220,8 +220,14 @@ function obj.request(url, postData, headers) -- Starts an HTTP request. If this 
 				return nil, page
 			else
 				n = math.min(math.max(n, 0), settings.maxReadBuffer)
-				local data = page:sub(1,n)
-				page = page:sub(n+1)
+				local data
+				if n == math.huge then
+					data = page
+					page = ""
+				else
+					data = page:sub(1,n)
+					page = page:sub(n+1)
+				end
 				return data
 			end
 		end,
