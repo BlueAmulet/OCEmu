@@ -4,19 +4,18 @@ OCEmu - OpenComputers Emulator
 Installation
 ------------
 
-Needs lua-5.2, luafilesystem, luautf8, luaffi, and SDL2.
-
-luasocket is optional but is required for the Internet Component and higher precision timing.
-
+Needs lua-5.2, luafilesystem, luautf8, luaffi, and SDL2.  
+luasocket is optional but is required for the Internet Component and higher precision timing.  
 luasec is optional but is required for HTTPS.
 
 **Windows**
 
 Binaries: [Windows 32bit](http://gamax92.pc-logix.com/ocemu/OCEmu-x32.zip) and [Windows 64bit](http://gamax92.pc-logix.com/ocemu/OCEmu-x64.zip) [(Build Date)](http://gamax92.pc-logix.com/ocemu/builddate.txt)
 
-Windows users will have to manually compile everything, as luarocks seems to hate MSYS2/Cygwin
+The binaries above have everything pre compiled and packed up for ease of use.
 
-The provided script ```msys2_setup_ocemu.sh``` will automated the compiling process for Windows, run it in [MSYS2](https://msys2.github.io/)
+If you'd like to compile OCEmu yourself for Windows, the provided script ```msys2_setup_ocemu.sh``` will automated the compiling process for Windows, run it inside of the [MSYS2](https://msys2.github.io/) environment.  
+Ignore the **Lua Libraries** step as it doesn't work on Windows and the script does this for you.
 
 **Ubuntu**
 ```
@@ -38,7 +37,7 @@ Grab the Lua 5.2, luarocks5.2, lua52-filesystem, lua52-sec & lua52-socket from t
 ```
 pacman -S lua52 luarocks5.2 lua52-filesystem lua52-sec lua52-socket
 ```
-Now follow the Luarocks steps below to get the remaining libraries which are not on Arch's repos.
+Now follow the luarocks steps below to get the remaining libraries which are not on Arch's repos.
 
 
 **Mac**
