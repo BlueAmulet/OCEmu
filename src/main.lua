@@ -1,4 +1,7 @@
-if elsa == nil then
+if love ~= nil then
+	print("OCEmu is not a Love2D application")
+	os.exit()
+elseif elsa == nil then
 	print("Launch boot.lua and not main.lua")
 	return
 end
