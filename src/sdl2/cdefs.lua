@@ -386,6 +386,9 @@ void SDL_UnlockAudio(void);
 void SDL_UnlockAudioDevice(SDL_AudioDeviceID dev);
 void SDL_CloseAudio(void);
 void SDL_CloseAudioDevice(SDL_AudioDeviceID dev);
+int SDL_QueueAudio(SDL_AudioDeviceID dev,
+                   const void*       data,
+                   Uint32            len);
 int SDL_SetClipboardText(const char *text);
 char * SDL_GetClipboardText(void);
 SDL_bool SDL_HasClipboardText(void);

@@ -1,4 +1,6 @@
 settings = {
+	beepSampleRate = config.get("client.beepSampleRate", 44100),
+	beepVolume = config.get("client.beepVolume", 32),
 	monochromeColor = tonumber(config.get("client.monochromeColor", "0xFFFFFF")),
 
 	allowBytecode = config.get("computer.lua.allowBytecode",false),

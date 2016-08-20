@@ -20,6 +20,8 @@ if not requirements then
 	error("Missing required resources", 0)
 end
 
+local ffi = require("ffi")
+
 local windows = (elsa.system.getOS() == "Windows")
 
 function math.trunc(n)
@@ -102,9 +104,48 @@ machine = {
 	totalMemory = 2*1024*1024,
 }
 
--- SDL2 causes Segmentation faults when both the Callback and Lua are running.
--- (Removed, code is garbage)
-
+if not machine.beep and settings.beepVolume <= 0 then
+	function machine.beep(frequency, duration)
+		cprint("BEEP (Silent)", frequency, duration)
+	end
+end
+if not machine.beep and elsa.SDL then
+	local desired = ffi.new("SDL_AudioSpec",{freq=settings.beepSampleRate, format=elsa.SDL.AUDIO_U8, channels=1, samples=4096, callback=ffi.NULL})
+	local obtained = ffi.new("SDL_AudioSpec",{})
+	local dev = elsa.SDL.openAudioDevice(ffi.NULL, 0, desired, obtained, 0)
+	if dev == 0 then
+		print(elsa.getError())
+	else
+		local same=true
+		for k,v in pairs({"freq", "format", "channels"}) do
+			if desired[v] ~= obtained[v] then
+				same = false
+				print(v .. ") " .. desired[v] .. " -> " .. obtained[v])
+			end
+		end
+		if same then
+			elsa.SDL.pauseAudioDevice(dev, 0)
+			local datatype = ffi.typeof("int8_t[?]")
+			local rate = tonumber(obtained.freq)
+			local vol = settings.beepVolume
+			local offset = 0
+			function machine.beep(frequency, duration)
+				local step = frequency/rate
+				local sampleCount = math.floor(duration*rate/1000)
+				local data = datatype(sampleCount)
+				for i=1, sampleCount do
+					data[i-1] = (offset < 0.5 and vol or -vol)
+					offset = (offset + step) % 1
+				end
+				if elsa.SDL.queueAudio(dev, data, sampleCount) ~= 0 then
+					error(elsa.getError())
+				end
+			end
+		else
+			print("Could not obtain requested audio format.")
+		end
+	end
+end
 -- Attempt to use SoX's synthesizer, this is safe to use.
 if not machine.beep and (not windows and os.execute("type sox")) then
 	function machine.beep(frequency, duration)
