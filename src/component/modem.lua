@@ -53,6 +53,7 @@ function modem_host.createPacketArray(packetType, address, port, ...)
 		modem_host.id,
 		port,
 		0, -- distance
+		n = 5 + select('#', ...),
 		...
 	}
 
@@ -69,14 +70,8 @@ function modem_host.packetArrayToPacket(packed)
 	packet.source = packed[3]
 	packet.port = packed[4]
 	packet.distance = packed[5]
-	packet.payload = {}
 
-	-- all other keys will be index values but may skip some (nils)
-	for k,v in pairs(packed) do
-		if k > 5 then
-			packet.payload[k-5] = v
-		end
-	end
+	packet.payload = table.pack(table.unpack(packed, 6, packed.n))
 
 	return packet
 end
@@ -89,20 +84,13 @@ function modem_host.packetArrayToDatagram(packed)
 end
 
 function modem_host.packetToPacketArray(packet)
-	local packed =
-	{
+	packed = table.pack(select(1,
 		packet.type,
 		packet.target,
 		packet.source,
 		packet.port,
 		packet.distance,
-	}
-
-	if packet.payload then
-		for i,v in pairs(packet.payload) do
-			packed[i+5] = v
-		end
-	end
+		table.unpack(packet.payload, 1, packet.payload.n)))
 
 	return packed
 end
@@ -258,10 +246,10 @@ function modem_host.acceptPendingClients()
 				local connectionResponse
 				local accepted = false
 				if handshake.type ~= "handshake" then
-					connectionResponse = modem_host.createPacketArray("handshake", 0, -1, 
+					connectionResponse = modem_host.createPacketArray("handshake", 0, -1,
 						false, "unsupported message type");
 				elseif modem_host.validTarget(handshake.source) then -- repeated client
-					connectionResponse = modem_host.createPacketArray("handshake", 0, -1, 
+					connectionResponse = modem_host.createPacketArray("handshake", 0, -1,
 						false, "computer address conflict detected, ignoring connection");
 				else
 					client:settimeout(0, 't')
@@ -507,7 +495,7 @@ function obj.open(port) -- Opens the specified port. Returns true if the port wa
 
 	-- make sure we are connected to the message board
 	local ok, why = modem_host.connectMessageBoard()
-	
+
 	if not ok then
 		return false, why
 	end
