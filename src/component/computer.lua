@@ -29,6 +29,28 @@ function obj.start() -- Starts the computer. Returns true if the state changed.
 	--STUB
 	cprint("computer.start")
 end
+function obj.getProgramLocations()
+	cprint("computer.getProgramLocations")
+	return table.pack(
+		table.pack("build", "builder"),
+		table.pack("dig", "dig"),
+		table.pack("base64", "data"),
+		table.pack("deflate", "data"),
+		table.pack("gpg", "data"),
+		table.pack("inflate", "data"),
+		table.pack("md5sum", "data"),
+		table.pack("sha256sum", "data"),
+		table.pack("refuel", "generator"),
+		table.pack("irc", "irc"),
+		table.pack("maze", "maze"),
+		table.pack("arp", "network"),
+		table.pack("ifconfig", "network"),
+		table.pack("ping", "network"),
+		table.pack("route", "network"),
+		table.pack("opl-flash", "openloader"),
+		table.pack("oppm", "oppm")
+	)
+end
 
 local cec = {}
 
@@ -37,6 +59,7 @@ local doc = {
 	["beep"]="function([frequency:number[, duration:number]]) -- Plays a tone, useful to alert users via audible feedback.",
 	["stop"]="function():boolean -- Stops the computer. Returns true if the state changed.",
 	["start"]="function():boolean -- Starts the computer. Returns true if the state changed.",
+	["getProgramLocations"]="function():table -- Returns a list of available programs and their install disks.",
 }
 
 return obj,cec,doc
