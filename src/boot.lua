@@ -36,6 +36,11 @@ else -- Assume Linux
 	elseif getenv["HOME"] and lfs.attributes(getenv["HOME"] .. "/.config", "mode") == "directory" then
 		table.insert(paths, getenv["HOME"] .. "/.config/ocemu")
 	end
+	if getenv["XDG_DATA_HOME"] then
+		table.insert(paths, getenv["XDG_DATA_HOME"] .. "/ocemu")
+	elseif getenv["HOME"] and lfs.attributes(getenv["HOME"] .. "/.local/share", "mode") == "directory" then
+		table.insert(paths, getenv["HOME"] .. "/.local/share/ocemu")
+	end
 end
 if #paths == 0 then
 	table.insert(paths, lfs.currentdir() .. "/data")
