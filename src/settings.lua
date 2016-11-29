@@ -8,7 +8,7 @@ settings = {
 	timeout = config.get("computer.timeout",5),
 
 	components = config.get("emulator.components"),
-	emulatorDebug = config.get("emulator.debug",true),
+	emulatorDebug = config.get("emulator.debug",false),
 	vagueErrors = config.get("emulator.vague",true),
 
 	maxReadBuffer = config.get("filesystem.maxReadBuffer",2048),
