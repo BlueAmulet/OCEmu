@@ -66,7 +66,13 @@ luarocks-5.2 install --server=http://luarocks.org/dev luaffi
 
 Running
 -------
-Launch boot.lua with lua5.2, and provided everything is installed, you'll have a working Emulator. OCEmu stores its files in $HOME/.ocemu or %APPDATA%\\.ocemu, whichever happens to exist first. 
+Launch boot.lua with lua5.2, and provided everything is installed, you'll have a working Emulator.  
+OCEmu stores its files in the following locations:
+
+OS | Location
+--- | ---
+Windows | `%APPDATA%\\OCEmu`
+Linux | `$XDG_CONFIG_HOME/ocemu` or `$HOME/.config/ocemu`
 
 ```
 cd src

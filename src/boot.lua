@@ -12,10 +12,59 @@ local lfs = require("lfs")
 local sdlinit = false
 
 local args = table.pack(...)
-local emulationInstancePath = (os.getenv("HOME") or os.getenv("APPDATA")) .. "/.ocemu"
+local baseDir
+
+local getenv = setmetatable({}, {__index=function(t, k) local v=os.getenv(k) t[k]=v return v end})
+local paths = {}
 
 if #args > 0 then
-	emulationInstancePath = args[1]
+	table.insert(paths, args[1])
+elseif ffi.os == 'Windows' then
+	if getenv["HOME"] then -- Unlikely but possible thanks to the old code.
+		table.insert(paths, getenv["HOME"] .. "\\.ocemu")
+	end
+	if getenv["APPDATA"] then
+		table.insert(paths, getenv["APPDATA"] .. "\\.ocemu")
+		table.insert(paths, getenv["APPDATA"] .. "\\OCEmu")
+	end
+else -- Assume Linux
+	if getenv["HOME"] then
+		table.insert(paths, getenv["HOME"] .. "/.ocemu")
+	end
+	if getenv["XDG_CONFIG_HOME"] then
+		table.insert(paths, getenv["XDG_CONFIG_HOME"] .. "/ocemu")
+	elseif getenv["HOME"] and lfs.attributes(getenv["HOME"] .. "/.config", "mode") == "directory" then
+		table.insert(paths, getenv["HOME"] .. "/.config/ocemu")
+	end
+end
+if #paths == 0 then
+	table.insert(paths, lfs.currentdir() .. "/data")
+end
+for i = 1, #paths do
+	if lfs.attributes(paths[i], "mode") ~= nil then
+		baseDir = paths[i]
+		break
+	end
+end
+
+local preferred = paths[#paths]
+if not baseDir then
+	baseDir = preferred
+end
+
+local baseDirType = lfs.attributes(baseDir, "mode")
+if baseDirType ~= nil and baseDirType ~= "directory" then
+	error("Emulation storage location '" .. baseDir .. "' is not a directory", 0)
+elseif baseDirType == "nil" then
+	local ok, err = lfs.mkdir(baseDir)
+	if not ok then
+		error("Failed to create directory '" .. baseDir .. "':" .. err, 0)
+	end
+end
+
+if baseDir ~= preferred then
+	print("Warning: Using legacy path of '" .. baseDir .. "'")
+	print("Please move this to '" .. preferred .. "'")
 end
 
 local function boot()
@@ -120,7 +169,7 @@ local function boot()
 				return lfs.attributes(path,"size")
 			end,
 			getSaveDirectory = function()
-				return emulationInstancePath
+				return baseDir
 			end,
 			remove = function(path)
 				return recursiveDelete(path)
@@ -153,7 +202,7 @@ local function boot()
 				return os_remove(path)
 			end
 		end
-		os_date = os.date
+		local os_date = os.date
 		os.date = function(format,...)
 			format=(format and format:gsub("%%F","%%Y-%%m-%%d")) or format
 			return os_date(format,...)
