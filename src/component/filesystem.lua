@@ -44,7 +44,7 @@ end
 local mai = {}
 local obj = {}
 
-mai.read = {direct = true, doc = "function(handle:number, count:number):string or nil -- Reads up to the specified amount of data from an open file descriptor with the specified handle. Returns nil when EOF is reached."}
+mai.read = {direct = true, limit = 15, doc = "function(handle:number, count:number):string or nil -- Reads up to the specified amount of data from an open file descriptor with the specified handle. Returns nil when EOF is reached."}
 function obj.read(handle, count)
 	--TODO
 	cprint("filesystem.read", handle, count)
@@ -190,7 +190,7 @@ function obj.setLabel(value)
 	label = value:sub(1,16)
 end
 
-mai.open = {direct = true, doc = "function(path:string[, mode:string='r']):number -- Opens a new file descriptor and returns its handle."}
+mai.open = {direct = true, limit = 4, doc = "function(path:string[, mode:string='r']):number -- Opens a new file descriptor and returns its handle."}
 function obj.open(path, mode)
 	cprint("filesystem.open", path, mode)
 	if mode == nil then mode = "r" end

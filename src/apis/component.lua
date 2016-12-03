@@ -177,7 +177,7 @@ function env.component.invoke(address, method, ...)
 		if not settings.fast and mailist[address][method].direct then
 			machine.callBudget = machine.callBudget - math.max(0.001, 1/mailist[address][method].limit)
 			if machine.callBudget < 0 then
-				print("Ran out of budget")
+				cprint("Ran out of budget")
 				return
 			end
 		end
