@@ -48,7 +48,7 @@ end
 local mai = {}
 local obj = {}
 
-mai.getData = {doc = "function():string -- Get the currently stored byte array."}
+mai.getData = {direct = true, doc = "function():string -- Get the currently stored byte array."}
 function obj.getData()
 	cprint("eeprom.getData")
 	return data
@@ -66,19 +66,19 @@ function obj.setData(newdata)
 	persist()
 end
 
-mai.getDataSize = {doc = "function():string -- Get the storage capacity of this EEPROM."}
+mai.getDataSize = {direct = true, doc = "function():string -- Get the storage capacity of this EEPROM."}
 function obj.getDataSize()
 	cprint("eeprom.getDataSize")
 	return 256
 end
 
-mai.getSize = {doc = "function():string -- Get the storage capacity of this EEPROM."}
+mai.getSize = {direct = true, doc = "function():string -- Get the storage capacity of this EEPROM."}
 function obj.getSize()
 	cprint("eeprom.getSize")
 	return 4096
 end
 
-mai.getLabel = {doc = "function():string -- Get the label of the EEPROM."}
+mai.getLabel = {direct = true, doc = "function():string -- Get the label of the EEPROM."}
 function obj.getLabel()
 	cprint("eeprom.getLabel")
 	return label
@@ -97,13 +97,13 @@ function obj.setLabel(newlabel)
 	return label
 end
 
-mai.getChecksum = {doc = "function():string -- Get the checksum of the data on this EEPROM."}
+mai.getChecksum = {direct = true, doc = "function():string -- Get the checksum of the data on this EEPROM."}
 function obj.getChecksum()
 	cprint("eeprom.getChecksum")
 	return string.format("%08x", tonumber(crc32(code)))
 end
 
-mai.get = {doc = "function():string -- Get the currently stored byte array."}
+mai.get = {direct = true, doc = "function():string -- Get the currently stored byte array."}
 function obj.get() -- Get the currently stored byte array.
 	cprint("eeprom.get")
 	return code
@@ -124,7 +124,7 @@ function obj.set(newcode) -- Overwrite the currently stored byte array.
 	persist()
 end
 
-mai.makeReadonly = {doc = "function(checksum:string):boolean -- Make this EEPROM readonly if it isn't already. This process cannot be reversed!"}
+mai.makeReadonly = {direct = true, doc = "function(checksum:string):boolean -- Make this EEPROM readonly if it isn't already. This process cannot be reversed!"}
 function obj.makeReadonly(checksum) -- Make this EEPROM readonly if it isn't already. This process cannot be reversed!
 	cprint("eeprom.makeReadonly", checksum)
 	compCheckArg(1,checksum,"string")

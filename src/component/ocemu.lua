@@ -14,6 +14,7 @@ end
 local mai = {}
 local obj = {}
 
+mai.connect = {direct = true, doc = "function(kind:string, address:string or number or nil, slot:number or nil, ...):boolean -- Attach a component to the emulator."}
 function obj.connect(kind, address, slot, ...)
 	cprint("ocemu.connect", kind, address, slot, ...)
 	compCheckArg(1,kind,"string")
@@ -30,12 +31,14 @@ function obj.connect(kind, address, slot, ...)
 	return component.connect(kind, address, slot, ...)
 end
 
+mai.disconnect = {direct = true, doc = "function(address:string):boolean -- Remove a component from the emulator."}
 function obj.disconnect(address)
 	cprint("ocemu.disconnect", address)
 	compCheckArg(1,address,"string")
 	return component.disconnect(address)
 end
 
+mai.lootlist = {direct = true, doc = "function():table -- Get a list of loot disks and disk information."}
 function obj.lootlist()
 	cprint("ocemu.lootlist")
 	local info={}
@@ -59,6 +62,7 @@ function obj.lootlist()
 	return dirs
 end
 
+mai.lootinsert = {direct = true, doc = "function(name:string):boolean or nil, string -- Insert a loot disk into the computer."}
 function obj.lootinsert(name)
 	cprint("ocemu.lootinsert", name)
 	compCheckArg(1,name,"string")
@@ -82,6 +86,7 @@ function obj.lootinsert(name)
 	return true
 end
 
+mai.lootremove = {direct = true, doc = "function(name:string):boolean or nil, string -- Remove a loot disk from the computer."}
 function obj.lootremove(name)
 	cprint("ocemu.lootremove", name)
 	compCheckArg(1,name,"string")
@@ -103,6 +108,7 @@ function obj.lootremove(name)
 	return true
 end
 
+mai.lootattached = {direct = true, doc = "function(name:string):boolean or nil, string -- Check if a loot disk is inserted in the computer."}
 function obj.lootattached(name)
 	cprint("ocemu.lootattached", name)
 	compCheckArg(1,name,"string")
@@ -117,10 +123,12 @@ function obj.lootattached(name)
 	return false
 end
 
+mai.biglist = {direct = true, doc = "function() -- Generate a giant useless list of lua information from the computer."}
 function obj.biglist()
 	machine.biglistgen=true
 end
 
+mai.log = {direct = true, doc = "function(...) -- Output a message to the emulator's stdout."}
 function obj.log(...)
 	print(...)
 end

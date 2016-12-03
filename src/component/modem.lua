@@ -437,7 +437,7 @@ function obj.send(address, port, ...)
 	return true
 end
 
-mai.getWakeMessage = {doc = "function():string -- Get the current wake-up message."}
+mai.getWakeMessage = {direct = true, doc = "function():string -- Get the current wake-up message."}
 function obj.getWakeMessage()
 	return wakeMessage
 end
@@ -471,13 +471,13 @@ function obj.close(port)
 	return true
 end
 
-mai.maxPacketSize = {doc = "function():number -- Gets the maximum packet size (config setting)."}
+mai.maxPacketSize = {direct = true, doc = "function():number -- Gets the maximum packet size (config setting)."}
 function obj.maxPacketSize()
 	return settings.maxNetworkPacketSize
 end
 
 if wireless then
-	mai.getStrength = {doc = "function():number -- Get the signal strength (range) used when sending messages."}
+	mai.getStrength = {direct = true, doc = "function():number -- Get the signal strength (range) used when sending messages."}
 	function obj.getStrength()
 		return strength
 	end
@@ -489,7 +489,7 @@ if wireless then
 	end
 end
 
-mai.isOpen = {doc = "function(port:number):boolean -- Whether the specified port is open."}
+mai.isOpen = {direct = true, doc = "function(port:number):boolean -- Whether the specified port is open."}
 function obj.isOpen(port)
 	compCheckArg(1,port,"number")
 	return modem_host.open_ports[port] ~= nil
@@ -515,7 +515,7 @@ function obj.open(port)
 	return true
 end
 
-mai.isWireless = {doc = "function():boolean -- Whether this is a wireless network card."}
+mai.isWireless = {direct = true, doc = "function():boolean -- Whether this is a wireless network card."}
 function obj.isWireless()
 	return wireless
 end

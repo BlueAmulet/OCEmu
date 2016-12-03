@@ -2,7 +2,7 @@
 local mai = {}
 local obj = {}
 
-mai.isRunning = {doc = "function():boolean -- Returns whether the computer is running."}
+mai.isRunning = {direct = true, doc = "function():boolean -- Returns whether the computer is running."}
 function obj.isRunning()
 	--STUB
 	cprint("computer.isRunning")
@@ -36,6 +36,12 @@ mai.start = {doc = "function():boolean -- Starts the computer. Returns true if t
 function obj.start()
 	--STUB
 	cprint("computer.start")
+end
+
+mai.getDeviceInfo = {direct = true, doc = "function():table -- Collect information on all connected devices."}
+function obj.getDeviceInfo()
+	--STUB
+	cprint("computer.getDeviceInfo")
 end
 
 mai.getProgramLocations = {doc = "function():table -- Returns a list of available programs and their install disks."}

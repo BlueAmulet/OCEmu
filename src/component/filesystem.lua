@@ -44,7 +44,7 @@ end
 local mai = {}
 local obj = {}
 
-mai.read = {doc = "function(handle:number, count:number):string or nil -- Reads up to the specified amount of data from an open file descriptor with the specified handle. Returns nil when EOF is reached."}
+mai.read = {direct = true, doc = "function(handle:number, count:number):string or nil -- Reads up to the specified amount of data from an open file descriptor with the specified handle. Returns nil when EOF is reached."}
 function obj.read(handle, count)
 	--TODO
 	cprint("filesystem.read", handle, count)
@@ -60,7 +60,7 @@ function obj.read(handle, count)
 	return table.unpack(ret)
 end
 
-mai.lastModified = {doc = "function(path:string):number -- Returns the (real world) timestamp of when the object at the specified absolute path in the file system was modified."}
+mai.lastModified = {direct = true, doc = "function(path:string):number -- Returns the (real world) timestamp of when the object at the specified absolute path in the file system was modified."}
 function obj.lastModified(path)
 	cprint("filesystem.lastModified", path)
 	compCheckArg(1,path,"string")
@@ -71,7 +71,7 @@ function obj.lastModified(path)
 	return elsa.filesystem.getLastModified(directory .. "/" .. path) or 0
 end
 
-mai.spaceUsed = {doc = "function():number -- The currently used capacity of the file system, in bytes."}
+mai.spaceUsed = {direct = true, doc = "function():number -- The currently used capacity of the file system, in bytes."}
 function obj.spaceUsed()
 	--STUB
 	cprint("filesystem.spaceUsed")
@@ -105,7 +105,7 @@ function obj.rename(from, to)
 	end
 end
 
-mai.close = {doc = "function(handle:number) -- Closes an open file descriptor with the specified handle."}
+mai.close = {direct = true, doc = "function(handle:number) -- Closes an open file descriptor with the specified handle."}
 function obj.close(handle)
 	cprint("filesystem.close", handle)
 	compCheckArg(1,handle,"number")
@@ -116,7 +116,7 @@ function obj.close(handle)
 	handles[handle] = nil
 end
 
-mai.write = {doc = "function(handle:number, value:string):boolean -- Writes the specified data to an open file descriptor with the specified handle."}
+mai.write = {direct = true, doc = "function(handle:number, value:string):boolean -- Writes the specified data to an open file descriptor with the specified handle."}
 function obj.write(handle, value)
 	cprint("filesystem.write", handle, value)
 	compCheckArg(1,handle,"number")
@@ -142,7 +142,7 @@ function obj.remove(path)
 	return elsa.filesystem.remove(directory .. "/" .. path)
 end
 
-mai.size = {doc = "function(path:string):number -- Returns the size of the object at the specified absolute path in the file system."}
+mai.size = {direct = true, doc = "function(path:string):number -- Returns the size of the object at the specified absolute path in the file system."}
 function obj.size(path)
 	cprint("filesystem.size", path)
 	compCheckArg(1,path,"string")
@@ -153,7 +153,7 @@ function obj.size(path)
 	return elsa.filesystem.getSize(directory .. "/" .. path) or 0
 end
 
-mai.seek = {doc = "function(handle:number, whence:string, offset:number):number -- Seeks in an open file descriptor with the specified handle. Returns the new pointer position."}
+mai.seek = {direct = true, doc = "function(handle:number, whence:string, offset:number):number -- Seeks in an open file descriptor with the specified handle. Returns the new pointer position."}
 function obj.seek(handle, whence, offset)
 	--TODO
 	cprint("filesystem.seek", handle, whence, offset)
@@ -166,14 +166,14 @@ function obj.seek(handle, whence, offset)
 	return handles[handle][1]:seek(whence, offset)
 end
 
-mai.spaceTotal = {doc = "function():number -- The overall capacity of the file system, in bytes."}
+mai.spaceTotal = {direct = true, doc = "function():number -- The overall capacity of the file system, in bytes."}
 function obj.spaceTotal()
 	--STUB
 	cprint("filesystem.spaceTotal")
 	return math.huge
 end
 
-mai.getLabel = {doc = "function():string -- Get the current label of the file system."}
+mai.getLabel = {direct = true, doc = "function():string -- Get the current label of the file system."}
 function obj.getLabel()
 	cprint("filesystem.getLabel")
 	return label
@@ -190,7 +190,7 @@ function obj.setLabel(value)
 	label = value:sub(1,16)
 end
 
-mai.open = {doc = "function(path:string[, mode:string='r']):number -- Opens a new file descriptor and returns its handle."}
+mai.open = {direct = true, doc = "function(path:string[, mode:string='r']):number -- Opens a new file descriptor and returns its handle."}
 function obj.open(path, mode)
 	cprint("filesystem.open", path, mode)
 	if mode == nil then mode = "r" end
@@ -220,7 +220,7 @@ function obj.open(path, mode)
 	end
 end
 
-mai.exists = {doc = "function(path:string):boolean -- Returns whether an object exists at the specified absolute path in the file system."}
+mai.exists = {direct = true, doc = "function(path:string):boolean -- Returns whether an object exists at the specified absolute path in the file system."}
 function obj.exists(path)
 	cprint("filesystem.exists", path)
 	compCheckArg(1,path,"string")
@@ -256,13 +256,13 @@ function obj.list(path)
 	return list
 end
 
-mai.isReadOnly = {doc = "function():boolean -- Returns whether the file system is read-only."}
+mai.isReadOnly = {direct = true, doc = "function():boolean -- Returns whether the file system is read-only."}
 function obj.isReadOnly()
 	cprint("filesystem.isReadOnly")
 	return readonly
 end
 
-mai.makeDirectory = {doc = "function(path:string):boolean -- Creates a directory at the specified absolute path in the file system. Creates parent directories, if necessary."}
+mai.makeDirectory = {direct = true, doc = "function(path:string):boolean -- Creates a directory at the specified absolute path in the file system. Creates parent directories, if necessary."}
 function obj.makeDirectory(path)
 	cprint("filesystem.makeDirectory", path)
 	compCheckArg(1,path,"string")
@@ -276,7 +276,7 @@ function obj.makeDirectory(path)
 	return elsa.filesystem.createDirectory(directory .. "/" .. path)
 end
 
-mai.isDirectory = {doc = "function(path:string):boolean -- Returns whether the object at the specified absolute path in the file system is a directory."}
+mai.isDirectory = {direct = true, doc = "function(path:string):boolean -- Returns whether the object at the specified absolute path in the file system is a directory."}
 function obj.isDirectory(path)
 	cprint("filesystem.isDirectory", path)
 	compCheckArg(1,path,"string")

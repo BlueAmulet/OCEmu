@@ -32,13 +32,13 @@ local function checkUri(address, port)
 	error("address could not be parsed or no valid port given",4)
 end
 
-mai.isTcpEnabled = {doc = "function():boolean -- Returns whether TCP connections can be made (config setting)."}
+mai.isTcpEnabled = {direct = true, doc = "function():boolean -- Returns whether TCP connections can be made (config setting)."}
 function obj.isTcpEnabled()
 	cprint("internet.isTcpEnabled")
 	return settings.tcpEnabled
 end
 
-mai.isHttpEnabled = {doc = "function():boolean -- Returns whether HTTP requests can be made (config setting)."}
+mai.isHttpEnabled = {direct = true, doc = "function():boolean -- Returns whether HTTP requests can be made (config setting)."}
 function obj.isHttpEnabled()
 	cprint("internet.isHttpEnabled")
 	return settings.httpEnabled
