@@ -41,9 +41,11 @@ local function cleanPath(path)
 end
 
 -- filesystem component
+local mai = {}
 local obj = {}
 
-function obj.read(handle, count) -- Reads up to the specified amount of data from an open file descriptor with the specified handle. Returns nil when EOF is reached.
+mai.read = {doc = "function(handle:number, count:number):string or nil -- Reads up to the specified amount of data from an open file descriptor with the specified handle. Returns nil when EOF is reached."}
+function obj.read(handle, count)
 	--TODO
 	cprint("filesystem.read", handle, count)
 	compCheckArg(1,handle,"number")
@@ -57,7 +59,9 @@ function obj.read(handle, count) -- Reads up to the specified amount of data fro
 	if ret[1] == "" and count ~= 0 then ret[1] = nil end
 	return table.unpack(ret)
 end
-function obj.lastModified(path) -- Returns the (real world) timestamp of when the object at the specified absolute path in the file system was modified.
+
+mai.lastModified = {doc = "function(path:string):number -- Returns the (real world) timestamp of when the object at the specified absolute path in the file system was modified."}
+function obj.lastModified(path)
 	cprint("filesystem.lastModified", path)
 	compCheckArg(1,path,"string")
 	path = cleanPath(path)
@@ -66,12 +70,16 @@ function obj.lastModified(path) -- Returns the (real world) timestamp of when th
 	end
 	return elsa.filesystem.getLastModified(directory .. "/" .. path) or 0
 end
-function obj.spaceUsed() -- The currently used capacity of the file system, in bytes.
+
+mai.spaceUsed = {doc = "function():number -- The currently used capacity of the file system, in bytes."}
+function obj.spaceUsed()
 	--STUB
 	cprint("filesystem.spaceUsed")
 	return 0
 end
-function obj.rename(from, to) -- Renames/moves an object from the first specified absolute path in the file system to the second.
+
+mai.rename = {doc = "function(from:string, to:string):boolean -- Renames/moves an object from the first specified absolute path in the file system to the second."}
+function obj.rename(from, to)
 	cprint("filesystem.rename", from, to)
 	compCheckArg(1,from,"string")
 	local ofrom = from
@@ -96,7 +104,9 @@ function obj.rename(from, to) -- Renames/moves an object from the first specifie
 		return nil, err
 	end
 end
-function obj.close(handle) -- Closes an open file descriptor with the specified handle.
+
+mai.close = {doc = "function(handle:number) -- Closes an open file descriptor with the specified handle."}
+function obj.close(handle)
 	cprint("filesystem.close", handle)
 	compCheckArg(1,handle,"number")
 	if handles[handle] == nil then
@@ -105,7 +115,9 @@ function obj.close(handle) -- Closes an open file descriptor with the specified 
 	handles[handle][1]:close()
 	handles[handle] = nil
 end
-function obj.write(handle, value) -- Writes the specified data to an open file descriptor with the specified handle.
+
+mai.write = {doc = "function(handle:number, value:string):boolean -- Writes the specified data to an open file descriptor with the specified handle."}
+function obj.write(handle, value)
 	cprint("filesystem.write", handle, value)
 	compCheckArg(1,handle,"number")
 	compCheckArg(2,value,"string")
@@ -115,7 +127,9 @@ function obj.write(handle, value) -- Writes the specified data to an open file d
 	handles[handle][1]:write(value)
 	return true
 end
-function obj.remove(path) -- Removes the object at the specified absolute path in the file system.
+
+mai.remove = {doc = "function(path:string):boolean -- Removes the object at the specified absolute path in the file system."}
+function obj.remove(path)
 	cprint("filesystem.remove", path)
 	compCheckArg(1,path,"string")
 	path = cleanPath(path)
@@ -127,7 +141,9 @@ function obj.remove(path) -- Removes the object at the specified absolute path i
 	end
 	return elsa.filesystem.remove(directory .. "/" .. path)
 end
-function obj.size(path) -- Returns the size of the object at the specified absolute path in the file system.
+
+mai.size = {doc = "function(path:string):number -- Returns the size of the object at the specified absolute path in the file system."}
+function obj.size(path)
 	cprint("filesystem.size", path)
 	compCheckArg(1,path,"string")
 	path = cleanPath(path)
@@ -136,7 +152,9 @@ function obj.size(path) -- Returns the size of the object at the specified absol
 	end
 	return elsa.filesystem.getSize(directory .. "/" .. path) or 0
 end
-function obj.seek(handle, whence, offset) -- Seeks in an open file descriptor with the specified handle. Returns the new pointer position.
+
+mai.seek = {doc = "function(handle:number, whence:string, offset:number):number -- Seeks in an open file descriptor with the specified handle. Returns the new pointer position."}
+function obj.seek(handle, whence, offset)
 	--TODO
 	cprint("filesystem.seek", handle, whence, offset)
 	compCheckArg(1,handle,"number")
@@ -147,16 +165,22 @@ function obj.seek(handle, whence, offset) -- Seeks in an open file descriptor wi
 	end
 	return handles[handle][1]:seek(whence, offset)
 end
-function obj.spaceTotal() -- The overall capacity of the file system, in bytes.
+
+mai.spaceTotal = {doc = "function():number -- The overall capacity of the file system, in bytes."}
+function obj.spaceTotal()
 	--STUB
 	cprint("filesystem.spaceTotal")
 	return math.huge
 end
-function obj.getLabel() -- Get the current label of the file system.
+
+mai.getLabel = {doc = "function():string -- Get the current label of the file system."}
+function obj.getLabel()
 	cprint("filesystem.getLabel")
 	return label
 end
-function obj.setLabel(value) -- Sets the label of the file system. Returns the new value, which may be truncated.
+
+mai.setLabel = {doc = "function(value:string):string -- Sets the label of the file system. Returns the new value, which may be truncated."}
+function obj.setLabel(value)
 	--TODO: treat functions as nil
 	cprint("filesystem.setLabel", value)
 	compCheckArg(1,value,"string")
@@ -165,7 +189,9 @@ function obj.setLabel(value) -- Sets the label of the file system. Returns the n
 	end
 	label = value:sub(1,16)
 end
-function obj.open(path, mode) -- Opens a new file descriptor and returns its handle.
+
+mai.open = {doc = "function(path:string[, mode:string='r']):number -- Opens a new file descriptor and returns its handle."}
+function obj.open(path, mode)
 	cprint("filesystem.open", path, mode)
 	if mode == nil then mode = "r" end
 	compCheckArg(1,path,"string")
@@ -193,7 +219,9 @@ function obj.open(path, mode) -- Opens a new file descriptor and returns its han
 		end
 	end
 end
-function obj.exists(path) -- Returns whether an object exists at the specified absolute path in the file system.
+
+mai.exists = {doc = "function(path:string):boolean -- Returns whether an object exists at the specified absolute path in the file system."}
+function obj.exists(path)
 	cprint("filesystem.exists", path)
 	compCheckArg(1,path,"string")
 	path = cleanPath(path)
@@ -202,7 +230,9 @@ function obj.exists(path) -- Returns whether an object exists at the specified a
 	end
 	return elsa.filesystem.exists(directory .. "/" .. path)
 end
-function obj.list(path) -- Returns a list of names of objects in the directory at the specified absolute path in the file system.
+
+mai.list = {doc = "function(path:string):table -- Returns a list of names of objects in the directory at the specified absolute path in the file system."}
+function obj.list(path)
 	--TODO
 	cprint("filesystem.list", path)
 	compCheckArg(1,path,"string")
@@ -225,11 +255,15 @@ function obj.list(path) -- Returns a list of names of objects in the directory a
 	list.n = #list
 	return list
 end
-function obj.isReadOnly() -- Returns whether the file system is read-only.
+
+mai.isReadOnly = {doc = "function():boolean -- Returns whether the file system is read-only."}
+function obj.isReadOnly()
 	cprint("filesystem.isReadOnly")
 	return readonly
 end
-function obj.makeDirectory(path) -- Creates a directory at the specified absolute path in the file system. Creates parent directories, if necessary.
+
+mai.makeDirectory = {doc = "function(path:string):boolean -- Creates a directory at the specified absolute path in the file system. Creates parent directories, if necessary."}
+function obj.makeDirectory(path)
 	cprint("filesystem.makeDirectory", path)
 	compCheckArg(1,path,"string")
 	path = cleanPath(path)
@@ -241,7 +275,9 @@ function obj.makeDirectory(path) -- Creates a directory at the specified absolut
 	end
 	return elsa.filesystem.createDirectory(directory .. "/" .. path)
 end
-function obj.isDirectory(path) -- Returns whether the object at the specified absolute path in the file system is a directory.
+
+mai.isDirectory = {doc = "function(path:string):boolean -- Returns whether the object at the specified absolute path in the file system is a directory."}
+function obj.isDirectory(path)
 	cprint("filesystem.isDirectory", path)
 	compCheckArg(1,path,"string")
 	path = cleanPath(path)
@@ -251,27 +287,4 @@ function obj.isDirectory(path) -- Returns whether the object at the specified ab
 	return elsa.filesystem.isDirectory(directory .. "/" .. path)
 end
 
-local cec = {}
-
-local doc = {
-	["read"]="function(handle:number, count:number):string or nil -- Reads up to the specified amount of data from an open file descriptor with the specified handle. Returns nil when EOF is reached.",
-	["lastModified"]="function(path:string):number -- Returns the (real world) timestamp of when the object at the specified absolute path in the file system was modified.",
-	["spaceUsed"]="function():number -- The currently used capacity of the file system, in bytes.",
-	["rename"]="function(from:string, to:string):boolean -- Renames/moves an object from the first specified absolute path in the file system to the second.",
-	["close"]="function(handle:number) -- Closes an open file descriptor with the specified handle.",
-	["write"]="function(handle:number, value:string):boolean -- Writes the specified data to an open file descriptor with the specified handle.",
-	["remove"]="function(path:string):boolean -- Removes the object at the specified absolute path in the file system.",
-	["size"]="function(path:string):number -- Returns the size of the object at the specified absolute path in the file system.",
-	["seek"]="function(handle:number, whence:string, offset:number):number -- Seeks in an open file descriptor with the specified handle. Returns the new pointer position.",
-	["spaceTotal"]="function():number -- The overall capacity of the file system, in bytes.",
-	["getLabel"]="function():string -- Get the current label of the file system.",
-	["setLabel"]="function(value:string):string -- Sets the label of the file system. Returns the new value, which may be truncated.",
-	["open"]="function(path:string[, mode:string='r']):number -- Opens a new file descriptor and returns its handle.",
-	["exists"]="function(path:string):boolean -- Returns whether an object exists at the specified absolute path in the file system.",
-	["list"]="function(path:string):table -- Returns a list of names of objects in the directory at the specified absolute path in the file system.",
-	["isReadOnly"]="function():boolean -- Returns whether the file system is read-only.",
-	["makeDirectory"]="function(path:string):boolean -- Creates a directory at the specified absolute path in the file system. Creates parent directories, if necessary.",
-	["isDirectory"]="function(path:string):boolean -- Returns whether the object at the specified absolute path in the file system is a directory.",
-}
-
-return obj,cec,doc
+return obj,nil,mai

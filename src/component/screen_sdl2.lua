@@ -305,48 +305,66 @@ local touchinvert = false
 local precise = false
 
 -- screen component
+local mai = {}
 local obj = {type="screen"}
 
-function obj.isTouchModeInverted() -- Whether touch mode is inverted (sneak-activate opens GUI, instead of normal activate).
+mai.isTouchModeInverted = {doc = "function():boolean -- Whether touch mode is inverted (sneak-activate opens GUI, instead of normal activate)."}
+function obj.isTouchModeInverted()
 	cprint("screen.isTouchModeInverted")
 	return touchinvert
 end
-function obj.setTouchModeInverted(value) -- Sets whether to invert touch mode (sneak-activate opens GUI, instead of normal activate).
+
+mai.setTouchModeInverted = {doc = "function(value:boolean):boolean -- Sets whether to invert touch mode (sneak-activate opens GUI, instead of normal activate)."}
+function obj.setTouchModeInverted(value)
 	--STUB
 	cprint("screen.setTouchModeInverted", value)
 	compCheckArg(1,value,"boolean")
 	touchinvert = value
 end
-function obj.isPrecise() -- Returns whether the screen is in high precision mode (sub-pixel mouse event positions).
+
+mai.isPrecise = {doc = "function():boolean -- Returns whether the screen is in high precision mode (sub-pixel mouse event positions)."}
+function obj.isPrecise()
 	cprint("screen.isPrecise")
 	return precise
 end
-function obj.setPrecise(enabled) -- Set whether to use high precision mode (sub-pixel mouse event positions).
+
+mai.setPrecise = {doc = "function(enabled:boolean):boolean -- Set whether to use high precision mode (sub-pixel mouse event positions)."}
+function obj.setPrecise(enabled)
 	cprint("screen.setPrecise", enabled)
 	compCheckArg(1,enabled,"boolean")
 	precise = enabled
 end
-function obj.turnOff() -- Turns off the screen. Returns true if it was on.
+
+mai.turnOff = {doc = "function():boolean -- Turns off the screen. Returns true if it was on."}
+function obj.turnOff()
 	--STUB
 	cprint("screen.turnOff")
 	return false
 end
-function obj.turnOn() -- Turns the screen on. Returns true if it was off.
+
+mai.turnOn = {doc = "function():boolean -- Turns the screen on. Returns true if it was off."}
+function obj.turnOn()
 	--STUB
 	cprint("screen.turnOn")
 	return false
 end
-function obj.isOn() -- Returns whether the screen is currently on.
+
+mai.isOn = {doc = "function():boolean -- Returns whether the screen is currently on."}
+function obj.isOn()
 	--STUB
 	cprint("screen.isOn")
 	return true
 end
-function obj.getAspectRatio() -- The aspect ratio of the screen. For multi-block screens this is the number of blocks, horizontal and vertical.
+
+mai.getAspectRatio = {doc = "function():number, number -- The aspect ratio of the screen. For multi-block screens this is the number of blocks, horizontal and vertical."}
+function obj.getAspectRatio()
 	--STUB
 	cprint("screen.getAspectRatio")
 	return 1, 1
 end
-function obj.getKeyboards() -- The list of keyboards attached to the screen.
+
+mai.getKeyboards = {doc = "function():table -- The list of keyboards attached to the screen."}
+function obj.getKeyboards()
 	cprint("screen.getKeyboards")
 	local klist = {}
 	for addr in component.list("keyboard",true) do
@@ -615,16 +633,4 @@ function cec.copy(x1, y1, w, h, tx, ty) -- Copies a portion of the screen from t
 	texture,copytexture=copytexture,texture
 end
 
-local doc = {
-	["isTouchModeInverted"]="function():boolean -- Whether touch mode is inverted (sneak-activate opens GUI, instead of normal activate).",
-	["setTouchModeInverted"]="function(value:boolean):boolean -- Sets whether to invert touch mode (sneak-activate opens GUI, instead of normal activate).",
-	["isPrecise"]="function():boolean -- Returns whether the screen is in high precision mode (sub-pixel mouse event positions).",
-	["setPrecise"]="function(enabled:boolean):boolean -- Set whether to use high precision mode (sub-pixel mouse event positions).",
-	["turnOff"]="function():boolean -- Turns off the screen. Returns true if it was on.",
-	["turnOn"]="function():boolean -- Turns the screen on. Returns true if it was off.",
-	["isOn"]="function():boolean -- Returns whether the screen is currently on.",
-	["getAspectRatio"]="function():number, number -- The aspect ratio of the screen. For multi-block screens this is the number of blocks, horizontal and vertical.",
-	["getKeyboards"]="function():table -- The list of keyboards attached to the screen.",
-}
-
-return obj,cec,doc
+return obj,cec,mai

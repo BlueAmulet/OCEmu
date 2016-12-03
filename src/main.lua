@@ -100,6 +100,8 @@ if settings.components == nil then
 	config.set("emulator.components",settings.components)
 end
 
+local maxCallBudget = (1.5 + 1.5 + 1.5) / 3 -- T3 CPU and 2 T3+ memory
+
 machine = {
 	starttime = elsa.timer.getTime(),
 	deadline = elsa.timer.getTime(),
@@ -401,7 +403,12 @@ function resume_thread(...)
 		local results = table.pack(coroutine.resume(machine.thread, ...))
 		cprint("yield",table.unpack(results))
 		if type(results[2]) == "function" then
-			resume_thread(results[2]())
+			if settings.fast then
+				elsa.draw()
+				resume_thread(results[2]())
+			else
+				machine.syncfunc = results[2]
+			end
 		elseif type(results[2]) == "number" then
 			machine.deadline = elsa.timer.getTime() + results[2]
 		elseif type(results[2]) == "boolean" then
@@ -437,7 +444,12 @@ function elsa.update(dt)
 	if modem_host then
 		modem_host.processPendingMessages()
 	end
-	if #machine.signals > 0 then
+	machine.callBudget = maxCallBudget
+	if machine.syncfunc then
+		local func = machine.syncfunc
+		machine.syncfunc = nil
+		resume_thread(func())
+	elseif #machine.signals > 0 then
 		signal = machine.signals[1]
 		table.remove(machine.signals, 1)
 		resume_thread(table.unpack(signal, 1, signal.n or #signal))

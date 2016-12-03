@@ -13,7 +13,7 @@ end
 local proxylist = {}
 local slotlist = {}
 local emuicc = {}
-local doclist = {}
+local mailist = {}
 
 component = {}
 
@@ -37,15 +37,25 @@ function component.connect(info, ...)
 	if not fn then
 		return nil, err
 	end
-	local proxy, cec, doc = fn(table.unpack(info,2))
+	local proxy, cec, mai = fn(table.unpack(info,2))
 	if not proxy then
 		return nil, cec or "no component added"
+	end
+	for k, v in pairs(proxy) do
+		if type(v) == "function" then
+			if mai[k] == nil then mai[k] = {} end
+			if mai[k].direct == nil then mai[k].direct = false end
+			if mai[k].limit == nil then mai[k].limit = math.huge end
+			if mai[k].doc == nil then mai[k].doc = "" end
+			if mai[k].getter == nil then mai[k].getter = false end
+			if mai[k].setter == nil then mai[k].setter = false end
+		end
 	end
 	proxy.address = address
 	proxy.type = proxy.type or info[1]
 	proxylist[address] = proxy
 	emuicc[address] = cec
-	doclist[address] = doc
+	mailist[address] = mai
 	slotlist[address] = info[3]
 	if boot_machine then
 		table.insert(machine.signals,{"component_added",address,proxy.type})
@@ -60,7 +70,7 @@ function component.disconnect(address)
 	local thetype = proxylist[address].type
 	proxylist[address] = nil
 	emuicc[address] = nil
-	doclist[address] = nil
+	mailist[address] = nil
 	slotlist[address] = nil
 	table.insert(machine.signals,{"component_removed",address,thetype})
 	return true
@@ -148,7 +158,8 @@ function env.component.methods(address)
 		local methods = {}
 		for k,v in pairs(proxylist[address]) do
 			if type(v) == "function" then
-				methods[k] = {direct=true} -- TODO: getter, setter?
+				local methodmai = mailist[address][k]
+				methods[k] = {direct=(settings.fast or methodmai.direct), getter=methodmai.getter, setter=methodmai.setter}
 			end
 		end
 		return methods
@@ -163,6 +174,13 @@ function env.component.invoke(address, method, ...)
 		if proxylist[address][method] == nil then
 			error("no such method",2)
 		end
+		if not settings.fast and mailist[address][method].direct then
+			machine.callBudget = machine.callBudget - math.max(0.001, 1/mailist[address][method].limit)
+			if machine.callBudget < 0 then
+				print("Ran out of budget")
+				return
+			end
+		end
 		return true, proxylist[address][method](...)
 	end
 	return nil, "no such component"
@@ -175,8 +193,8 @@ function env.component.doc(address, method)
 		if proxylist[address][method] == nil then
 			return nil
 		end
-		if doclist[address] ~= nil then
-			return doclist[address][method]
+		if mailist[address] ~= nil then
+			return mailist[address][method].doc
 		end
 		return nil
 	end

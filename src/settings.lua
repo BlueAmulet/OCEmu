@@ -9,6 +9,7 @@ settings = {
 
 	components = config.get("emulator.components"),
 	emulatorDebug = config.get("emulator.debug",false),
+	fast = config.get("emulator.fast",true),
 	vagueErrors = config.get("emulator.vague",true),
 
 	maxReadBuffer = config.get("filesystem.maxReadBuffer",2048),

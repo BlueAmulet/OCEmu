@@ -26,6 +26,7 @@ end
 modem_host = {}
 
 -- modem component
+local mai = {}
 local obj = {}
 
 -- Modem cards communicate on a real backend port
@@ -419,7 +420,8 @@ local function checkPort(port)
 	return math.floor(port)
 end
 
-function obj.send(address, port, ...) -- Sends the specified data to the specified target.
+mai.send = {doc = "function(address:string, port:number, data...) -- Sends the specified data to the specified target."}
+function obj.send(address, port, ...)
 	compCheckArg(1,address,"string")
 	compCheckArg(2,port,"number")
 	port=checkPort(port)
@@ -435,16 +437,19 @@ function obj.send(address, port, ...) -- Sends the specified data to the specifi
 	return true
 end
 
-function obj.getWakeMessage() -- Get the current wake-up message.
+mai.getWakeMessage = {doc = "function():string -- Get the current wake-up message."}
+function obj.getWakeMessage()
 	return wakeMessage
 end
 
-function obj.setWakeMessage(message) -- Set the wake-up message.
+mai.setWakeMessage = {doc = "function(message:string):string -- Set the wake-up message."}
+function obj.setWakeMessage(message)
 	compCheckArg(1,message,"string","nil")
 	wakeMessage = message
 end
 
-function obj.close(port) -- Closes the specified port (default: all ports). Returns true if ports were closed.
+mai.close = {doc = "function([port:number]):boolean -- Closes the specified port (default: all ports). Returns true if ports were closed."}
+function obj.close(port)
 	compCheckArg(1,port,"number","nil")
 	if port ~= nil then
 		port=checkPort(port)
@@ -466,26 +471,32 @@ function obj.close(port) -- Closes the specified port (default: all ports). Retu
 	return true
 end
 
-function obj.maxPacketSize() -- Gets the maximum packet size (config setting).
+mai.maxPacketSize = {doc = "function():number -- Gets the maximum packet size (config setting)."}
+function obj.maxPacketSize()
 	return settings.maxNetworkPacketSize
 end
 
 if wireless then
-	function obj.getStrength() -- Get the signal strength (range) used when sending messages.
+	mai.getStrength = {doc = "function():number -- Get the signal strength (range) used when sending messages."}
+	function obj.getStrength()
 		return strength
 	end
-	function obj.setStrength(newstrength) -- Set the signal strength (range) used when sending messages.
+
+	mai.setStrength = {doc = "function(strength:number):number -- Set the signal strength (range) used when sending messages."}
+	function obj.setStrength(newstrength)
 		compCheckArg(1,newstrength,"number")
 		strength = newstrength
 	end
 end
 
-function obj.isOpen(port) -- Whether the specified port is open.
+mai.isOpen = {doc = "function(port:number):boolean -- Whether the specified port is open."}
+function obj.isOpen(port)
 	compCheckArg(1,port,"number")
 	return modem_host.open_ports[port] ~= nil
 end
 
-function obj.open(port) -- Opens the specified port. Returns true if the port was opened.
+mai.open = {doc = "function(port:number):boolean -- Opens the specified port. Returns true if the port was opened."}
+function obj.open(port)
 	compCheckArg(1,port,"number")
 	port=checkPort(port)
 
@@ -504,11 +515,13 @@ function obj.open(port) -- Opens the specified port. Returns true if the port wa
 	return true
 end
 
-function obj.isWireless() -- Whether this is a wireless network card.
+mai.isWireless = {doc = "function():boolean -- Whether this is a wireless network card."}
+function obj.isWireless()
 	return wireless
 end
 
-function obj.broadcast(port, ...) -- Broadcasts the specified data on the specified port.
+mai.broadcast = {doc = "function(port:number, data...) -- Broadcasts the specified data on the specified port."}
+function obj.broadcast(port, ...)
 	compCheckArg(1,port,"number")
 	port=checkPort(port)
 
@@ -523,20 +536,4 @@ function obj.broadcast(port, ...) -- Broadcasts the specified data on the specif
 	return true
 end
 
-local cec = {}
-
-local doc = {
-	["send"]="function(address:string, port:number, data...) -- Sends the specified data to the specified target.",
-	["getWakeMessage"]="function():string -- Get the current wake-up message.",
-	["setWakeMessage"]="function(message:string):string -- Set the wake-up message.",
-	["close"]="function([port:number]):boolean -- Closes the specified port (default: all ports). Returns true if ports were closed.",
-	["maxPacketSize"]="function():number -- Gets the maximum packet size (config setting).",
-	["getStrength"]="function():number -- Get the signal strength (range) used when sending messages.",
-	["setStrength"]="function(strength:number):number -- Set the signal strength (range) used when sending messages.",
-	["isOpen"]="function(port:number):boolean -- Whether the specified port is open.",
-	["open"]="function(port:number):boolean -- Opens the specified port. Returns true if the port was opened.",
-	["isWireless"]="function():boolean -- Whether this is a wireless network card.",
-	["broadcast"]="function(port:number, data...) -- Broadcasts the specified data on the specified port.",
-}
-
-return obj,cec,doc
+return obj,nil,mai

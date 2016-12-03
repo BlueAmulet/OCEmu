@@ -68,10 +68,10 @@ end
 -- keyboard component
 
 -- Much complex
-local obj = {type="keyboard"}
+local mai = {}
 
 -- Such methods
-local cec = {}
+local obj = {type="keyboard"}
 
 -- Wow
-return obj,cec
+return obj,nil,mai

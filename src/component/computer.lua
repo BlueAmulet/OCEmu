@@ -1,12 +1,16 @@
 -- computer component
+local mai = {}
 local obj = {}
 
-function obj.isRunning() -- Returns whether the computer is running.
+mai.isRunning = {doc = "function():boolean -- Returns whether the computer is running."}
+function obj.isRunning()
 	--STUB
 	cprint("computer.isRunning")
 	return true
 end
-function obj.beep(frequency, duration) -- Plays a tone, useful to alert users via audible feedback.
+
+mai.beep = {doc = "function([frequency:number[, duration:number]]) -- Plays a tone, useful to alert users via audible feedback."}
+function obj.beep(frequency, duration)
 	--STUB
 	cprint("computer.beep", frequency, duration)
 	if frequency == nil then frequency = 440 end
@@ -21,14 +25,20 @@ function obj.beep(frequency, duration) -- Plays a tone, useful to alert users vi
 	machine.beep(frequency, durationMS)
 	machine.sleep(durationMS/1000)
 end
-function obj.stop() -- Stops the computer. Returns true if the state changed.
+
+mai.stop = {doc = "function():boolean -- Stops the computer. Returns true if the state changed."}
+function obj.stop()
 	--STUB
 	cprint("computer.stop")
 end
-function obj.start() -- Starts the computer. Returns true if the state changed.
+
+mai.start = {doc = "function():boolean -- Starts the computer. Returns true if the state changed."}
+function obj.start()
 	--STUB
 	cprint("computer.start")
 end
+
+mai.getProgramLocations = {doc = "function():table -- Returns a list of available programs and their install disks."}
 function obj.getProgramLocations()
 	cprint("computer.getProgramLocations")
 	return table.pack(
@@ -52,14 +62,4 @@ function obj.getProgramLocations()
 	)
 end
 
-local cec = {}
-
-local doc = {
-	["isRunning"]="function():boolean -- Returns whether the computer is running.",
-	["beep"]="function([frequency:number[, duration:number]]) -- Plays a tone, useful to alert users via audible feedback.",
-	["stop"]="function():boolean -- Stops the computer. Returns true if the state changed.",
-	["start"]="function():boolean -- Starts the computer. Returns true if the state changed.",
-	["getProgramLocations"]="function():table -- Returns a list of available programs and their install disks.",
-}
-
-return obj,cec,doc
+return obj,nil,mai

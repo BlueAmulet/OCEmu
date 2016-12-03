@@ -17,6 +17,7 @@ end
 local ltn12 = require("ltn12")
 local javaserialize = require("support.serialization").javaserialize
 
+local mai = {}
 local obj = {}
 
 local function checkUri(address, port)
@@ -31,15 +32,20 @@ local function checkUri(address, port)
 	error("address could not be parsed or no valid port given",4)
 end
 
-function obj.isTcpEnabled() -- Returns whether TCP connections can be made (config setting).
+mai.isTcpEnabled = {doc = "function():boolean -- Returns whether TCP connections can be made (config setting)."}
+function obj.isTcpEnabled()
 	cprint("internet.isTcpEnabled")
 	return settings.tcpEnabled
 end
-function obj.isHttpEnabled() -- Returns whether HTTP requests can be made (config setting).
+
+mai.isHttpEnabled = {doc = "function():boolean -- Returns whether HTTP requests can be made (config setting)."}
+function obj.isHttpEnabled()
 	cprint("internet.isHttpEnabled")
 	return settings.httpEnabled
 end
-function obj.connect(address, port) -- Opens a new TCP connection. Returns the handle of the connection.
+
+mai.connect = {doc = "function(address:string[, port:number]):userdata -- Opens a new TCP connection. Returns the handle of the connection."}
+function obj.connect(address, port)
 	cprint("internet.connect",address, port)
 	if port == nil then port = -1 end
 	compCheckArg(1,address,"string")
@@ -121,7 +127,9 @@ function obj.connect(address, port) -- Opens a new TCP connection. Returns the h
 	}
 	return fakesocket
 end
-function obj.request(url, postData, headers) -- Starts an HTTP request. If this returns true, further results will be pushed using `http_response` signals.
+
+mai.request = {doc = "function(url:string[, postData:string[, headers:table]]):userdata -- Starts an HTTP request. If this returns true, further results will be pushed using `http_response` signals."}
+function obj.request(url, postData, headers)
 	cprint("internet.request", url, postData, headers)
 	compCheckArg(1,url,"string")
 	if not settings.httpEnabled then
@@ -258,13 +266,4 @@ function obj.request(url, postData, headers) -- Starts an HTTP request. If this 
 	return fakesocket
 end
 
-local cec = {}
-
-local doc = {
-	["isTcpEnabled"]="function():boolean -- Returns whether TCP connections can be made (config setting).",
-	["isHttpEnabled"]="function():boolean -- Returns whether HTTP requests can be made (config setting).",
-	["connect"]="function(address:string[, port:number]):userdata -- Opens a new TCP connection. Returns the handle of the connection.",
-	["request"]="function(url:string[, postData:string[, headers:table]]):userdata -- Starts an HTTP request. If this returns true, further results will be pushed using `http_response` signals.",
-}
-
-return obj,cec,doc
+return obj,nil,mai

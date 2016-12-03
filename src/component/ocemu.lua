@@ -11,6 +11,7 @@ local function cleanName(name)
 	return name
 end
 
+local mai = {}
 local obj = {}
 
 function obj.connect(kind, address, slot, ...)
@@ -124,8 +125,4 @@ function obj.log(...)
 	print(...)
 end
 
-local cec = {}
-
-local doc = {}
-
-return obj,cec,doc
+return obj,nil,mai

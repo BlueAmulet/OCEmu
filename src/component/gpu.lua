@@ -11,9 +11,11 @@ local rdepthTbl = {1,[4]=2,[8]=3}
 local depthNames = {"OneBit","FourBit","EightBit"}
 
 -- gpu component
+local mai = {}
 local obj = {}
 
-function obj.bind(address) -- Binds the GPU to the screen with the specified address.
+mai.bind = {doc = "function(address:string):boolean -- Binds the GPU to the screen with the specified address."}
+function obj.bind(address)
 	cprint("gpu.bind", address)
 	compCheckArg(1,address,"string")
 	local thing = component.exists(address)
@@ -24,14 +26,19 @@ function obj.bind(address) -- Binds the GPU to the screen with the specified add
 	end
 	bindaddress = address
 end
-function obj.getForeground() -- Get the current foreground color and whether it's from the palette or not.
+
+mai.getForeground = {doc = "function():number, boolean -- Get the current foreground color and whether it's from the palette or not."}
+function obj.getForeground()
 	cprint("gpu.getForeground")
 	if bindaddress == nil then
 		return nil, "no screen"
 	end
 	return component.cecinvoke(bindaddress, "getForeground")
 end
-function obj.setForeground(value, palette) -- Sets the foreground color to the specified value. Optionally takes an explicit palette index. Returns the old value and if it was from the palette its palette index.
+
+
+mai.setForeground = {doc = "function(value:number[, palette:boolean]):number, number or nil -- Sets the foreground color to the specified value. Optionally takes an explicit palette index. Returns the old value and if it was from the palette its palette index."}
+function obj.setForeground(value, palette)
 	cprint("gpu.setForeground", value, palette)
 	compCheckArg(1,value,"number")
 	compCheckArg(2,palette,"boolean","nil")
@@ -46,14 +53,18 @@ function obj.setForeground(value, palette) -- Sets the foreground color to the s
 	end
 	return component.cecinvoke(bindaddress, "setForeground", value, palette)
 end
-function obj.getBackground() -- Get the current background color and whether it's from the palette or not.
+
+mai.getBackground = {doc = "function():number, boolean -- Get the current background color and whether it's from the palette or not."}
+function obj.getBackground()
 	cprint("gpu.getBackground")
 	if bindaddress == nil then
 		return nil, "no screen"
 	end
 	return component.cecinvoke(bindaddress, "getBackground")
 end
-function obj.setBackground(value, palette) -- Sets the background color to the specified value. Optionally takes an explicit palette index. Returns the old value and if it was from the palette its palette index.
+
+mai.setBackground = {doc = "function(value:number[, palette:boolean]):number, number or nil -- Sets the background color to the specified value. Optionally takes an explicit palette index. Returns the old value and if it was from the palette its palette index."}
+function obj.setBackground(value, palette)
 	cprint("gpu.setBackground", value, palette)
 	compCheckArg(1,value,"number")
 	compCheckArg(2,palette,"boolean","nil")
@@ -69,11 +80,15 @@ function obj.setBackground(value, palette) -- Sets the background color to the s
 	end
 	return component.cecinvoke(bindaddress, "setBackground", value, palette)
 end
-function obj.getDepth() -- Returns the currently set color depth.
+
+mai.getDepth = {doc = "function():number -- Returns the currently set color depth."}
+function obj.getDepth()
 	cprint("gpu.getDepth")
 	return depthTbl[component.cecinvoke(bindaddress, "getDepth")]
 end
-function obj.setDepth(depth) -- Set the color depth. Returns the previous value.
+
+mai.setDepth = {doc = "function(depth:number):number -- Set the color depth. Returns the previous value."}
+function obj.setDepth(depth)
 	cprint("gpu.setDepth", depth)
 	compCheckArg(1,depth,"number")
 	if bindaddress == nil then
@@ -88,11 +103,15 @@ function obj.setDepth(depth) -- Set the color depth. Returns the previous value.
 	component.cecinvoke(bindaddress, "setDepth", rdepthTbl[depth])
 	return old
 end
-function obj.maxDepth() -- Get the maximum supported color depth.
+
+mai.maxDepth = {doc = "function():number -- Get the maximum supported color depth."}
+function obj.maxDepth()
 	cprint("gpu.maxDepth")
 	return depthTbl[math.min(component.cecinvoke(bindaddress, "maxDepth"), maxtier)]
 end
-function obj.fill(x, y, width, height, char) -- Fills a portion of the screen at the specified position with the specified size with the specified character.
+
+mai.fill = {doc = "function(x:number, y:number, width:number, height:number, char:string):boolean -- Fills a portion of the screen at the specified position with the specified size with the specified character."}
+function obj.fill(x, y, width, height, char)
 	cprint("gpu.fill", x, y, width, height, char)
 	compCheckArg(1,x,"number")
 	compCheckArg(2,y,"number")
@@ -107,18 +126,24 @@ function obj.fill(x, y, width, height, char) -- Fills a portion of the screen at
 	end
 	return component.cecinvoke(bindaddress, "fill", x, y, width, height, char)
 end
-function obj.getScreen() -- Get the address of the screen the GPU is currently bound to.
+
+mai.getScreen = {doc = "function():string -- Get the address of the screen the GPU is currently bound to."}
+function obj.getScreen()
 	cprint("gpu.getScreen")
 	return bindaddress
 end
-function obj.getResolution() -- Get the current screen resolution.
+
+mai.getResolution = {doc = "function():number, number -- Get the current screen resolution."}
+function obj.getResolution()
 	cprint("gpu.getResolution")
 	if bindaddress == nil then
 		return nil, "no screen"
 	end
 	return component.cecinvoke(bindaddress, "getResolution")
 end
-function obj.setResolution(width, height) -- Set the screen resolution. Returns true if the resolution changed.
+
+mai.setResolution = {doc = "function(width:number, height:number):boolean -- Set the screen resolution. Returns true if the resolution changed."}
+function obj.setResolution(width, height)
 	cprint("gpu.setResolution", width, height)
 	compCheckArg(1,width,"number")
 	compCheckArg(2,height,"number")
@@ -132,7 +157,9 @@ function obj.setResolution(width, height) -- Set the screen resolution. Returns 
 	end
 	return component.cecinvoke(bindaddress, "setResolution", width, height)
 end
-function obj.maxResolution() -- Get the maximum screen resolution.
+
+mai.maxResolution = {doc = "function():number, number -- Get the maximum screen resolution."}
+function obj.maxResolution()
 	cprint("gpu.maxResolution")
 	if bindaddress == nil then
 		return nil, "no screen"
@@ -140,16 +167,20 @@ function obj.maxResolution() -- Get the maximum screen resolution.
 	local smw,smh = component.cecinvoke(bindaddress, "maxResolution")
 	return math.min(smw, maxwidth), math.min(smh, maxheight)
 end
+
 --STUB: Actually Implement viewport
-function obj.getViewport() -- Get the current viewport resolution.
+mai.getViewport = {doc = "function():number, number -- Get the current viewport resolution."}
+function obj.getViewport()
 	cprint("gpu.getViewport")
 	if bindaddress == nil then
 		return nil, "no screen"
 	end
 	return component.cecinvoke(bindaddress, "getResolution")
 end
+
 --STUB: Actually Implement viewport
-function obj.setViewport(width, height) -- Set the viewport resolution. Returns true if the resolution changed.
+mai.setViewport = {doc = "function(width:number, height:number):boolean -- Set the viewport resolution. Returns true if the resolution changed."}
+function obj.setViewport(width, height)
 	cprint("gpu.setViewport", width, height)
 	compCheckArg(1,width,"number")
 	compCheckArg(2,height,"number")
@@ -163,7 +194,9 @@ function obj.setViewport(width, height) -- Set the viewport resolution. Returns 
 	end
 	return component.cecinvoke(bindaddress, "setResolution", width, height)
 end
-function obj.getPaletteColor(index) -- Get the palette color at the specified palette index.
+
+mai.getPaletteColor = {doc = "function(index:number):number -- Get the palette color at the specified palette index."}
+function obj.getPaletteColor(index)
 	cprint("gpu.getPaletteColor", index)
 	compCheckArg(1,index,"number")
 	if bindaddress == nil then
@@ -178,7 +211,9 @@ function obj.getPaletteColor(index) -- Get the palette color at the specified pa
 	end
 	return component.cecinvoke(bindaddress, "getPaletteColor", index)
 end
-function obj.setPaletteColor(index, color) -- Set the palette color at the specified palette index. Returns the previous value.
+
+mai.setPaletteColor = {doc = "function(index:number, color:number):number -- Set the palette color at the specified palette index. Returns the previous value."}
+function obj.setPaletteColor(index, color)
 	cprint("gpu.setPaletteColor", index, color)
 	compCheckArg(1,index,"number")
 	compCheckArg(2,color,"number")
@@ -194,7 +229,9 @@ function obj.setPaletteColor(index, color) -- Set the palette color at the speci
 	end
 	return component.cecinvoke(bindaddress, "setPaletteColor", index, color)
 end
-function obj.get(x, y) -- Get the value displayed on the screen at the specified index, as well as the foreground and background color. If the foreground or background is from the palette, returns the palette indices as fourth and fifth results, else nil, respectively.
+
+mai.get = {doc = "function(x:number, y:number):string, number, number, number or nil, number or nil -- Get the value displayed on the screen at the specified index, as well as the foreground and background color. If the foreground or background is from the palette, returns the palette indices as fourth and fifth results, else nil, respectively."}
+function obj.get(x, y)
 	cprint("gpu.get", x, y)
 	compCheckArg(1,x,"number")
 	compCheckArg(2,y,"number")
@@ -207,7 +244,9 @@ function obj.get(x, y) -- Get the value displayed on the screen at the specified
 	end
 	return component.cecinvoke(bindaddress, "get", x, y)
 end
-function obj.set(x, y, value, vertical) -- Plots a string value to the screen at the specified position. Optionally writes the string vertically.
+
+mai.set = {doc = "function(x:number, y:number, value:string[, vertical:boolean]):boolean -- Plots a string value to the screen at the specified position. Optionally writes the string vertically."}
+function obj.set(x, y, value, vertical)
 	cprint("gpu.set", x, y, value, vertical)
 	compCheckArg(1,x,"number")
 	compCheckArg(2,y,"number")
@@ -218,7 +257,9 @@ function obj.set(x, y, value, vertical) -- Plots a string value to the screen at
 	end
 	return component.cecinvoke(bindaddress, "set", x, y, value, vertical)
 end
-function obj.copy(x, y, width, height, tx, ty) -- Copies a portion of the screen from the specified location with the specified size by the specified translation.
+
+mai.copy = {doc = "function(x:number, y:number, width:number, height:number, tx:number, ty:number):boolean -- Copies a portion of the screen from the specified location with the specified size by the specified translation."}
+function obj.copy(x, y, width, height, tx, ty)
 	cprint("gpu.copy", x, y, width, height, tx, ty)
 	compCheckArg(1,x,"number")
 	compCheckArg(2,y,"number")
@@ -232,29 +273,4 @@ function obj.copy(x, y, width, height, tx, ty) -- Copies a portion of the screen
 	return component.cecinvoke(bindaddress, "copy", x, y, width, height, tx, ty)
 end
 
-local cec = {}
-
-local doc = {
-	["bind"]="function(address:string):boolean -- Binds the GPU to the screen with the specified address.",
-	["getForeground"]="function():number, boolean -- Get the current foreground color and whether it's from the palette or not.",
-	["setForeground"]="function(value:number[, palette:boolean]):number, number or nil -- Sets the foreground color to the specified value. Optionally takes an explicit palette index. Returns the old value and if it was from the palette its palette index.",
-	["getBackground"]="function():number, boolean -- Get the current background color and whether it's from the palette or not.",
-	["setBackground"]="function(value:number[, palette:boolean]):number, number or nil -- Sets the background color to the specified value. Optionally takes an explicit palette index. Returns the old value and if it was from the palette its palette index.",
-	["getDepth"]="function():number -- Returns the currently set color depth.",
-	["setDepth"]="function(depth:number):number -- Set the color depth. Returns the previous value.",
-	["maxDepth"]="function():number -- Get the maximum supported color depth.",
-	["fill"]="function(x:number, y:number, width:number, height:number, char:string):boolean -- Fills a portion of the screen at the specified position with the specified size with the specified character.",
-	["getScreen"]="function():string -- Get the address of the screen the GPU is currently bound to.",
-	["getResolution"]="function():number, number -- Get the current screen resolution.",
-	["setResolution"]="function(width:number, height:number):boolean -- Set the screen resolution. Returns true if the resolution changed.",
-	["maxResolution"]="function():number, number -- Get the maximum screen resolution.",
-	["getViewport"]="function():number, number -- Get the current viewport resolution.",
-	["setViewport"]="function(width:number, height:number):boolean -- Set the viewport resolution. Returns true if the resolution changed.",
-	["getPaletteColor"]="function(index:number):number -- Get the palette color at the specified palette index.",
-	["setPaletteColor"]="function(index:number, color:number):number -- Set the palette color at the specified palette index. Returns the previous value.",
-	["get"]="function(x:number, y:number):string, number, number, number or nil, number or nil -- Get the value displayed on the screen at the specified index, as well as the foreground and background color. If the foreground or background is from the palette, returns the palette indices as fourth and fifth results, else nil, respectively.",
-	["set"]="function(x:number, y:number, value:string[, vertical:boolean]):boolean -- Plots a string value to the screen at the specified position. Optionally writes the string vertically.",
-	["copy"]="function(x:number, y:number, width:number, height:number, tx:number, ty:number):boolean -- Copies a portion of the screen from the specified location with the specified size by the specified translation.",
-}
-
-return obj,cec,doc
+return obj,nil,mai
