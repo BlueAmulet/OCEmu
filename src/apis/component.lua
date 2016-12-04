@@ -181,7 +181,7 @@ function env.component.invoke(address, method, ...)
 				return
 			end
 		end
-		return true, proxylist[address][method](...)
+		return pcall(proxylist[address][method], ...)
 	end
 	return nil, "no such component"
 end

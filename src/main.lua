@@ -51,7 +51,7 @@ function compCheckArg(n, have, ...)
 	have = type(have)
 	if not check(have, ...) then
 		local msg = string.format("bad arguments #%d (%s expected, got %s)", n, table.concat({...}, " or "), have)
-		error(msg, 4)
+		error(msg, 0)
 	end
 end
 
