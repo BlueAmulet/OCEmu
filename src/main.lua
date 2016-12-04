@@ -113,7 +113,7 @@ function machine.consumeCallBudget(callCost)
 	if not settings.fast then
 		machine.callBudget = machine.callBudget - math.max(0.001, callCost)
 		if machine.callBudget < 0 then
-			print("Ran out of budget", callCost, 1/callCost)
+			cprint("Ran out of budget", callCost, 1/callCost)
 			return false
 		end
 	end

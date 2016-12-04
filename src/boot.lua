@@ -213,6 +213,7 @@ local function boot()
 
 	local e = ffi.new('SDL_Event')
 	while true do
+		local start = SDL.getTicks()
 		while b(SDL.pollEvent(e)) do
 			local etype = eventNames[e.type]
 			if etype == nil then
@@ -232,7 +233,11 @@ local function boot()
 			elsa.draw()
 		end
 
-		SDL.delay(16)
+		if settings.fast then
+			SDL.delay(16)
+		else
+			SDL.delay(math.max(start + (1000/20) - SDL.getTicks(), 1))
+		end
 	end
 end
 
