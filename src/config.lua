@@ -22,6 +22,7 @@ local comments = {
 ["misc"]="Other settings that you might find useful to tweak.",
 ["misc.maxNetworkPacketSize"]="The maximum size of network packets to allow sending via network cards. This has *nothing to do* with real network traffic, it's just a limit for the network cards, mostly to reduce the chance of computer with a lot of RAM killing those with less by sending huge packets. This does not apply to HTTP traffic.",
 ["misc.maxWirelessRange"]="The maximum distance a wireless message can be sent. In other words, this is the maximum signal strength a wireless network card supports. This is used to limit the search range in which to check for modems, which may or may not lead to performance issues for ridiculous ranges - like, you know, more than the loaded area. See also: `wirelessCostPerRange`.",
+["version"]="The configuration version this config was generated at. This is used to allow the emulator to reset/migrate parts of the config when their meaning has changed across versions."
 }
 
 local function writeComment(text,file,size)

@@ -10,6 +10,16 @@ function gen_uuid()
 	r(0,255),r(0,255),r(0,255),r(0,255),r(0,255),r(0,255))
 end
 
+local function tlen(t)
+	local n = -math.huge
+	for k in pairs(t) do
+		if type(k) == "number" and k >= n then
+			n = k
+		end
+	end
+	return n
+end
+
 local proxylist = {}
 local slotlist = {}
 local emuicc = {}
@@ -21,6 +31,8 @@ function component.connect(info, ...)
 	local address
 	if type(info) ~= "table" then
 		info = table.pack(info, ...)
+	else
+		info.n = tlen(info)
 	end
 	checkArg(2,info[2],"string","number")
 	if type(info[2]) == "string" then
@@ -37,7 +49,7 @@ function component.connect(info, ...)
 	if not fn then
 		return nil, err
 	end
-	local proxy, cec, mai = fn(table.unpack(info,2))
+	local proxy, cec, mai = fn(table.unpack(info, 2, info.n))
 	if not proxy then
 		return nil, cec or "no component added"
 	end
@@ -147,7 +159,7 @@ end
 function env.component.slot(address)
 	checkArg(1,address,"string")
 	if proxylist[address] ~= nil then
-		return slotlist[address] or -1
+		return slotlist[address]
 	end
 	return nil, "no such component"
 end
@@ -174,14 +186,14 @@ function env.component.invoke(address, method, ...)
 		if proxylist[address][method] == nil then
 			error("no such method",2)
 		end
-		if not settings.fast and mailist[address][method].direct then
-			machine.callBudget = machine.callBudget - math.max(0.001, 1/mailist[address][method].limit)
-			if machine.callBudget < 0 then
-				cprint("Ran out of budget")
-				return
-			end
+		if mailist[address][method].direct and not machine.consumeCallBudget(1/mailist[address][method].limit) then
+			return
 		end
-		return pcall(proxylist[address][method], ...)
+		local results = table.pack(pcall(proxylist[address][method], ...))
+		if machine.callBudget < 0 then
+			return
+		end
+		return table.unpack(results, 1, results.n)
 	end
 	return nil, "no such component"
 end

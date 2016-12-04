@@ -10,6 +10,13 @@ local depthTbl = {1,4,8}
 local rdepthTbl = {1,[4]=2,[8]=3}
 local depthNames = {"OneBit","FourBit","EightBit"}
 
+local setBackgroundCosts = {1/32, 1/64, 1/128}
+local setForegroundCosts = {1/32, 1/64, 1/128}
+local setPaletteColorCosts = {1/2, 1/8, 1/16}
+local setCosts = {1/64, 1/128, 1/256}
+local copyCosts = {1/16, 1/32, 1/64}
+local fillCosts = {1/32, 1/64, 1/128}
+
 -- gpu component
 local mai = {}
 local obj = {}
@@ -40,6 +47,7 @@ end
 mai.setForeground = {direct = true, doc = "function(value:number[, palette:boolean]):number, number or nil -- Sets the foreground color to the specified value. Optionally takes an explicit palette index. Returns the old value and if it was from the palette its palette index."}
 function obj.setForeground(value, palette)
 	cprint("gpu.setForeground", value, palette)
+	if not machine.consumeCallBudget(setForegroundCosts[maxtier]) then return end
 	compCheckArg(1,value,"number")
 	compCheckArg(2,palette,"boolean","nil")
 	if bindaddress == nil then
@@ -66,6 +74,7 @@ end
 mai.setBackground = {direct = true, doc = "function(value:number[, palette:boolean]):number, number or nil -- Sets the background color to the specified value. Optionally takes an explicit palette index. Returns the old value and if it was from the palette its palette index."}
 function obj.setBackground(value, palette)
 	cprint("gpu.setBackground", value, palette)
+	if not machine.consumeCallBudget(setBackgroundCosts[maxtier]) then return end
 	compCheckArg(1,value,"number")
 	compCheckArg(2,palette,"boolean","nil")
 	if bindaddress == nil then
@@ -113,6 +122,7 @@ end
 mai.fill = {direct = true, doc = "function(x:number, y:number, width:number, height:number, char:string):boolean -- Fills a portion of the screen at the specified position with the specified size with the specified character."}
 function obj.fill(x, y, width, height, char)
 	cprint("gpu.fill", x, y, width, height, char)
+	if not machine.consumeCallBudget(fillCosts[maxtier]) then return end
 	compCheckArg(1,x,"number")
 	compCheckArg(2,y,"number")
 	compCheckArg(3,width,"number")
@@ -215,6 +225,7 @@ end
 mai.setPaletteColor = {direct = true, doc = "function(index:number, color:number):number -- Set the palette color at the specified palette index. Returns the previous value."}
 function obj.setPaletteColor(index, color)
 	cprint("gpu.setPaletteColor", index, color)
+	if not machine.consumeCallBudget(setPaletteColorCosts[maxtier]) then return end
 	compCheckArg(1,index,"number")
 	compCheckArg(2,color,"number")
 	if bindaddress == nil then
@@ -248,6 +259,7 @@ end
 mai.set = {direct = true, doc = "function(x:number, y:number, value:string[, vertical:boolean]):boolean -- Plots a string value to the screen at the specified position. Optionally writes the string vertically."}
 function obj.set(x, y, value, vertical)
 	cprint("gpu.set", x, y, value, vertical)
+	if not machine.consumeCallBudget(setCosts[maxtier]) then return end
 	compCheckArg(1,x,"number")
 	compCheckArg(2,y,"number")
 	compCheckArg(3,value,"string")
@@ -261,6 +273,7 @@ end
 mai.copy = {direct = true, doc = "function(x:number, y:number, width:number, height:number, tx:number, ty:number):boolean -- Copies a portion of the screen from the specified location with the specified size by the specified translation."}
 function obj.copy(x, y, width, height, tx, ty)
 	cprint("gpu.copy", x, y, width, height, tx, ty)
+	if not machine.consumeCallBudget(copyCosts[maxtier]) then return end
 	compCheckArg(1,x,"number")
 	compCheckArg(2,y,"number")
 	compCheckArg(3,width,"number")

@@ -25,3 +25,37 @@ if settings.monochromeColor == nil then
 	settings.monochromeColor = 0xFFFFFF
 	config.set("client.monochromeColor", "0xFFFFFF")
 end
+
+-- Config version upgrade
+
+if config.get("version") == nil then
+	if settings.components ~= nil then
+		for _, v in pairs(settings.components) do
+			-- Set all nil slots to -1
+			if v[3] == nil then
+				v[3] = -1
+			end
+			if v[1] == "filesystem" then
+				v[6]=v[5]
+				-- Infer label and speed from directory
+				if v[4] and v[4]:sub(1,5) == "loot/" then
+					v[5] = v[4]:sub(6)
+					v[7] = 1
+				elseif v[4] == "tmpfs" then
+					v[5] = v[4]
+					v[7] = 5
+				else
+					if elsa.filesystem.read(elsa.filesystem.getSaveDirectory().."/"..v[2].."/.prop") == "{label = \"OpenOS\", reboot=true, setlabel=true, setboot=true}\n" then
+						v[5] = "OpenOS"
+					else
+						v[5] = nil
+					end
+					v[7] = 4
+				end
+			elseif v[1] == "internet" and v[3] == -1 then
+				v[3] = 2
+			end
+		end
+	end
+	config.set("version", 2)
+end

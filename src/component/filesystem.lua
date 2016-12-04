@@ -1,12 +1,17 @@
-local address, _, directory, readonly = ...
+local address, _, directory, label, readonly, speed = ...
 compCheckArg(1,directory,"string","nil")
-compCheckArg(2,readonly,"boolean")
+compCheckArg(2,label,"string","nil")
+compCheckArg(3,readonly,"boolean")
+compCheckArg(4,speed,"number")
+
+local istmpfs = false -- used to simulate differences between tmpfs and drives
 
 if directory == nil then
 	directory = elsa.filesystem.getSaveDirectory() .. "/" .. address
 elseif directory == "tmpfs" then
 	directory = elsa.filesystem.getSaveDirectory() .. "/tmpfs"
 	computer.setTempAddress(address)
+	istmpfs = true
 end
 
 if not elsa.filesystem.exists(directory) then
@@ -15,10 +20,6 @@ end
 
 local vague = settings.vagueErrors
 
-local label = ("/" .. directory):match(".*/(.+)")
-if label == address then
-	label = nil
-end
 local handles = {}
 
 local function cleanPath(path)
@@ -40,6 +41,10 @@ local function cleanPath(path)
 	return table.concat(tPath, "/")
 end
 
+local readCosts = {1/1, 1/4, 1/7, 1/10, 1/13, 1/15}
+local seekCosts = {1/1, 1/4, 1/7, 1/10, 1/13, 1/15}
+local writeCosts = {1/1, 1/2, 1/3, 1/4, 1/5, 1/6}
+
 -- filesystem component
 local mai = {}
 local obj = {}
@@ -48,6 +53,7 @@ mai.read = {direct = true, limit = 15, doc = "function(handle:number, count:numb
 function obj.read(handle, count)
 	--TODO
 	cprint("filesystem.read", handle, count)
+	if not machine.consumeCallBudget(readCosts[speed]) then return end
 	compCheckArg(1,handle,"number")
 	compCheckArg(2,count,"number")
 	if handles[handle] == nil or handles[handle][2] ~= "r" then
@@ -119,6 +125,7 @@ end
 mai.write = {direct = true, doc = "function(handle:number, value:string):boolean -- Writes the specified data to an open file descriptor with the specified handle."}
 function obj.write(handle, value)
 	cprint("filesystem.write", handle, value)
+	if not machine.consumeCallBudget(writeCosts[speed]) then return end
 	compCheckArg(1,handle,"number")
 	compCheckArg(2,value,"string")
 	if handles[handle] == nil or (handles[handle][2] ~= "w" and handles[handle][2] ~= "a") then
@@ -157,6 +164,7 @@ mai.seek = {direct = true, doc = "function(handle:number, whence:string, offset:
 function obj.seek(handle, whence, offset)
 	--TODO
 	cprint("filesystem.seek", handle, whence, offset)
+	if not machine.consumeCallBudget(seekCosts[speed]) then return end
 	compCheckArg(1,handle,"number")
 	compCheckArg(2,whence,"string")
 	compCheckArg(3,offset,"number")
@@ -184,10 +192,20 @@ function obj.setLabel(value)
 	--TODO: treat functions as nil
 	cprint("filesystem.setLabel", value)
 	compCheckArg(1,value,"string")
-	if readonly or directory:sub(-6) == "/tmpfs" then
+	if readonly or istmpfs then
 		error("label is read only",3)
 	end
-	label = value:sub(1,16)
+	value = value:sub(1,16)
+	if label ~= value then
+		label = value
+		--TODO: set label in config a bit more efficiently.
+		for _, v in pairs(settings.components) do
+			if v[1] == "filesystem" and v[2] == address then
+				v[5] = label
+			end
+		end
+		config.save()
+	end
 end
 
 mai.open = {direct = true, limit = 4, doc = "function(path:string[, mode:string='r']):number -- Opens a new file descriptor and returns its handle."}

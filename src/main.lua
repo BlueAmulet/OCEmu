@@ -84,16 +84,16 @@ if settings.components == nil then
 		{"gpu",nil,0,160,50,3},
 		{"modem",nil,1,false},
 		{"eeprom",nil,9,"lua/bios.lua"},
-		{"filesystem",nil,7,"loot/openos",true},
-		{"filesystem",nil,nil,"tmpfs",false},
-		{"filesystem",nil,5,nil,false},
-		{"internet"},
-		{"computer"},
-		{"ocemu"},
+		{"filesystem",nil,7,"loot/openos","openos",true,1},
+		{"filesystem",nil,-1,"tmpfs","tmpfs",false,5},
+		{"filesystem",nil,5,nil,nil,false,4},
+		{"internet",nil,2},
+		{"computer",nil,-1},
+		{"ocemu",nil,-1},
 	}
 	if elsa.SDL then
-		table.insert(settings.components, {"screen_sdl2",nil,nil,80,25,3})
-		table.insert(settings.components, {"keyboard_sdl2"})
+		table.insert(settings.components, {"screen_sdl2",nil,-1,80,25,3})
+		table.insert(settings.components, {"keyboard_sdl2",nil,-1})
 	else
 		-- TODO: Alternatives
 	end
@@ -108,6 +108,17 @@ machine = {
 	signals = {},
 	totalMemory = 2*1024*1024,
 }
+
+function machine.consumeCallBudget(callCost)
+	if not settings.fast then
+		machine.callBudget = machine.callBudget - math.max(0.001, callCost)
+		if machine.callBudget < 0 then
+			print("Ran out of budget", callCost, 1/callCost)
+			return false
+		end
+	end
+	return true
+end
 
 if not machine.beep and settings.beepVolume <= 0 then
 	function machine.beep(frequency, duration)

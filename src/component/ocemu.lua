@@ -1,6 +1,7 @@
 -- ocemu component
 
-component.connect("filesystem",gen_uuid(),nil,"customlua/ocemu",true)
+-- TODO: Remove this eventually
+component.connect("filesystem", gen_uuid(), -1, "customlua/ocemu", "ocemu", true, 5)
 
 local components = settings.components
 
@@ -79,8 +80,8 @@ function obj.lootinsert(name)
 	end
 	if not attached then
 		local address=gen_uuid()
-		component.connect("filesystem", address, nil, "loot/"..name, true)
-		components[#components+1]={"filesystem", address, nil, "loot/"..name, true}
+		component.connect("filesystem", address, -1, "loot/"..name, name, true, 1)
+		components[#components+1]={"filesystem", address, -1, "loot/"..name, name, true, 1}
 		config.save()
 	end
 	return true
