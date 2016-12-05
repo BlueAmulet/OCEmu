@@ -54,10 +54,10 @@ function obj.setForeground(value, palette)
 		return nil, "no screen"
 	end
 	if palette and component.cecinvoke(bindaddress, "getDepth") == 1 then
-		error("color palette not suppported",3)
+		error("color palette not suppported", 0)
 	end
 	if palette == true and (value < 0 or value > 15) then
-		error("invalid palette index",3)
+		error("invalid palette index", 0)
 	end
 	return component.cecinvoke(bindaddress, "setForeground", value, palette)
 end
@@ -81,11 +81,11 @@ function obj.setBackground(value, palette)
 		return nil, "no screen"
 	end
 	if palette and component.cecinvoke(bindaddress, "getDepth") == 1 then
-		error("color palette not suppported",3)
+		error("color palette not suppported", 0)
 	end
 	value = math.floor(value)
 	if palette and (value < 0 or value > 15) then
-		error("invalid palette index",3)
+		error("invalid palette index", 0)
 	end
 	return component.cecinvoke(bindaddress, "setBackground", value, palette)
 end
@@ -106,7 +106,7 @@ function obj.setDepth(depth)
 	depth = math.floor(depth)
 	local scrmax = component.cecinvoke(bindaddress, "maxDepth")
 	if rdepthTbl[depth] == nil or rdepthTbl[depth] > math.max(scrmax, maxtier) then
-		error("unsupported depth",3)
+		error("unsupported depth", 0)
 	end
 	local old = depthNames[component.cecinvoke(bindaddress, "getDepth")]
 	component.cecinvoke(bindaddress, "setDepth", rdepthTbl[depth])
@@ -163,7 +163,7 @@ function obj.setResolution(width, height)
 	local smw,smh = component.cecinvoke(bindaddress, "maxResolution")
 	smw,smh = math.min(smw,maxwidth),math.min(smh,maxheight)
 	if width <= 0 or width >= smw + 1 or height <= 0 or height >= smh + 1 then
-		error("unsupported resolution",3)
+		error("unsupported resolution", 0)
 	end
 	return component.cecinvoke(bindaddress, "setResolution", width, height)
 end
@@ -200,7 +200,7 @@ function obj.setViewport(width, height)
 	local smw,smh = component.cecinvoke(bindaddress, "maxResolution")
 	smw,smh = math.min(smw,maxwidth),math.min(smh,maxheight)
 	if width <= 0 or width >= smw + 1 or height <= 0 or height >= smh + 1 then
-		error("unsupported viewport size",3)
+		error("unsupported viewport size", 0)
 	end
 	return component.cecinvoke(bindaddress, "setResolution", width, height)
 end
@@ -217,7 +217,7 @@ function obj.getPaletteColor(index)
 	end
 	index = math.floor(index)
 	if index < 0 or index > 15 then
-		error("invalid palette index",3)
+		error("invalid palette index", 0)
 	end
 	return component.cecinvoke(bindaddress, "getPaletteColor", index)
 end
@@ -236,7 +236,7 @@ function obj.setPaletteColor(index, color)
 	end
 	index = math.floor(index)
 	if index < 0 or index > 15 then
-		error("invalid palette index",3)
+		error("invalid palette index", 0)
 	end
 	return component.cecinvoke(bindaddress, "setPaletteColor", index, color)
 end
@@ -251,7 +251,7 @@ function obj.get(x, y)
 	end
 	local w,h = component.cecinvoke(bindaddress, "getResolution")
 	if x < 1 or x >= w+1 or y < 1 or y >= h+1 then
-		error("index out of bounds",3)
+		error("index out of bounds", 0)
 	end
 	return component.cecinvoke(bindaddress, "get", x, y)
 end

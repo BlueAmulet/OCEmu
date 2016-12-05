@@ -193,7 +193,7 @@ function obj.setLabel(value)
 	cprint("filesystem.setLabel", value)
 	compCheckArg(1,value,"string")
 	if readonly or istmpfs then
-		error("label is read only",3)
+		error("label is read only", 0)
 	end
 	value = value:sub(1,16)
 	if label ~= value then
@@ -220,7 +220,7 @@ function obj.open(path, mode)
 		return nil, (vague and opath or "file not found")
 	end
 	if mode ~= "r" and mode ~= "rb" and mode ~= "w" and mode ~= "wb" and mode ~= "a" and mode ~= "ab" then
-		error("unsupported mode",3)
+		error("unsupported mode", 0)
 	end
 	if (mode == "r" or mode == "rb") and not elsa.filesystem.exists(directory .. "/" .. path) then
 		return nil, (vague and opath or "file not found")

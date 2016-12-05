@@ -60,7 +60,7 @@ function obj.setData(newdata)
 	compCheckArg(1,newdata,"string","nil")
 	if newdata == nil then newdata = "" end
 	if #newdata > settings.eepromDataSize then
-		error("not enough space",3)
+		error("not enough space", 0)
 	end
 	data = newdata
 	persist()
@@ -118,7 +118,7 @@ function obj.set(newcode) -- Overwrite the currently stored byte array.
 	compCheckArg(1,newcode,"string","nil")
 	if newcode == nil then newcode = "" end
 	if #newcode > settings.eepromSize then
-		error("not enough space",3)
+		error("not enough space", 0)
 	end
 	code = newcode
 	persist()

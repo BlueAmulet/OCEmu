@@ -29,7 +29,7 @@ local function checkUri(address, port)
 	if simple ~= nil and simple.host ~= nil and (simple.port ~= nil or port > -1) then
 		return simple.host, simple.port or port
 	end
-	error("address could not be parsed or no valid port given",4)
+	error("address could not be parsed or no valid port given", 0)
 end
 
 mai.isTcpEnabled = {direct = true, doc = "function():boolean -- Returns whether TCP connections can be made (config setting)."}

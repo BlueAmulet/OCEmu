@@ -414,8 +414,8 @@ if wireless then
 end
 
 local function checkPort(port)
-	if port < 1 and port >= 65536 then
-		error("invalid port number",4)
+	if port < 1 or port >= 65536 then
+		error("invalid port number", 0)
 	end
 	return math.floor(port)
 end

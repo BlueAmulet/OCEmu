@@ -17,7 +17,7 @@ function obj.beep(frequency, duration)
 	compCheckArg(1,frequency,"number")
 	frequency = math.floor(frequency)
 	if frequency < 20 or frequency > 2000 then
-		error("invalid frequency, must be in [20, 2000]",3)
+		error("invalid frequency, must be in [20, 2000]", 0)
 	end
 	if duration == nil then duration = 0.1 end
 	compCheckArg(2,duration,"number")

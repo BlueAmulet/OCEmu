@@ -61,7 +61,7 @@ function env.unicode.isWide(str)
 	checkArg(1,str,"string")
 	str=cln(str)
 	if #str == 0 then
-		error("String index out of range: 0",3)
+		error("String index out of range: 0", 0)
 	end
 	local char = utf8.byte(str)
 	return getCharWidth(char) > 1
@@ -71,7 +71,7 @@ function env.unicode.charWidth(str)
 	checkArg(1,str,"string")
 	str=cln(str)
 	if #str == 0 then
-		error("String index out of range: 0",3)
+		error("String index out of range: 0", 0)
 	end
 	local char = utf8.byte(str)
 	return getCharWidth(char)
@@ -100,7 +100,7 @@ function env.unicode.wtrunc(str, count)
 	while (width < count) do
 		pos = pos + 1
 		if pos > len then
-			error("String index out of range: " .. pos-1,3)
+			error("String index out of range: " .. pos-1, 0)
 		end
 		width = width + getCharWidth(utf8.byte(str,pos,pos))
 	end
