@@ -3,6 +3,8 @@ settings = {
 	beepVolume = config.get("client.beepVolume", 32),
 	monochromeColor = tonumber(config.get("client.monochromeColor", "0xFFFFFF")),
 
+	eepromDataSize = config.get("computer.eepromDataSize", 256),
+	eepromSize = config.get("computer.eepromSize", 4096),
 	allowBytecode = config.get("computer.lua.allowBytecode",false),
 	allowGC = config.get("computer.lua.allowGC",false),
 	timeout = config.get("computer.timeout",5),

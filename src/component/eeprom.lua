@@ -59,7 +59,7 @@ function obj.setData(newdata)
 	cprint("eeprom.setData", newdata)
 	compCheckArg(1,newdata,"string","nil")
 	if newdata == nil then newdata = "" end
-	if #newdata > 256 then
+	if #newdata > settings.eepromDataSize then
 		error("not enough space",3)
 	end
 	data = newdata
@@ -69,13 +69,13 @@ end
 mai.getDataSize = {direct = true, doc = "function():string -- Get the storage capacity of this EEPROM."}
 function obj.getDataSize()
 	cprint("eeprom.getDataSize")
-	return 256
+	return settings.eepromDataSize
 end
 
 mai.getSize = {direct = true, doc = "function():string -- Get the storage capacity of this EEPROM."}
 function obj.getSize()
 	cprint("eeprom.getSize")
-	return 4096
+	return settings.eepromSize
 end
 
 mai.getLabel = {direct = true, doc = "function():string -- Get the label of the EEPROM."}
@@ -117,7 +117,7 @@ function obj.set(newcode) -- Overwrite the currently stored byte array.
 	end
 	compCheckArg(1,newcode,"string","nil")
 	if newcode == nil then newcode = "" end
-	if #newcode > 4096 then
+	if #newcode > settings.eepromSize then
 		error("not enough space",3)
 	end
 	code = newcode
