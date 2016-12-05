@@ -107,10 +107,11 @@ machine = {
 	deadline = elsa.timer.getTime(),
 	signals = {},
 	totalMemory = 2*1024*1024,
+	insynccall = false,
 }
 
 function machine.consumeCallBudget(callCost)
-	if not settings.fast then
+	if not settings.fast and not machine.insynccall then
 		machine.callBudget = machine.callBudget - math.max(0.001, callCost)
 		if machine.callBudget < 0 then
 			cprint("Ran out of budget", callCost, 1/callCost)
@@ -459,7 +460,10 @@ function elsa.update(dt)
 	if machine.syncfunc then
 		local func = machine.syncfunc
 		machine.syncfunc = nil
-		resume_thread(func())
+		machine.insynccall = true
+		local result = func() -- should be a table
+		machine.insynccall = false
+		resume_thread(result)
 	elseif #machine.signals > 0 then
 		signal = machine.signals[1]
 		table.remove(machine.signals, 1)
