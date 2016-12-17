@@ -98,10 +98,13 @@ function elsa.mousewheel(event)
 	table.insert(machine.signals,{"scroll",address,math.floor(x[0]/8)+1,math.floor(y[0]/16)+1,mwevent.y})
 end
 
+-- Hack for lack of highdpi support in Linux
+local highdpi=(elsa.args.options.highdpi and 2 or 1)
+
 local window, renderer, texture, copytexture
 local function createWindow()
 	if not window then
-		window = SDL.createWindow("OCEmu - screen@" .. address, SDL.WINDOWPOS_CENTERED, SDL.WINDOWPOS_CENTERED, width*8, height*16, bit.bor(SDL.WINDOW_SHOWN, SDL.WINDOW_ALLOW_HIGHDPI))
+		window = SDL.createWindow("OCEmu - screen@" .. address, SDL.WINDOWPOS_CENTERED, SDL.WINDOWPOS_CENTERED, width*8*highdpi, height*16*highdpi, bit.bor(SDL.WINDOW_SHOWN, SDL.WINDOW_ALLOW_HIGHDPI))
 		if window == ffi.NULL then
 			error(ffi.string(SDL.getError()))
 		end
@@ -109,7 +112,7 @@ local function createWindow()
 		-- Attempt to fix random issues on Windows 64bit
 		SDL.setWindowFullscreen(window, 0)
 		SDL.restoreWindow(window)
-		SDL.setWindowSize(window, width*8, height*16)
+		SDL.setWindowSize(window, width*8*highdpi, height*16*highdpi)
 		SDL.setWindowPosition(window, SDL.WINDOWPOS_CENTERED, SDL.WINDOWPOS_CENTERED)
 		SDL.setWindowGrab(window, SDL.FALSE)
 		--]]
@@ -487,10 +490,10 @@ function cec.setResolution(newwidth, newheight) -- Set the screen resolution. Re
 	if oldwidth ~= width or oldheight ~= height then
 		-- TODO: What magical SDL hacks can I do to make this faster?
 		cleanUpWindow()
-		SDL.setWindowSize(window, width*8, height*16)
+		SDL.setWindowSize(window, width*8*highdpi, height*16*highdpi)
 		local xpos, ypos = ffi.new("int[1]"), ffi.new("int[1]")
 		SDL.getWindowPosition(window, xpos, ypos)
-		SDL.setWindowPosition(window, xpos[0] - (width-oldwidth)*4, ypos[0] - (height-oldheight)*4)
+		SDL.setWindowPosition(window, xpos[0] - (width-oldwidth)*4*highdpi, ypos[0] - (height-oldheight)*4*highdpi)
 		createWindow()
 		for y = 1,math.min(oldheight,height) do
 			for x = 1,math.min(oldwidth,width) do

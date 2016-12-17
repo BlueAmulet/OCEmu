@@ -11,7 +11,9 @@ local lfs = require("lfs")
 
 local sdlinit = false
 
-local args = table.pack(...)
+local arg_parse = require("support.arg_parse")
+
+local args = arg_parse(...)
 local baseDir
 
 local getenv = setmetatable({}, {__index=function(t, k) local v=os.getenv(k) t[k]=v return v end})
@@ -129,6 +131,7 @@ local function boot()
 	end
 
 	elsa = {
+		args = args,
 		getError = function() return ffi.string(SDL.getError()) end,
 		filesystem = {
 			lines = io.lines,
