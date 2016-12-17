@@ -101,7 +101,7 @@ end
 local window, renderer, texture, copytexture
 local function createWindow()
 	if not window then
-		window = SDL.createWindow("OCEmu - screen@" .. address, SDL.WINDOWPOS_CENTERED, SDL.WINDOWPOS_CENTERED, width*8, height*16, SDL.WINDOW_SHOWN)
+		window = SDL.createWindow("OCEmu - screen@" .. address, SDL.WINDOWPOS_CENTERED, SDL.WINDOWPOS_CENTERED, width*8, height*16, bit.bor(SDL.WINDOW_SHOWN, SDL.WINDOW_ALLOW_HIGHDPI))
 		if window == ffi.NULL then
 			error(ffi.string(SDL.getError()))
 		end
