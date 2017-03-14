@@ -13,7 +13,7 @@ void bail(lua_State *L) {
 	exit(1);
 }
 
-int main(void) {
+int main(int argc, char *argv[]) {
 	lua_State *L;
 
 	if (AttachConsole(ATTACH_PARENT_PROCESS)) {
@@ -25,7 +25,9 @@ int main(void) {
 	luaL_openlibs(L);
 	if (luaL_loadfile(L, "boot.lua"))
 		bail(L);
-	if (lua_pcall(L, 0, 0, 0))
+	for (int i = 1; i < argc; i++)
+		lua_pushstring(L, argv[i]);
+	if (lua_pcall(L, argc-1, 0, 0))
 		bail(L);
 	lua_close(L);
 
