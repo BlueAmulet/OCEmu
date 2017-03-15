@@ -38,7 +38,6 @@ function component.connect(info, ...)
 	if type(info[2]) == "string" then
 		address = info[2]
 	else
-		math.randomseed(info[2])
 		address = gen_uuid()
 	end
 	if proxylist[address] ~= nil then

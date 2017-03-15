@@ -212,6 +212,9 @@ local function boot()
 		end
 	end
 
+	-- seed randomizer
+	math.randomseed(os.time())
+
 	require("main")
 
 	local e = ffi.new('SDL_Event')
