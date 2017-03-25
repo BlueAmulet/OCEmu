@@ -1,5 +1,6 @@
 local address = ...
 
+local bit = require("bit32")
 local ffi = require("ffi")
 local utf8 = require("lua-utf8")
 local SDL = elsa.SDL
@@ -7,7 +8,7 @@ local SDL = elsa.SDL
 local kbdstate = SDL.getKeyboardState(ffi.NULL)
 
 -- Conversion table for SDL2 keys to LWJGL key codes
-local keys,codes = elsa.filesystem.load("support/sdl_to_lwjgl.lua")()
+local keys,codes,numkeys = elsa.filesystem.load("support/sdl_to_lwjgl.lua")()
 
 local code2char = {}
 
@@ -37,7 +38,8 @@ function elsa.keydown(event)
 	local keyevent = ffi.cast("SDL_KeyboardEvent*", event)
 	local key = tonumber(keyevent.keysym.scancode)
 	local char = tonumber(keyevent.keysym.sym)
-	local lwjgl = keys[key]
+	local numpad = (bit.band(SDL.getModState(), SDL.KMOD_NUM) ~= 0)
+	local lwjgl = numpad and numkeys[key] or keys[key]
 	cprint("keydown",key,lwjgl)
 	-- TODO: Lovely SDL Hacks
 	if lwjgl ~= 1 then -- Escape
@@ -58,7 +60,8 @@ end
 function elsa.keyup(event)
 	local keyevent = ffi.cast("SDL_KeyboardEvent*", event)
 	local key = tonumber(keyevent.keysym.scancode)
-	local lwjgl = keys[key]
+	local numpad = (bit.band(SDL.getModState(), SDL.KMOD_NUM) ~= 0)
+	local lwjgl = numpad and numkeys[key] or keys[key]
 	cprint("keyup",key,lwjgl)
 	if key ~= 41 then -- Escape
 		table.insert(kbdcodes,{type="key_up",addr=address,code=lwjgl or 0,char=code2char[lwjgl]})
