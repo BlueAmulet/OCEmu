@@ -34,7 +34,7 @@ function env.computer.uptime()
 end
 function env.computer.address()
 	cprint("computer.address")
-	return component.list("computer",true)()
+	return (component.list("computer",true)())
 end
 function env.computer.freeMemory()
 	--STUB
