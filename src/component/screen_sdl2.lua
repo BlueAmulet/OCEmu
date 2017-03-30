@@ -522,7 +522,7 @@ function cec.setResolution(newwidth, newheight) -- Set the screen resolution. Re
 		end
 	end
 	table.insert(machine.signals,{"screen_resized",address,width,height})
-	return true
+	return oldwidth ~= newwidth or oldheight ~= newheight
 end
 function cec.maxResolution() -- Get the maximum screen resolution.
 	cprint("(cec) screen.maxResolution")
