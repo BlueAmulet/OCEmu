@@ -56,9 +56,12 @@ if tier > 1 then
 end
 
 local buttons = {[SDL.BUTTON_LEFT] = 0, [SDL.BUTTON_RIGHT] = 1}
-local moved, bttndown, lx, ly = false
+local moved, bttndown, lx, ly, windowID = false
 function elsa.mousebuttondown(event)
 	local mbevent = ffi.cast("SDL_MouseButtonEvent*", event)
+	if mbevent.windowID ~= windowID then
+		return
+	end
 	if buttons[mbevent.button] then
 		if not bttndown then
 			lx, ly = math.floor(mbevent.x/8)+1,math.floor(mbevent.y/16)+1
@@ -70,6 +73,9 @@ end
 
 function elsa.mousebuttonup(event)
 	local mbevent = ffi.cast("SDL_MouseButtonEvent*", event)
+	if mbevent.windowID ~= windowID then
+		return
+	end
 	if bttndown and buttons[mbevent.button] then
 		if moved then
 			moved = false
@@ -81,6 +87,9 @@ end
 
 function elsa.mousemotion(event)
 	local mmevent = ffi.cast("SDL_MouseMotionEvent*", event)
+	if mmevent.windowID ~= windowID then
+		return
+	end
 	if bttndown then
 		local nx, ny = math.floor(mmevent.x/8)+1,math.floor(mmevent.y/16)+1
 		if nx ~= lx or ny ~= ly then
@@ -108,6 +117,7 @@ local function createWindow()
 		if window == ffi.NULL then
 			error(ffi.string(SDL.getError()))
 		end
+		windowID = SDL.getWindowID(window)
 
 		-- Attempt to fix random issues on Windows 64bit
 		SDL.setWindowFullscreen(window, 0)
@@ -147,7 +157,7 @@ local function cleanUpWindow(wind)
 	SDL.destroyRenderer(renderer)
 	if wind then
 		SDL.destroyWindow(window)
-		window = nil
+		window, windowID = nil
 	end
 	texture, copytexture, renderer = nil
 	charCache={}
@@ -155,8 +165,12 @@ end
 
 createWindow()
 
-elsa.cleanup[#elsa.cleanup+1] = function()
+function elsa.windowclose(event)
+	if event.windowID ~= windowID then
+		return
+	end
 	cleanUpWindow(true)
+	component.disconnect(address)
 end
 
 function elsa.draw()

@@ -69,12 +69,8 @@ elsa.filesystem.load("config.lua")()
 config.load()
 elsa.filesystem.load("settings.lua")()
 
-elsa.cleanup = {}
 function elsa.quit()
 	config.save()
-	for k,v in pairs(elsa.cleanup) do
-		v()
-	end
 end
 
 if settings.components == nil then

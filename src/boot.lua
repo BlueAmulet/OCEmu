@@ -214,9 +214,22 @@ local function boot()
 				return ffi.os
 			end,
 		},
+		handlers = {},
 		SDL = SDL,
 		windowEventID = wen,
 	}
+
+	local handlers = elsa.handlers
+
+	setmetatable(elsa, {
+		__newindex=function(t, k, v)
+			if handlers[k] == nil then
+				handlers[k] = {}
+			end
+			local hndtbl = handlers[k]
+			hndtbl[#hndtbl+1]=v
+		end
+	})
 
 	-- redirect os.remove is non posix
 	if ffi.os == 'Windows' then
@@ -242,22 +255,40 @@ local function boot()
 	while true do
 		local start = SDL.getTicks()
 		while b(SDL.pollEvent(e)) do
-			local etype = eventNames[e.type]
+			local event = e
+			local etype = eventNames[event.type]
 			if etype == nil then
-				print("Ignoring event of ID: " .. e.type)
+				print("Ignoring event of ID: " .. event.type)
 				goto econtinue
 			end
-			if elsa[etype] ~= nil then
-				elsa[etype](e)
+			if etype == "windowevent" then
+				event = ffi.cast("SDL_WindowEvent*", event)
+				if wen[event.event] == nil then
+					print("Ignoring window event of kind: " .. event.event)
+					goto econtinue
+				end
+				etype = "window" .. wen[event.event]
+			end
+			if handlers[etype] ~= nil then
+				local hndtbl = handlers[etype]
+				for i=1, #hndtbl do
+					hndtbl[i](event)
+				end
 			end
 			if etype == "quit" then
 				return
 			end
 			::econtinue::
 		end
-		elsa.update()
-		if elsa.draw then
-			elsa.draw()
+		local updtbl=handlers.update
+		for i=1, #updtbl do
+			updtbl[i]()
+		end
+		if handlers.draw then
+			local drawtbl=handlers.draw
+			for i=1, #drawtbl do
+				drawtbl[i]()
+			end
 		end
 
 		if settings.fast then
