@@ -441,14 +441,7 @@ function resume_thread(...)
 	end
 end
 
-kbdcodes = {}
-
 function elsa.update(dt)
-	if #kbdcodes > 0 then
-		local kbdcode = kbdcodes[1]
-		table.remove(kbdcodes,1)
-		table.insert(machine.signals,{kbdcode.type,kbdcode.addr,kbdcode.char or 0,kbdcode.code})
-	end
 	if modem_host then
 		modem_host.processPendingMessages()
 	end
