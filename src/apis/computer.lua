@@ -95,7 +95,7 @@ function env.computer.getArchitectures()
 end
 function env.computer.getArchitecture()
 	--STUB
-	cprint("computer.getArchitecure")
+	cprint("computer.getArchitecture")
 	return _VERSION
 end
 function env.computer.setArchitecture(archName)
