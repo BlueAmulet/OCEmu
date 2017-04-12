@@ -122,6 +122,13 @@ local function boot()
 		[SDL.MULTIGESTURE] = "multigesture",
 		[SDL.CLIPBOARDUPDATE] = "clipboardupdate",
 		[SDL.DROPFILE] = "dropfile",
+		[SDL.DROPTEXT] = "droptext",
+		[SDL.DROPBEGIN] = "dropbegin",
+		[SDL.DROPCOMPLETE] = "dropcomplete",
+		[SDL.AUDIODEVICEADDED] = "audiodeviceadded",
+		[SDL.AUDIODEVICEREMOVED] = "audiodeviceremoved",
+		[SDL.RENDER_TARGETS_RESET] = "render_targets_reset",
+		[SDL.RENDER_DEVICE_RESET] = "render_device_reset",
 	}
 
 	local wen = {}
