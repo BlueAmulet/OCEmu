@@ -412,7 +412,11 @@ function resume_thread(...)
 		cprint("yield",table.unpack(results))
 		if type(results[2]) == "function" then
 			if settings.fast then
-				elsa.draw()
+				if elsa.draw then
+					for k,v in pairs(elsa.draw) do
+						v()
+					end
+				end
 				resume_thread(results[2]())
 			else
 				machine.syncfunc = results[2]
