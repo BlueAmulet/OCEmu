@@ -165,11 +165,18 @@ local function boot()
 			lines = io.lines,
 			load = loadfile,
 			read = function(path)
-				local file, err = io.open(path,"rb")
+				local file, err = io.open(path, "rb")
 				if not file then return nil, err end
 				local data = file:read("*a")
 				file:close()
 				return data, #data
+			end,
+			write = function(path, data)
+				local file, err = io.open(path, "wb")
+				if not file then return false, err end
+				file:write(data)
+				file:close()
+				return true
 			end,
 			exists = function(path)
 				return lfs.attributes(path,"mode") ~= nil

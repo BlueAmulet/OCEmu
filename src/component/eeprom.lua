@@ -15,6 +15,24 @@ local code = elsa.filesystem.read(filename)
 local data = ""
 local label = "EEPROM"
 local readonly = false
+
+local function persistfile(fname, data)
+	local ok, err = elsa.filesystem.write(directory .. "/" .. fname, data)
+	if not ok then
+		cprint("Failed to persist eeprom(" .. fname .. ") @" .. address .. ": " .. err)
+		return false
+	end
+	return ok, err
+end
+
+local function persistlock()
+	if readonly then
+		persistfile("readonly", "")
+	else
+		elsa.filesystem.remove(directory .. "/readonly")
+	end
+end
+
 if elsa.filesystem.exists(directory .. "/data.lua") then
 	local fn, err = elsa.filesystem.load(directory .. "/data.lua","t",{})
 	if not fn then
@@ -29,19 +47,30 @@ if elsa.filesystem.exists(directory .. "/data.lua") then
 			cprint("read) " .. type(nread))
 		else
 			code,data,label,readonly = ncode,ndata,nlabel,nread
+			persistfile("code.lua", code)
+			persistfile("data.bin", data)
+			persistfile("label.txt", label)
+			persistlock()
+			elsa.filesystem.remove(directory .. "/data.lua")
 		end
 	end
-end
-
-local function persist()
-	local file, err = io.open(directory .. "/data.lua", "wb")
-	if not file then
-		cprint("Failed to persist eeprom @" .. address .. ": " .. err)
-		return false
+else
+	if elsa.filesystem.exists(directory .. "/code.lua") then
+		code = elsa.filesystem.read(directory .. "/code.lua")
+	else
+		persistfile("code.lua", code)
 	end
-	file:write(string.format("return %q,%q,%q,%s",code,data,label,tostring(readonly)):gsub("\\\n","\\n") .. "")
-	file:close()
-	return true
+	if elsa.filesystem.exists(directory .. "/data.bin") then
+		data = elsa.filesystem.read(directory .. "/data.bin")
+	else
+		persistfile("data.bin", data)
+	end
+	if elsa.filesystem.exists(directory .. "/label.txt") then
+		label = elsa.filesystem.read(directory .. "/label.txt")
+	else
+		persistfile("label.txt", label)
+	end
+	readonly = elsa.filesystem.exists(directory .. "/readonly")
 end
 
 -- eeprom component
@@ -63,7 +92,7 @@ function obj.setData(newdata)
 		error("not enough space", 0)
 	end
 	data = newdata
-	persist()
+	persistfile("data.bin", data)
 end
 
 mai.getDataSize = {direct = true, doc = "function():string -- Get the storage capacity of this EEPROM."}
@@ -93,7 +122,7 @@ function obj.setLabel(newlabel)
 	compCheckArg(1,newlabel,"string","nil")
 	if newlabel == nil then newlabel = "EEPROM" end
 	label = newlabel:sub(1,16)
-	persist()
+	persistfile("label.txt", label)
 	return label
 end
 
@@ -121,7 +150,7 @@ function obj.set(newcode) -- Overwrite the currently stored byte array.
 		error("not enough space", 0)
 	end
 	code = newcode
-	persist()
+	persistfile("code.lua", code)
 end
 
 mai.makeReadonly = {direct = true, doc = "function(checksum:string):boolean -- Make this EEPROM readonly if it isn't already. This process cannot be reversed!"}
@@ -132,7 +161,7 @@ function obj.makeReadonly(checksum) -- Make this EEPROM readonly if it isn't alr
 		return nil, "incorrect checksum"
 	end
 	readonly = true
-	persist()
+	persistlock()
 	return true
 end
 
