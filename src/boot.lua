@@ -229,6 +229,16 @@ local function boot()
 	local handlers = elsa.handlers
 
 	setmetatable(elsa, {
+		__index=function(t, k)
+			return function(...)
+				if handlers[k] ~= nil then
+					local hndtbl = handlers[k]
+					for i=1, #hndtbl do
+						hndtbl[i](...)
+					end
+				end
+			end
+		end,
 		__newindex=function(t, k, v)
 			if handlers[k] == nil then
 				handlers[k] = {}

@@ -410,31 +410,36 @@ function resume_thread(...)
 		cprint("resume",...)
 		local results = table.pack(coroutine.resume(machine.thread, ...))
 		cprint("yield",table.unpack(results))
-		if type(results[2]) == "function" then
-			if settings.fast then
-				if elsa.draw then
-					for k,v in pairs(elsa.draw) do
-						v()
-					end
+		if coroutine.status(machine.thread) ~= "dead" then
+			if type(results[2]) == "function" then
+				if settings.fast then
+					elsa.draw()
+					resume_thread(results[2]())
+				else
+					machine.syncfunc = results[2]
 				end
-				resume_thread(results[2]())
-			else
-				machine.syncfunc = results[2]
+			elseif type(results[2]) == "boolean" then
+				if results[2] then
+					modem_host.halt(true)
+					boot_machine()
+				else
+					modem_host.halt(false)
+					elsa.quit()
+					error("Machine power off",0)
+				end
+			elseif type(results[2]) == "number" then
+				machine.deadline = elsa.timer.getTime() + results[2]
 			end
-		elseif type(results[2]) == "number" then
-			machine.deadline = elsa.timer.getTime() + results[2]
-		elseif type(results[2]) == "boolean" then
-			if results[2] then
-				modem_host.halt(true)
-				boot_machine()
+		else
+			modem_host.halt(false)
+			elsa.quit()
+			if type(results[2]) ~= "boolean" or (type(results[3]) ~= "string" and results[3] ~= nil) then
+				error("Kernel returned unexpected results.", 0)
+			elseif results[2] then
+				error("Kernel stopped unexpectedly", 0)
 			else
-				modem_host.halt(false)
-				elsa.quit()
-				error("Machine power off",0)
+				error(results[3], 0)
 			end
-		end
-		if coroutine.status(machine.thread) == "dead" and type(results[2]) ~= "function" then
-			cprint("machine.lua has died")
 		end
 		if machine.biglistgen then
 			print("BigList")
