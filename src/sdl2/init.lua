@@ -2,7 +2,18 @@
 -- Generated with dev/create-init.lua
 
 local ffi = require 'ffi'
-local C = ffi.load('SDL2')
+local ok, C
+-- Search multiple places for the SDL2 library
+local names={'SDL2', 'SDL2-2.0', 'SDL2-2.0.so.0'}
+for i = 1, #names do
+	ok, C = pcall(ffi.load, names[i])
+	if ok then break end
+	ok, C = pcall(ffi.load, 'lib' .. names[i])
+	if ok then break end
+end
+if not ok then
+	error("Failed to load the SDL2 library!")
+end
 local sdl = {C=C}
 local registerdefines = require 'sdl2.defines'
 
