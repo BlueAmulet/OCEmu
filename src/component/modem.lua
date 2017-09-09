@@ -1,4 +1,4 @@
-local address, _, wireless = ...
+local modem_address, _, wireless = ...
 compCheckArg(1,wireless,"boolean")
 
 local socket = require("socket")
@@ -35,7 +35,7 @@ modem_host.comms_ip = "127.0.0.10"
 modem_host.connected = false
 modem_host.messages = {}
 modem_host.socket = nil
-
+modem_host.id = modem_address
 modem_host.hosting = false
 modem_host.clients = {}
 
@@ -353,12 +353,6 @@ function modem_host.connectMessageBoard()
 	modem_host.clients = {}
 	modem_host.messages = {}
 	modem_host.host_shutdown = nil
-
-	-- computer address seems to be applied late
-	if modem_host.id == nil then
-		modem_host.id = component.list("computer",true)()
-		assert(modem_host.id)
-	end
 
 	local ok, info, critical = modem_host.joinExistingMessageBoard()
 
