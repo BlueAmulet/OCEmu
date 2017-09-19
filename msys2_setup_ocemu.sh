@@ -103,7 +103,7 @@ fi
 cd luaffifb
 cat << 'EOF' > luaffifb_mingw.patch
 --- Makefile-old	2015-06-27 10:41:00.288971000 -0600
-+++ Makefile.win	2015-06-27 10:41:18.062998000 -0600
++++ Makefile.mingw	2015-06-27 10:41:18.062998000 -0600
 @@ -6,2 +6,3 @@
 -LUA_CFLAGS=`$(PKG_CONFIG) --cflags lua5.2 2>/dev/null || $(PKG_CONFIG) --cflags lua`
 -SOCFLAGS=`$(PKG_CONFIG) --libs lua5.2 2>/dev/null || $(PKG_CONFIG) --libs lua`
@@ -112,7 +112,7 @@ cat << 'EOF' > luaffifb_mingw.patch
 +CC=gcc
 EOF
 patch < luaffifb_mingw.patch
-make -f Makefile.win ffi.dll
+make -f Makefile.mingw ffi.dll
 if [ ! -e ffi.dll ]; then
 	echo "Failed to build luaffifb"
 	exit 1
