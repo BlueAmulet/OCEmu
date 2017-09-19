@@ -1,0 +1,3 @@
+[submodule "luaffifb"]
+	path = luaffifb
+	url = https://github.com/gamax92/luaffifb

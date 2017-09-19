@@ -8,6 +8,8 @@ Needs lua-5.2, luafilesystem, luautf8, luaffi, and SDL2.
 luasocket is optional but is required for the Internet Component and higher precision timing.  
 luasec is optional but is required for HTTPS.
 
+This git repository contains submodules, please clone using `git clone --recursive https://github.com/gamax92/OCEmu.git`
+
 **Windows**
 
 Binaries: [Windows 32bit](http://gamax92.pc-logix.com/ocemu/OCEmu-x32.zip) and [Windows 64bit](http://gamax92.pc-logix.com/ocemu/OCEmu-x64.zip) [(Build Date)](http://gamax92.pc-logix.com/ocemu/builddate.txt)
@@ -58,7 +60,8 @@ luarocks-5.2 install luafilesystem
 luarocks-5.2 install luautf8
 luarocks-5.2 install luasocket
 luarocks-5.2 install luasec
-luarocks-5.2 install --server=http://luarocks.org/dev luaffi
+cd luaffifb
+luarocks-5.2 make
 
 # OpenComputer's lua source code is not provided, if you have svn then use the provided Makefile
 # If you hate svn, manually download assets/loot, assets/lua, and assets/font.hex into src/
