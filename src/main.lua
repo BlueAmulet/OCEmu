@@ -147,7 +147,7 @@ if not machine.beep and elsa.SDL then
 				local sampleCount = math.floor(duration*rate/1000)
 				local data = datatype(sampleCount)
 				for i=1, sampleCount do
-					data[i-1] = (offset < 0.5 and vol or -vol)
+					data[i-1] = bit32.bxor(offset < 0.5 and vol or -vol, 0x80)
 					offset = (offset + step) % 1
 				end
 				if elsa.SDL.queueAudio(dev, data, sampleCount) ~= 0 then

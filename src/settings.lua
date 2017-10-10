@@ -61,3 +61,10 @@ if config.get("version") == nil then
 	end
 	config.set("version", 2)
 end
+if config.get("version") == 2 then
+	if settings.beepVolume > 32 then
+		settings.beepVolume = 32
+		config.set("client.beepVolume", 32)
+	end
+	config.set("version", 3)
+end

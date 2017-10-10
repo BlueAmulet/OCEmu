@@ -122,7 +122,7 @@ function config.load()
 	local file, err = io.open(elsa.filesystem.getSaveDirectory() .. "/ocemu.cfg","rb")
 	if file == nil then
 		print("Problem opening configuration, using default: " .. err)
-		_config = {version = 2}
+		_config = {version = 3}
 		return
 	end
 	local rawdata = file:read("*a")
