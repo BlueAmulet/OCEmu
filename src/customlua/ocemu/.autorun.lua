@@ -6,7 +6,7 @@ local proxy = ...
 
 -- Install symlinks if they don't already exist.
 local links = {}
-local fsroot = fs.path(process.running())
+local fsroot = fs.path(process.info().path)
 local function inject(path)
   for file in fs.list(fs.concat(fsroot, path)) do
     local source = fs.concat(fsroot, path, file)
