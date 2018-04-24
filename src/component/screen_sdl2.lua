@@ -11,7 +11,7 @@ local SDL = elsa.SDL
 local width, height, tier = maxwidth, maxheight, maxtier
 local scrfgc, scrfgp, scrrfp = 0xFFFFFF
 local scrbgc, scrfgp, scrrbp = 0x000000
-local scrrfc, srcrbc = scrfgc, scrbgc
+local scrrfc, scrrbc = scrfgc, scrbgc
 local palcol = {}
 local precise = false
 

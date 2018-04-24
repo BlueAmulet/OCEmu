@@ -22,9 +22,13 @@ local mai = {}
 local obj = {}
 
 mai.bind = {doc = "function(address:string):boolean -- Binds the GPU to the screen with the specified address."}
-function obj.bind(address)
-	cprint("gpu.bind", address)
+function obj.bind(address, reset)
+	cprint("gpu.bind", address, reset)
 	compCheckArg(1,address,"string")
+	compCheckArg(2,reset,"boolean","nil")
+	if reset == nil then
+		reset = true
+	end
 	local thing = component.exists(address)
 	if thing == nil then
 		return nil, "invalid address"
@@ -32,6 +36,13 @@ function obj.bind(address)
 		return nil, "not a screen"
 	end
 	bindaddress = address
+	if reset then
+		local smw, smh = component.cecinvoke(bindaddress, "maxResolution")
+		component.cecinvoke(bindaddress, "setResolution", math.min(smw, maxwidth), math.min(smh, maxheight))
+		component.cecinvoke(bindaddress, "setDepth", math.min(component.cecinvoke(bindaddress, "maxDepth"), maxtier))
+		component.cecinvoke(bindaddress, "setForeground", 0xFFFFFF)
+		component.cecinvoke(bindaddress, "setBackground", 0x000000)
+	end
 end
 
 mai.getForeground = {direct = true, doc = "function():number, boolean -- Get the current foreground color and whether it's from the palette or not."}
