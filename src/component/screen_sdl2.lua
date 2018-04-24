@@ -13,6 +13,7 @@ local scrfgc, scrfgp, scrrfp = 0xFFFFFF
 local scrbgc, scrfgp, scrrbp = 0x000000
 local scrrfc, srcrbc = scrfgc, scrbgc
 local palcol = {}
+local precise = false
 
 t3pal = {}
 for i = 0,15 do
@@ -56,7 +57,7 @@ if tier > 1 then
 end
 
 local buttons = {[SDL.BUTTON_LEFT] = 0, [SDL.BUTTON_RIGHT] = 1}
-local moved, bttndown, lx, ly, windowID = false
+local bttndown, lx, ly, windowID
 function elsa.mousebuttondown(event)
 	local mbevent = ffi.cast("SDL_MouseButtonEvent*", event)
 	if mbevent.windowID ~= windowID then
@@ -64,7 +65,11 @@ function elsa.mousebuttondown(event)
 	end
 	if buttons[mbevent.button] then
 		if not bttndown then
-			lx, ly = math.floor(mbevent.x/8)+1,math.floor(mbevent.y/16)+1
+			if precise then
+				lx, ly = math.floor(mbevent.x/2)/4,math.floor(mbevent.y/2)/8
+			else
+				lx, ly = math.floor(mbevent.x/8)+1,math.floor(mbevent.y/16)+1
+			end
 			table.insert(machine.signals,{"touch",address,lx,ly,buttons[mbevent.button]})
 		end
 		bttndown = buttons[mbevent.button]
@@ -77,10 +82,7 @@ function elsa.mousebuttonup(event)
 		return
 	end
 	if bttndown and buttons[mbevent.button] then
-		if moved then
-			moved = false
-			table.insert(machine.signals,{"drop",address,lx,ly,buttons[mbevent.button]})
-		end
+		table.insert(machine.signals,{"drop",address,lx,ly,buttons[mbevent.button]})
 		bttndown = nil
 	end
 end
@@ -91,9 +93,13 @@ function elsa.mousemotion(event)
 		return
 	end
 	if bttndown then
-		local nx, ny = math.floor(mmevent.x/8)+1,math.floor(mmevent.y/16)+1
+		local nx, ny
+		if precise then
+			nx, ny = math.floor(mmevent.x/2)/4,math.floor(mmevent.y/2)/8
+		else
+			nx, ny = math.floor(mmevent.x/8)+1,math.floor(mmevent.y/16)+1
+		end
 		if nx ~= lx or ny ~= ly then
-			moved = true
 			table.insert(machine.signals,{"drag",address,nx,ny,bttndown})
 			lx, ly = nx, ny
 		end
@@ -319,7 +325,6 @@ local function getColor(value, sel)
 end
 
 local touchinvert = false
-local precise = false
 
 -- screen component
 local mai = {}
