@@ -1,4 +1,5 @@
 local address, _, tier = ...
+compCheckArg(1,tier,"number")
 
 -- data component
 local mai = {}
