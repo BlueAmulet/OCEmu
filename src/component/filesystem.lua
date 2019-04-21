@@ -1,4 +1,6 @@
-local address, _, directory, label, readonly, speed = ...
+local address, _, directory, label, readonly, speed, size = ...
+size = size or math.huge
+local usedSize = 0
 compCheckArg(1,directory,"string","nil")
 compCheckArg(2,label,"string","nil")
 compCheckArg(3,readonly,"boolean")
@@ -49,6 +51,33 @@ local writeCosts = {1/1, 1/2, 1/3, 1/4, 1/5, 1/6}
 local mai = {}
 local obj = {}
 
+local function getAllFiles(dirPath, tab)
+    tab = tab or {}
+    dirPath = cleanPath(dirPath)
+    local items = elsa.filesystem.getDirectoryItems(directory .. dirPath)
+    for k, v in pairs(items) do
+        if elsa.filesystem.isDirectory(directory .. dirPath .. "/" .. v) then
+            getAllFiles(dirPath .. "/" .. v, tab)
+        else
+            table.insert(tab, directory .. dirPath .. "/" .. v)
+        end
+    end
+    return tab
+end
+
+local function calcUsedSpace()
+    local files = getAllFiles("/")
+    usedSize = 0
+    for k, v in pairs(files) do
+        local path = v
+        usedSize = usedSize + 512 -- default OC emulation of "file info"
+        usedSize = usedSize + elsa.filesystem.getSize(v)
+    end
+    return usedSize
+end
+
+calcUsedSpace() -- get used space
+
 mai.read = {direct = true, limit = 15, doc = "function(handle:number, count:number):string or nil -- Reads up to the specified amount of data from an open file descriptor with the specified handle. Returns nil when EOF is reached."}
 function obj.read(handle, count)
 	--TODO
@@ -79,9 +108,8 @@ end
 
 mai.spaceUsed = {direct = true, doc = "function():number -- The currently used capacity of the file system, in bytes."}
 function obj.spaceUsed()
-	--STUB
 	cprint("filesystem.spaceUsed")
-	return 0
+	return usedSpace
 end
 
 mai.rename = {doc = "function(from:string, to:string):boolean -- Renames/moves an object from the first specified absolute path in the file system to the second."}
@@ -131,6 +159,11 @@ function obj.write(handle, value)
 	if handles[handle] == nil or (handles[handle][2] ~= "w" and handles[handle][2] ~= "a") then
 		return nil, "bad file descriptor"
 	end
+    local len = value:len()
+    if usedSize + len > size then
+        return nil, "not enough space" -- todo use OC error message
+    end
+    usedSize = usedSize + len -- if sucedded, add to used space.
 	handles[handle][1]:write(value)
 	return true
 end
@@ -176,9 +209,8 @@ end
 
 mai.spaceTotal = {direct = true, doc = "function():number -- The overall capacity of the file system, in bytes."}
 function obj.spaceTotal()
-	--STUB
 	cprint("filesystem.spaceTotal")
-	return math.huge
+	return size
 end
 
 mai.getLabel = {direct = true, doc = "function():string -- Get the current label of the file system."}

@@ -88,3 +88,6 @@ If you want to use a custom path (for example, for running multiple machines wit
 cd src
 lua boot.lua /path/to/my/emulated/machine_a
 ```
+
+## The fork on itself
+The fork on itself is a update of the, now to seem, not working on project by gamax92. In this fork i'm going to try to fix all known bugs and to verify and add existing pull requests, and also treat issues on my own.
