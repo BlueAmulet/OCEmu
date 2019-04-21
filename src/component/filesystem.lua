@@ -53,7 +53,6 @@ local obj = {}
 
 local function getAllFiles(dirPath, tab)
     tab = tab or {}
-    dirPath = cleanPath(dirPath)
     local items = elsa.filesystem.getDirectoryItems(directory .. dirPath)
     for k, v in pairs(items) do
         if elsa.filesystem.isDirectory(directory .. dirPath .. "/" .. v) then
@@ -109,7 +108,7 @@ end
 mai.spaceUsed = {direct = true, doc = "function():number -- The currently used capacity of the file system, in bytes."}
 function obj.spaceUsed()
 	cprint("filesystem.spaceUsed")
-	return usedSpace
+	return usedSize
 end
 
 mai.rename = {doc = "function(from:string, to:string):boolean -- Renames/moves an object from the first specified absolute path in the file system to the second."}
