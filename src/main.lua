@@ -96,6 +96,10 @@ if settings.components == nil then
 	config.set("emulator.components",settings.components)
 end
 
+if settings.profiler then
+	
+end
+
 local maxCallBudget = (1.5 + 1.5 + 1.5) / 3 -- T3 CPU and 2 T3+ memory
 
 machine = {
