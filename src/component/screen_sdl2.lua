@@ -15,6 +15,9 @@ local scrrfc, scrrbc = scrfgc, scrbgc
 local palcol = {}
 local precise = false
 
+local obj = {type="screen"}
+
+
 t3pal = {}
 for i = 0,15 do
 	t3pal[i] = (i+1)*0x0F0F0F
@@ -84,6 +87,11 @@ function elsa.mousebuttonup(event)
 	if bttndown and buttons[mbevent.button] then
 		table.insert(machine.signals,{"drop",address,lx,ly,buttons[mbevent.button]})
 		bttndown = nil
+	else
+		if elsa.SDL.hasClipboardText() then
+			local text = ffi.string(elsa.SDL.getClipboardText())
+			table.insert(machine.signals, {"clipboard", obj.getKeyboards()[1], text})
+		end
 	end
 end
 
@@ -328,7 +336,6 @@ local touchinvert = false
 
 -- screen component
 local mai = {}
-local obj = {type="screen"}
 
 mai.isTouchModeInverted = {doc = "function():boolean -- Whether touch mode is inverted (sneak-activate opens GUI, instead of normal activate)."}
 function obj.isTouchModeInverted()
