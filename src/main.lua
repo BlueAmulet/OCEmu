@@ -377,8 +377,43 @@ elsa.filesystem.load("apis/component.lua")(env)
 
 config.save()
 
+local profilerWindow
+local profilerWindowID
+local profilerRenderer
+local profilerTexture
+local SDL = elsa.SDL
+
+local highdpi=(elsa.args.options.highdpi and 2 or 1)
+
+function draw_profiler_window()
+	SDL.setRenderTarget(profilerRenderer, ffi.NULL);
+	SDL.renderCopy(profilerRenderer, profilerTexture, ffi.NULL, ffi.NULL)
+	SDL.renderPresent(profilerRenderer)
+	SDL.setRenderTarget(profilerRenderer, profilerTexture);
+	-- Actually draw
+	
+end
+
 function boot_machine()
 	-- load machine.lua
+	if settings.profiler then
+		profilerWindow = SDL.createWindow("OCEmu - Profiler", 0, 0, 400*highdpi, 200*highdpi, bit32.bor(SDL.WINDOW_SHOWN, SDL.WINDOW_ALLOW_HIGHDPI))
+		if profilerWindow == ffi.NULL then
+			error(ffi.string(SDL.getError()))
+		end
+		profilerWindowID = SDL.getWindowID(profilerWindow)
+		SDL.setWindowFullscreen(profilerWindow, 0)
+		SDL.restoreWindow(profilerWindow)
+		SDL.setWindowSize(profilerWindow, 400*highdpi, 200*highdpi)
+		SDL.setWindowPosition(profilerWindow, 0, 0)
+		SDL.setWindowGrab(profilerWindow, SDL.FALSE)
+		profilerRenderer = SDL.createRenderer(profilerWindow, -1, SDL.RENDERER_TARGETTEXTURE)
+		SDL.setRenderDrawBlendMode(profilerRenderer, SDL.BLENDMODE_BLEND)
+		profilerTexture = SDL.createTexture(profilerRenderer, SDL.PIXELFORMAT_ARGB8888, SDL.TEXTUREACCESS_TARGET, 400, 200);
+		if profilerTexture == ffi.NULL then
+			error(ffi.string(SDL.getError()))
+		end
+	end
 	local machine_data, err = elsa.filesystem.read("lua/machine.lua")
 	if machine_data == nil then
 		error("Failed to load machine.lua:\n\t" .. tostring(err))
@@ -479,5 +514,8 @@ function elsa.update(dt)
 		resume_thread(table.unpack(signal, 1, signal.n or #signal))
 	elseif elsa.timer.getTime() >= machine.deadline then
 		resume_thread()
+	end
+	if settings.profiler then
+		draw_profiler_window()
 	end
 end
