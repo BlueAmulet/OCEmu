@@ -2,11 +2,10 @@ OCEmu - OpenComputers Emulator
 ==============================
 
 # Features added compared to original
-75% - (Optional) Filesystem size limitation
-TODO- Close on program termination
-TODO- Debugger mode. Useful for coding OSes
-TODO- Profiler
-TODO- Automatic unit tests
+* 95% - (Optional) Filesystem size limitation
+* TODO- Debugger mode. Useful for coding OSes
+* TODO- Profiler
+* TODO- Automatic unit tests
 
 Installation
 ------------
