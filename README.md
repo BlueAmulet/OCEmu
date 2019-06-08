@@ -3,6 +3,7 @@ OCEmu - OpenComputers Emulator
 
 # Features added compared to original
 * 95% - (Optional) Filesystem size limitation
+* 100% - Paste with mouse wheel
 * TODO- Debugger mode. Useful for coding OSes
 * TODO- Profiler
 * TODO- Automatic unit tests
