@@ -16,6 +16,7 @@ local savePath = directory .. "/" .. address .. ".bin"
 local platterCount = tier == 3 and 6 or tier == 2 and 4 or 2
 local capacity = (tier == 3 and 4096 or tier == 2 and 2048 or 1024) * 1024
 local sectorSize = 512
+local speed = tier*2
 local sectorCount = capacity / sectorSize
 local sectorsPerPlatter = sectorCount / platterCount
 local headPos = 0

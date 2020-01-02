@@ -109,6 +109,7 @@ machine = {
 	totalMemory = 2*1024*1024,
 	insynccall = false,
 }
+--maxCallBudget = 0.0--5
 
 function machine.consumeCallBudget(callCost)
 	if not settings.fast and not machine.insynccall then
