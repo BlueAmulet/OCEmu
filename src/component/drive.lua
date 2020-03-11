@@ -20,7 +20,7 @@ local sectorSize = 512
 local sectorCount = capacity / sectorSize
 local sectorsPerPlatter = sectorCount / platterCount
 local headPos = 0
-local data = string.rep("\0", capacity - #data)
+local data
 
 local readSectorCosts = {1/10, 1/20, 1/30, 1/40, 1/50, 1/60}
 local writeSectorCosts = {1/5, 1/10, 1/15, 1/20, 1/25, 1/30}
@@ -39,13 +39,17 @@ local function load(filename)
 		data = file:read("*a"):sub(1, capacity)
 		file:close()
 		data = data .. string.rep("\0", capacity - #data)
+		return true
 	end
+	return false
 end
 
-if type(filename == "string") then
-	load(filename)
+if not load(savePath) then
+	if type(filename) ~= "string" or not load(filename) then
+		data = string.rep("\0", capacity)
+	end
+	save()
 end
-load(savePath)
 
 local function validateSector(sector)
 	if sector < 0 or sector >= sectorCount then
