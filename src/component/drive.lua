@@ -4,8 +4,9 @@ compCheckArg(1,filename,"string","nil")
 compCheckArg(2,label,"string","nil")
 compCheckArg(3,tier,"number")
 
-if type(filename) == "string" and not elsa.filesystem.exists(filename) then	
-	error("no such file", 3)
+if type(filename) == "string" and not elsa.filesystem.exists(filename) then
+	print("`".. filename .. "` could not be found.\nAn empty .bin will be made instead upon first write.")
+	--error("no such file", 3)
 end
 
 local directory = elsa.filesystem.getSaveDirectory() .. "/" .. address
@@ -13,14 +14,14 @@ if not elsa.filesystem.exists(directory) then
 	elsa.filesystem.createDirectory(directory)
 end
 
-local savePath = directory .. "/data.bin"
+local savePath = filename or (directory .. "/data.bin")
 local platterCount = tier == 3 and 8 or tier == 2 and 4 or 2
 local capacity = (tier == 3 and 4 or tier == 2 and 2 or 1) * 1024 * 1024
 local sectorSize = 512
 local sectorCount = capacity / sectorSize
 local sectorsPerPlatter = sectorCount / platterCount
 local headPos = 0
-local data = string.rep("\0", capacity - #data)
+local data = string.rep("\0", capacity)
 
 local readSectorCosts = {1/10, 1/20, 1/30, 1/40, 1/50, 1/60}
 local writeSectorCosts = {1/5, 1/10, 1/15, 1/20, 1/25, 1/30}
@@ -42,9 +43,6 @@ local function load(filename)
 	end
 end
 
-if type(filename == "string") then
-	load(filename)
-end
 load(savePath)
 
 local function validateSector(sector)
