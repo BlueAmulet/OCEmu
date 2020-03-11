@@ -5,7 +5,7 @@ compCheckArg(2,label,"string","nil")
 compCheckArg(3,tier,"number")
 
 if type(filename) == "string" and not elsa.filesystem.exists(filename) then
-	print("`".. filename .. "` could not be found.\nAn empty .bin will be made instead upon first write.")
+	print("`".. filename .. "` could not be found.\nAn empty binary file will be made instead upon first write.")
 	--error("no such file", 3)
 end
 
