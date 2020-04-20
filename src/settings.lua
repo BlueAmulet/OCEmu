@@ -14,6 +14,9 @@ settings = {
 	fast = config.get("emulator.fast",true),
 	vagueErrors = config.get("emulator.vague",true),
 
+	floppySize = config.get("filesystem.floppySize",512),
+	hddPlatterCounts = config.get("filesystem.hddPlatterCounts",{2,4,8}),
+	hddSizes = config.get("filesystem.hddSizes",{1024,2048,4096}),
 	maxReadBuffer = config.get("filesystem.maxReadBuffer",2048),
 
 	httpEnabled = config.get("internet.enableHttp",true),

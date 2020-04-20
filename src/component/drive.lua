@@ -14,12 +14,13 @@ if not elsa.filesystem.exists(directory) then
 end
 
 local savePath = directory .. "/data.bin"
-local platterCount = tier == 3 and 8 or tier == 2 and 4 or 2
-local capacity = (tier == 3 and 4 or tier == 2 and 2 or 1) * 1024 * 1024
+local platterCount = (tier == 0 and 1 or settings.hddPlatterCounts[tier])
+local capacity = (tier == 0 and settings.floppySize or settings.hddSizes[tier]) * 1024
 local sectorSize = 512
 local sectorCount = capacity / sectorSize
 local sectorsPerPlatter = sectorCount / platterCount
 local headPos = 0
+local speed = tier + 2
 local data
 
 local readSectorCosts = {1/10, 1/20, 1/30, 1/40, 1/50, 1/60}
