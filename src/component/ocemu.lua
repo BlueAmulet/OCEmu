@@ -4,7 +4,6 @@
 component.connect("filesystem", gen_uuid(), -1, "customlua/ocemu", "ocemu", true, 5)
 
 local components = settings.components
-local profiler = settings.profiler
 
 local function cleanName(name)
 	if name:find("/", nil, true) then
@@ -108,11 +107,6 @@ function obj.lootremove(name)
 		config.save()
 	end
 	return true
-end
-
-mai.profilerEnabled = {direct = true, doc = "function():boolean -- Return whether or not profiler is enabled"}
-function obj.profilerEnabled()
-	return profiler
 end
 
 mai.lootattached = {direct = true, doc = "function(name:string):boolean or nil, string -- Check if a loot disk is inserted in the computer."}

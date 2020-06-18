@@ -24,7 +24,6 @@ settings = {
 
 	maxNetworkPacketSize = config.get("misc.maxNetworkPacketSize",8192),
 	maxWirelessRange = config.get("misc.maxWirelessRange",400),
-	profiler = config.get("emulator.profiler",false),
 }
 
 if settings.monochromeColor == nil then
