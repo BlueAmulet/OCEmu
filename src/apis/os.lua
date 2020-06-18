@@ -55,16 +55,5 @@ function env.os.date(format, ...)
 	if format:sub(1, 1) == "!" then
 		format = format:sub(2)
 	end
-	local ok, err = pcall(function(format, ...)
-		return os.date(format, ...)
-	end, format, ...)
-	if ok then
-		return err
-	else
-		if format == "*t" then
-			return {year=0,month=1,day=1,hour=0,min=0,sec=0,wday=1,yday=1,isdst=false}
-		else
-			return "No date"
-		end
-	end
+	return os.date(format, ...)
 end
