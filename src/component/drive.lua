@@ -1,34 +1,32 @@
-local address, _, directory, label, tier = ...
+local address, _, filename, label, tier = ...
 
-compCheckArg(1,directory,"string","nil")
+compCheckArg(1,filename,"string","nil")
 compCheckArg(2,label,"string","nil")
 compCheckArg(3,tier,"number")
 
-if directory == nil then
-	directory = elsa.filesystem.getSaveDirectory()
+if type(filename) == "string" and not elsa.filesystem.exists(filename) then	
+	error("no such file", 3)
 end
 
+local directory = elsa.filesystem.getSaveDirectory() .. "/" .. address
 if not elsa.filesystem.exists(directory) then
-    elsa.filesystem.createDirectory(directory)
+	elsa.filesystem.createDirectory(directory)
 end
 
-local savePath = directory .. "/" .. address .. ".bin"
-local platterCount = tier == 3 and 6 or tier == 2 and 4 or 2
-local capacity = (tier == 3 and 4096 or tier == 2 and 2048 or 1024) * 1024
+local savePath = directory .. "/data.bin"
+local platterCount = (tier == 0 and 1 or settings.hddPlatterCounts[tier])
+local capacity = (tier == 0 and settings.floppySize or settings.hddSizes[tier]) * 1024
 local sectorSize = 512
-local speed = tier*2
 local sectorCount = capacity / sectorSize
 local sectorsPerPlatter = sectorCount / platterCount
 local headPos = 0
+local speed = tier + 2
 local data
 
-local mai = {}
-local obj = {}
-
-local readSectorCosts = {1.0 / 10, 1.0 / 20, 1.0 / 30, 1.0 / 40, 1.0 / 50, 1.0 / 60}
-local writeSectorCosts = {1.0 / 5, 1.0 / 10, 1.0 / 15, 1.0 / 20, 1.0 / 25, 1.0 / 30}
-local readByteCosts = {1.0 / 48, 1.0 / 64, 1.0 / 80, 1.0 / 96, 1.0 / 112, 1.0 / 128}
-local writeByteCosts = {1.0 / 24, 1.0 / 32, 1.0 / 40, 1.0 / 48, 1.0 / 56, 1.0 / 64}
+local readSectorCosts = {1/10, 1/20, 1/30, 1/40, 1/50, 1/60}
+local writeSectorCosts = {1/5, 1/10, 1/15, 1/20, 1/25, 1/30}
+local readByteCosts = {1/48, 1/64, 1/80, 1/96, 1/112, 1/128}
+local writeByteCosts = {1/24, 1/32, 1/40, 1/48, 1/56, 1/64}
 
 local function save()
 	local file = elsa.filesystem.newFile(savePath, "w")
@@ -36,27 +34,33 @@ local function save()
 	file:close()
 end
 
-local function load()
-	if not elsa.filesystem.exists(savePath) then
-		data = string.rep(string.char(0), capacity)
-		return
+local function load(filename)
+	if elsa.filesystem.exists(filename) then
+		local file = elsa.filesystem.newFile(filename, "r")
+		data = file:read("*a"):sub(1, capacity)
+		file:close()
+		data = data .. string.rep("\0", capacity - #data)
+		return true
 	end
-	local file = elsa.filesystem.newFile(savePath, "r")
-	data = file:read("*a")
-	file:close()
+	return false
 end
 
-load()
+if not load(savePath) then
+	if type(filename) ~= "string" or not load(filename) then
+		data = string.rep("\0", capacity)
+	end
+	save()
+end
 
 local function validateSector(sector)
 	if sector < 0 or sector >= sectorCount then
-		error("invalid offset, not in a usable sector")
+		error("invalid offset, not in a usable sector", 0)
 	end
 	return sector
 end
 
-local function offsetSector(sector)
-	return sector / sectorSize
+local function offsetSector(offset)
+	return offset / sectorSize
 end
 
 local function sectorOffset(sector)
@@ -67,8 +71,8 @@ local function checkSector(sector)
 	return validateSector(sector - 1)
 end
 
-local function checkSectorR(sector)
-	return validateSector(offsetSector(sector))
+local function checkOffset(offset)
+	return validateSector(offsetSector(offset - 1))
 end
 
 local function sectorToHeadPos(sector)
@@ -82,6 +86,9 @@ local function moveToSector(sector)
 	end
 	return sector
 end
+
+local mai = {}
+local obj = {}
 
 mai.getLabel = {direct = true, doc = "function():string -- Get the current label of the drive."}
 function obj.getLabel()
@@ -129,7 +136,7 @@ function obj.readSector(sector)
 	compCheckArg(1, sector, "number")
 	if not machine.consumeCallBudget(readSectorCosts[speed]) then return end
 	local s = moveToSector(checkSector(sector))
-	return string.sub(data, sectorOffset(s), sectorOffset(s) + sectorSize)
+	return data:sub(sectorOffset(s) + 1, sectorOffset(s) + sectorSize)
 end
 
 mai.writeSector = {direct = true, doc = "function(sector:number, value:string) -- Write the specified contents to the specified sector."}
@@ -138,9 +145,10 @@ function obj.writeSector(sector, value)
 	compCheckArg(1, sector, "number")
 	compCheckArg(1, value, "string")
 	if not machine.consumeCallBudget(writeSectorCosts[speed]) then return end
+	value = value:sub(1, sectorSize)
     local s = moveToSector(checkSector(sector))
-    local a = string.sub(data, 1, sectorOffset(s))
-    local b = string.sub(data, sectorOffset(s) + math.min(sectorSize, #value) + 1, capacity)
+    local a = data:sub(1, sectorOffset(s))
+    local b = data:sub(sectorOffset(s) + #value + 1)
     data = a .. value .. b
     save()
 end
@@ -150,8 +158,12 @@ function obj.readByte(offset)
 	cprint("drive.readByte", offset)
 	compCheckArg(1, offset, "number")
 	if not machine.consumeCallBudget(readByteCosts[speed]) then return end
-	local s = moveToSector(checkSectorR(offset))
-	return string.byte(string.sub(data, sectorOffset(s), sectorOffset(s)))
+	moveToSector(checkOffset(offset))
+	local byte = data:sub(offset, offset):byte()
+	if byte >= 128 then
+		byte = byte - 256
+	end
+	return byte
 end
 
 mai.writeByte = {direct = true, doc = "function(offset:number, value:number) -- Write a single byte to the specified offset."}
@@ -160,13 +172,11 @@ function obj.writeByte(offset, value)
 	compCheckArg(1, offset, "number")
 	compCheckArg(1, value, "number")
 	if not machine.consumeCallBudget(writeByteCosts[speed]) then return end
-	local s = moveToSector(checkSectorR(offset))
-    local a = string.sub(data, 1, sectorOffset(s))
-    local b = string.sub(data, sectorOffset(s) + 2, capacity)
-    data = a .. string.char(value) .. b
+	moveToSector(checkOffset(offset))
+    local a = data:sub(1, offset - 1)
+    local b = data:sub(offset + 1)
+    data = a .. string.char(math.floor(value % 256)) .. b
     save()
 end
 
-
 return obj, nil, mai
- 

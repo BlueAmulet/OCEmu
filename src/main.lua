@@ -96,8 +96,19 @@ if settings.components == nil then
 	config.set("emulator.components",settings.components)
 end
 
-if settings.profiler then
-	
+local memoryUsages = {}
+
+local profilerHook = function(event)
+	local func = debug.getinfo(2)
+	if func == nil then return end
+	local name = func.name
+	if name ~= nil then
+		if event == "call" or event == "tail call" then
+			memoryUsages[name] = collectgarbage("count")
+		elseif event == "return" then
+			memoryUsages[name] = collectgarbage("count") - memoryUsages[name]
+		end
+	end
 end
 
 local maxCallBudget = (1.5 + 1.5 + 1.5) / 3 -- T3 CPU and 2 T3+ memory
@@ -109,7 +120,7 @@ machine = {
 	totalMemory = 2*1024*1024,
 	insynccall = false,
 }
---maxCallBudget = 0.0--5
+--maxCallBudget = 0.5
 
 function machine.consumeCallBudget(callCost)
 	if not settings.fast and not machine.insynccall then
@@ -216,7 +227,13 @@ local env = {
 	},
 	collectgarbage = collectgarbage,
 	coroutine = {
-		create = coroutine.create,
+		create = function(...)
+			local c = coroutine.create(...)
+			if settings.profiler then
+				debug.sethook(c, profilerHook, "cr")
+			end
+			return c
+		end,
 		resume = coroutine.resume,
 		running = coroutine.running,
 		status = coroutine.status,
@@ -232,7 +249,18 @@ local env = {
 		getregistry = debug.getregistry,
 		getupvalue = debug.getupvalue,
 		getuservalue = debug.getuservalue,
-		sethook = debug.sethook,
+		sethook = function(...)
+			if not select(1, ...) then
+				if settings.profiler then
+					cprint("attempt to clear hooks")
+					debug.sethook()
+					cprint("adding profiler hook")
+					debug.sethook(profilerHook, "cr")
+				end
+			else
+				debug.sethook(...)
+			end
+		end,
 		setlocal = debug.setlocal,
 		setmetatable = debug.setmetatable,
 		setupvalue = debug.setupvalue,
@@ -424,6 +452,10 @@ function boot_machine()
 		error("Failed to parse machine.lua\n\t" .. tostring(err))
 	end
 	machine.thread = coroutine.create(machine_fn)
+	if settings.profiler then
+		print("hook profiler to machine thread")
+		debug.sethook(machine.thread, profilerHook, "cr")
+	end
 	local results = { coroutine.resume(machine.thread) }
 	if results[1] then
 		if #results ~= 1 then
