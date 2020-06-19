@@ -504,21 +504,23 @@ function cec.fill(x1, y1, w, h, char) -- Fills a portion of the screen at the sp
 	end
 	return true
 end
-function cec.bitblt(buf, col, row, width, height, fromCol, fromRow)
-	cprint("(cec) screen.bitblt", tostring(buf), col, row, width, height, fromCol, fromRow)
+function cec.bitblt(buf, col, row, w, h, fromCol, fromRow)
+	cprint("(cec) screen.bitblt", tostring(buf), col, row, w, h, fromCol, fromRow)
 	local oldFg = srcfgc
 	local oldBg = srcbgc
-	for x=0, width-1 do
-		for y=0, height-1 do
+	for y=0, h-1 do
+		for x=0, w-1 do
 			local char, fg, bg = buf:bufferGet(x+fromCol, y+fromRow)
 			local dx = x+col
 			local dy = y+row
 			if dx >= 1 and dx <= width and dy >= 1 and dy <= height then
 				srcfgc = fg
 				srcbgc = bg
+				io.stdout:write(char)
 				setPos(dx, dy, utf8.byte(char), fg, bg)
 			end
 		end
+		print("")
 	end
 	srcfgc = oldFg
 	srcbgc = oldBg

@@ -7,7 +7,6 @@ local utf8 = require("lua-utf8")
 
 local bindaddress
 local depthTbl = {1,4,8}
-local vramTbl = {1,2,3}
 local rdepthTbl = {1,[4]=2,[8]=3}
 local depthNames = {"OneBit","FourBit","EightBit"}
 
@@ -24,19 +23,23 @@ local obj = {}
 
 local activeBufferIdx = 0 -- 0 = screen
 local buffers = {}
-local totalMemory = maxwidth*maxheight*vramTbl[maxtier]
+local totalMemory = maxwidth*maxheight*maxtier
 local usedMemory = 0
 
 local function bufferSet(buf, x, y, char, fg, bg)
+	if x > buf.width or y > buf.height or x < 1 or y < 1 then
+		return false
+	end
 	local pos = (y-1) * buf.width + x
 	fg = fg or buf.fg
 	bg = bg or buf.bg
 	buf.foreground[pos] = fg
 	buf.background[pos] = bg
-	local before = buf.text:sub(1, pos-1)
-	local after = buf.text:sub(pos+1)
+	local before = utf8.sub(buf.text, 1, pos-1)
+	local after = utf8.sub(buf.text, pos+1)
 	buf.text = before .. char .. after
 	buf.dirty = true
+	return true
 end
 
 local function bufferGet(buf, x, y)
@@ -88,6 +91,7 @@ end
 
 mai.freeBuffer = {direct = true, doc = "function(index: number): boolean -- Closes buffer at `index`. Returns true if a buffer closed. If the current buffer is closed, index moves to 0"}
 function obj.freeBuffer(idx)
+	cprint("gpu.freeBuffer", idx)
 	if not buffers[idx] then
 		return false, "no buffer at index"
 	else
@@ -238,7 +242,7 @@ end
 mai.setForeground = {direct = true, doc = "function(value:number[, palette:boolean]):number, number or nil -- Sets the foreground color to the specified value. Optionally takes an explicit palette index. Returns the old value and if it was from the palette its palette index."}
 function obj.setForeground(value, palette)
 	cprint("gpu.setForeground", value, palette)
-	if consumeGraphicCallBudget(setForegroundCosts[maxtier]) then return end
+	if not consumeGraphicCallBudget(setForegroundCosts[maxtier]) then return end
 	compCheckArg(1,value,"number")
 	compCheckArg(2,palette,"boolean","nil")
 	if bindaddress == nil then
@@ -325,7 +329,7 @@ end
 mai.fill = {direct = true, doc = "function(x:number, y:number, width:number, height:number, char:string):boolean -- Fills a portion of the screen at the specified position with the specified size with the specified character."}
 function obj.fill(x, y, width, height, char)
 	cprint("gpu.fill", x, y, width, height, char)
-	if activeBufferIdx == 0 and not machine.consumeCallBudget(fillCosts[maxtier]) then return end
+	if not consumeGraphicCallBudget(fillCosts[maxtier]) then return end
 	compCheckArg(1,x,"number")
 	compCheckArg(2,y,"number")
 	compCheckArg(3,width,"number")
@@ -476,7 +480,7 @@ end
 mai.set = {direct = true, doc = "function(x:number, y:number, value:string[, vertical:boolean]):boolean -- Plots a string value to the screen at the specified position. Optionally writes the string vertically."}
 function obj.set(x, y, value, vertical)
 	cprint("gpu.set", x, y, value, vertical)
-	if consumeGraphicCallBudget(setCosts[maxtier]) then return end
+	if not consumeGraphicCallBudget(setCosts[maxtier]) then return end
 	compCheckArg(1,x,"number")
 	compCheckArg(2,y,"number")
 	compCheckArg(3,value,"string")
