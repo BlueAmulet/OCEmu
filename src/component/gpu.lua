@@ -24,7 +24,7 @@ local obj = {}
 
 local activeBufferIdx = 0 -- 0 = screen
 local buffers = {}
-local totalMemory = maxwidth*maxheight*vramTbl[maxtier] -- TODO set
+local totalMemory = maxwidth*maxheight*vramTbl[maxtier]
 local usedMemory = 0
 
 local function bufferSet(buf, x, y, char, fg, bg)
@@ -45,6 +45,14 @@ local function bufferGet(buf, x, y)
 	local fg = buf.foreground[pos] or 0xFFFFFF
 	local bg = buf.background[pos] or 0
 	return char, fg, bg
+end
+
+local function consumeGraphicCallBudget(cost)
+	if activeBufferIdx == 0 then
+		return machine.consumeCallBudget(cost)
+	else
+		return true
+	end
 end
 
 mai.allocateBuffer = {direct = true, doc = "function([width: number, height: number]): number -- allocates a new buffer with dimensions width*height (defaults to max resolution) and appends it to the buffer list. Returns the index of the new buffer and returns nil with an error message on failure. A buffer can be allocated even when there is no screen bound to this gpu. Index 0 is always reserved for the screen and thus the lowest index of an allocated buffer is always 1."}
@@ -117,6 +125,7 @@ end
 
 mai.setActiveBuffer = {direct = true, doc = "function(index: number): number -- Sets the active buffer to `index`. 1 is the first vram buffer and 0 is reserved for the screen. returns nil for invalid index (0 is always valid)"}
 function obj.setActiveBuffer(idx)
+	cprint("gpu.setActiveBuffer", idx)
 	if idx ~= 0 and not buffers[idx] then
 		return nil
 	else
@@ -150,6 +159,7 @@ end
 
 mai.bitblt = {direct = true, doc = "function([dst: number, col: number, row: number, width: number, height: number, src: number, fromCol: number, fromRow: number]):boolean -- bitblt from buffer to screen. All parameters are optional. Writes to `dst` page in rectangle `x, y, width, height`, defaults to the bound screen and its viewport. Reads data from `src` page at `fx, fy`, default is the active page from position 1, 1"}
 function obj.bitblt(dst, col, row, width, height, src, fromCol, fromRow)
+	cprint("gpu.bitblt", dst, col, row, width, height, src, fromCol, fromRow)
 	dst = dst or 0
 	col = col or 1
 	row = row or 1
@@ -161,7 +171,13 @@ function obj.bitblt(dst, col, row, width, height, src, fromCol, fromRow)
 		if bindaddress == nil then
 			return nil, "no screen"
 		end
-		width, height = component.cecinvoke(bindaddress, "getResolution")
+		if not width or not height then
+			local rw, rh = component.cecinvoke(bindaddress, "getResolution")
+			width = width or rw
+			height = height or rh
+		end
+
+		-- TODO consume call budget
 		if src == 0 then
 			-- TODO act as copy()
 		else
@@ -169,6 +185,7 @@ function obj.bitblt(dst, col, row, width, height, src, fromCol, fromRow)
 			if not buf then
 				return nil
 			end
+			buf.dirty = false
 			width, height = math.min(buf.width, width), math.min(buf.height, height)
 			component.cecinvoke(bindaddress, "bitblt", buf, col, row, width, height, fromCol, fromRow)
 		end
@@ -210,14 +227,18 @@ function obj.getForeground()
 	if bindaddress == nil then
 		return nil, "no screen"
 	end
-	return component.cecinvoke(bindaddress, "getForeground")
+	if activeBufferIdx == 0 then
+		return component.cecinvoke(bindaddress, "getForeground")
+	else
+		return buffers[activeBufferIdx].fg
+	end
 end
 
 
 mai.setForeground = {direct = true, doc = "function(value:number[, palette:boolean]):number, number or nil -- Sets the foreground color to the specified value. Optionally takes an explicit palette index. Returns the old value and if it was from the palette its palette index."}
 function obj.setForeground(value, palette)
 	cprint("gpu.setForeground", value, palette)
-	if not machine.consumeCallBudget(setForegroundCosts[maxtier]) then return end
+	if consumeGraphicCallBudget(setForegroundCosts[maxtier]) then return end
 	compCheckArg(1,value,"number")
 	compCheckArg(2,palette,"boolean","nil")
 	if bindaddress == nil then
@@ -229,7 +250,11 @@ function obj.setForeground(value, palette)
 	if palette == true and (value < 0 or value > 15) then
 		error("invalid palette index", 0)
 	end
-	return component.cecinvoke(bindaddress, "setForeground", value, palette)
+	if activeBufferIdx == 0 then
+		return component.cecinvoke(bindaddress, "setForeground", value, palette)
+	else
+		buffers[activeBufferIdx].fg = value
+	end
 end
 
 mai.getBackground = {direct = true, doc = "function():number, boolean -- Get the current background color and whether it's from the palette or not."}
@@ -238,13 +263,17 @@ function obj.getBackground()
 	if bindaddress == nil then
 		return nil, "no screen"
 	end
-	return component.cecinvoke(bindaddress, "getBackground")
+	if activeBufferIdx == 0 then
+		return component.cecinvoke(bindaddress, "getBackground")
+	else
+		return buffers[activeBufferIdx].bg
+	end
 end
 
 mai.setBackground = {direct = true, doc = "function(value:number[, palette:boolean]):number, number or nil -- Sets the background color to the specified value. Optionally takes an explicit palette index. Returns the old value and if it was from the palette its palette index."}
 function obj.setBackground(value, palette)
 	cprint("gpu.setBackground", value, palette)
-	if not machine.consumeCallBudget(setBackgroundCosts[maxtier]) then return end
+	if not consumeGraphicCallBudget(setBackgroundCosts[maxtier]) then return end
 	compCheckArg(1,value,"number")
 	compCheckArg(2,palette,"boolean","nil")
 	if bindaddress == nil then
@@ -257,7 +286,11 @@ function obj.setBackground(value, palette)
 	if palette and (value < 0 or value > 15) then
 		error("invalid palette index", 0)
 	end
-	return component.cecinvoke(bindaddress, "setBackground", value, palette)
+	if activeBufferIdx == 0 then
+		return component.cecinvoke(bindaddress, "setBackground", value, palette)
+	else
+		buffers[activeBufferIdx].bg = value
+	end
 end
 
 mai.getDepth = {direct = true, doc = "function():number -- Returns the currently set color depth."}
@@ -292,7 +325,7 @@ end
 mai.fill = {direct = true, doc = "function(x:number, y:number, width:number, height:number, char:string):boolean -- Fills a portion of the screen at the specified position with the specified size with the specified character."}
 function obj.fill(x, y, width, height, char)
 	cprint("gpu.fill", x, y, width, height, char)
-	if not machine.consumeCallBudget(fillCosts[maxtier]) then return end
+	if activeBufferIdx == 0 and not machine.consumeCallBudget(fillCosts[maxtier]) then return end
 	compCheckArg(1,x,"number")
 	compCheckArg(2,y,"number")
 	compCheckArg(3,width,"number")
@@ -304,7 +337,17 @@ function obj.fill(x, y, width, height, char)
 	if utf8.len(char) ~= 1 then
 		return nil, "invalid fill value"
 	end
-	return component.cecinvoke(bindaddress, "fill", x, y, width, height, char)
+	if activeBufferIdx == 0 then
+		return component.cecinvoke(bindaddress, "fill", x, y, width, height, char)
+	else
+		local buf = buffers[activeBufferIdx]
+		for dx=0, width-1 do
+			for dy=0, height-1 do
+				bufferSet(buf, x+dx, y+dy, char)
+			end
+		end
+		return true
+	end
 end
 
 mai.getScreen = {direct = true, doc = "function():string -- Get the address of the screen the GPU is currently bound to."}
@@ -433,7 +476,7 @@ end
 mai.set = {direct = true, doc = "function(x:number, y:number, value:string[, vertical:boolean]):boolean -- Plots a string value to the screen at the specified position. Optionally writes the string vertically."}
 function obj.set(x, y, value, vertical)
 	cprint("gpu.set", x, y, value, vertical)
-	if activeBufferIdx == 0 and not machine.consumeCallBudget(setCosts[maxtier]) then return end
+	if consumeGraphicCallBudget(setCosts[maxtier]) then return end
 	compCheckArg(1,x,"number")
 	compCheckArg(2,y,"number")
 	compCheckArg(3,value,"string")
