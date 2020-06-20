@@ -516,11 +516,9 @@ function cec.bitblt(buf, col, row, w, h, fromCol, fromRow)
 			if dx >= 1 and dx <= width and dy >= 1 and dy <= height then
 				srcfgc = fg
 				srcbgc = bg
-				io.stdout:write(char)
 				setPos(dx, dy, utf8.byte(char), fg, bg)
 			end
 		end
-		print("")
 	end
 	srcfgc = oldFg
 	srcbgc = oldBg

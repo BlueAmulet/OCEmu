@@ -16,6 +16,7 @@ local setPaletteColorCosts = {1/2, 1/8, 1/16}
 local setCosts = {1/64, 1/128, 1/256}
 local copyCosts = {1/16, 1/32, 1/64}
 local fillCosts = {1/32, 1/64, 1/128}
+local bitbltCost = 0.5
 
 -- gpu component
 local mai = {}
@@ -95,11 +96,11 @@ function obj.freeBuffer(idx)
 	if not buffers[idx] then
 		return false, "no buffer at index"
 	else
+		usedMemory = usedMemory - buffers[idx].size
+		buffers[idx] = nil
 		if idx == activeBufferIdx then
 			idx = 0
 		end
-		usedMemory = usedMemory - buffers[idx].size
-		buffers[idx] = nil
 		return true
 	end
 end
@@ -161,6 +162,18 @@ function obj.getBufferSize(idx)
 	end
 end
 
+local function determineBitbltBudgetCost(src, dst)
+	if dst ~= "screen" then -- write to buffer from buffer/screen are free
+		return 0
+	elseif src == "screen" then
+		return 0
+	elseif src.dirty then
+		return bitbltCost * (src.width * src.height) / (maxwidth * maxheight)
+	elseif not src.dirty then
+		return 0.001
+	end
+end
+
 mai.bitblt = {direct = true, doc = "function([dst: number, col: number, row: number, width: number, height: number, src: number, fromCol: number, fromRow: number]):boolean -- bitblt from buffer to screen. All parameters are optional. Writes to `dst` page in rectangle `x, y, width, height`, defaults to the bound screen and its viewport. Reads data from `src` page at `fx, fy`, default is the active page from position 1, 1"}
 function obj.bitblt(dst, col, row, width, height, src, fromCol, fromRow)
 	cprint("gpu.bitblt", dst, col, row, width, height, src, fromCol, fromRow)
@@ -189,6 +202,8 @@ function obj.bitblt(dst, col, row, width, height, src, fromCol, fromRow)
 			if not buf then
 				return nil
 			end
+			local cost = determineBitbltBudgetCost(buf, "screen")
+			if not machine.consumeCallBudget(cost) then return end
 			buf.dirty = false
 			width, height = math.min(buf.width, width), math.min(buf.height, height)
 			component.cecinvoke(bindaddress, "bitblt", buf, col, row, width, height, fromCol, fromRow)
@@ -473,7 +488,7 @@ function obj.get(x, y)
 	if activeBufferIdx == 0 then
 		return component.cecinvoke(bindaddress, "get", x, y)
 	else
-		return bufferGet(buffers[activeBufferIdx], x, y)
+		return bufferGet(buffers[activeBufferIdx], x, y), nil, nil
 	end
 end
 
@@ -499,6 +514,7 @@ function obj.set(x, y, value, vertical)
 				bufferSet(buffers[activeBufferIdx], x+i-1, y, ch)
 			end
 		end
+		return true
 	end
 end
 
