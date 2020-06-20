@@ -16,7 +16,7 @@ local setPaletteColorCosts = {1/2, 1/8, 1/16}
 local setCosts = {1/64, 1/128, 1/256}
 local copyCosts = {1/16, 1/32, 1/64}
 local fillCosts = {1/32, 1/64, 1/128}
-local bitbltCost = 0.5
+local bitbltCost = 0.5 * math.pow(2, maxtier)
 
 -- gpu component
 local mai = {}
