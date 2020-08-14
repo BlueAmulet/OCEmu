@@ -107,3 +107,24 @@ function env.computer.setArchitecture(archName)
 	end
 	return false
 end
+local template = {
+	gpu = {
+		capacity = 8000
+	},
+	screen = {
+		capacity = 8000
+	}
+}
+function env.computer.getDeviceInfo()
+	cprint("computer.getDeviceInfo")
+	local info = {}
+	for a, t in env.component.list() do
+		info[a] = {}
+		if template[t] then
+			for k, v in pairs(template[t]) do
+				info[a][k] = v
+			end
+		end
+	end
+	return info
+end
