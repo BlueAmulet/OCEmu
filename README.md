@@ -1,6 +1,11 @@
 OCEmu - OpenComputers Emulator
 ==============================
 
+Depreciated
+-----------
+I haven't been active with OpenComputers or Minecraft in general.  
+Please see https://github.com/zenith391/OCEmu for a more up to date fork.
+
 Installation
 ------------
 
