@@ -15,6 +15,9 @@ local scrrfc, scrrbc = scrfgc, scrbgc
 local palcol = {}
 local precise = false
 
+local obj = {type="screen"}
+
+
 t3pal = {}
 for i = 0,15 do
 	t3pal[i] = (i+1)*0x0F0F0F
@@ -84,6 +87,11 @@ function elsa.mousebuttonup(event)
 	if bttndown and buttons[mbevent.button] then
 		table.insert(machine.signals,{"drop",address,lx,ly,buttons[mbevent.button]})
 		bttndown = nil
+	else
+		if elsa.SDL.hasClipboardText() then
+			local text = ffi.string(elsa.SDL.getClipboardText())
+			table.insert(machine.signals, {"clipboard", obj.getKeyboards()[1], text})
+		end
 	end
 end
 
@@ -328,7 +336,6 @@ local touchinvert = false
 
 -- screen component
 local mai = {}
-local obj = {type="screen"}
 
 mai.isTouchModeInverted = {doc = "function():boolean -- Whether touch mode is inverted (sneak-activate opens GUI, instead of normal activate)."}
 function obj.isTouchModeInverted()
@@ -496,6 +503,25 @@ function cec.fill(x1, y1, w, h, char) -- Fills a portion of the screen at the sp
 		end
 	end
 	return true
+end
+function cec.bitblt(buf, col, row, w, h, fromCol, fromRow)
+	cprint("(cec) screen.bitblt", tostring(buf), col, row, w, h, fromCol, fromRow)
+	local oldFg = srcfgc
+	local oldBg = srcbgc
+	for y=0, h-1 do
+		for x=0, w-1 do
+			local char, fg, bg = buf:bufferGet(x+fromCol, y+fromRow)
+			local dx = x+col
+			local dy = y+row
+			if dx >= 1 and dx <= width and dy >= 1 and dy <= height then
+				srcfgc = fg
+				srcbgc = bg
+				setPos(dx, dy, utf8.byte(char), fg, bg)
+			end
+		end
+	end
+	srcfgc = oldFg
+	srcbgc = oldBg
 end
 function cec.getResolution() -- Get the current screen resolution.
 	cprint("(cec) screen.getResolution")

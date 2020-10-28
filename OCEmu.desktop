@@ -1,0 +1,9 @@
+[Desktop Entry]
+Exec=/usr/bin/lua $OCEMU_PATH/src/boot.lua
+GenericName=OCEmu
+Icon=$OCEMU_PATH/icon.png
+Name=OCEmu
+Path=$OCEMU_PATH/src
+StartupNotify=true
+Terminal=false
+Type=Application

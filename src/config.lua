@@ -21,6 +21,7 @@ local comments = {
 ["filesystem.floppySize"]="The size of writable floppy disks, in kilobytes.",
 ["filesystem.hddPlatterCounts"]="Number of physical platters to pretend a disk has in unmanaged mode. This controls seek times, in how it emulates sectors overlapping (thus sharing a common head position for access).",
 ["filesystem.hddSizes"]="The sizes of the three tiers of hard drives, in kilobytes. This list must contain exactly three entries, or it will be ignored.",
+["emulator.profiler"]="Whether to enable real-time profiler or not.",
 ["filesystem.maxReadBuffer"]="The maximum block size that can be read in one 'read' call on a file system. This is used to limit the amount of memory a call from a user program can cause to be allocated on the host side: when 'read' is, called a byte array with the specified size has to be allocated. So if this weren't limited, a Lua program could trigger massive memory allocations regardless of the amount of RAM installed in the computer it runs on. As a side effect this pretty much determines the read performance of file systems.",
 ["internet.enableHttp"]="Whether to allow HTTP requests via internet cards. When enabled, the `request` method on internet card components becomes available.",
 ["internet.enableTcp"]="Whether to allow TCP connections via internet cards. When enabled, the `connect` method on internet card components becomes available.",
