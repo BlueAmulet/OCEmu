@@ -44,7 +44,10 @@ Grab the Lua 5.2, luarocks5.2, lua52-filesystem, lua52-sec & lua52-socket from t
 ```
 pacman -S lua52 luarocks5.2 lua52-filesystem lua52-sec lua52-socket
 ```
+
 Now follow the luarocks steps below to get the remaining libraries which are not on Arch's repos.
+
+Or install [ocemu](https://aur.archlinux.org/packages/ocemu/) from the AUR.
 
 
 **Mac**
