@@ -139,7 +139,7 @@ local function componentConfig()
 				gpu.set(2,listX+2," ")
 				listX = listX + 1
 				gpu.set(2,listX+2,"▶")
-			elseif evnt[4] == keys.delete then
+			elseif evnt[4] == keys.delete or evnt[3] == string.byte("d") then
 				local ok, err = ocemu.disconnect(list[listX][1])
 				if ok then
 					table.remove(list, listX)
@@ -148,7 +148,7 @@ local function componentConfig()
 				else
 					setStatus(err or "unknown error")
 				end
-			elseif evnt[4] == keys.insert then
+			elseif evnt[4] == keys.insert or evnt[3] == string.byte("i") then
 				setStatus("")
 				local kind = prompt("Component type: ")
 				local address = prompt("Component address: ")
